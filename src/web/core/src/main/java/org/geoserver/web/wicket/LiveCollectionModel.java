@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -10,59 +10,58 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.apache.wicket.model.IModel;
 
-
 /**
- * A model that can be applied on top of another model returning a
- * "live collection", that is, a list that is supposed to be modified directly,
- * as opposed thru setting it again with a property setter
+ * A model that can be applied on top of another model returning a "live collection", that is, a
+ * list that is supposed to be modified directly, as opposed thru setting it again with a property
+ * setter
  */
-@SuppressWarnings("serial")
-public abstract class LiveCollectionModel implements IModel {
-    IModel wrapped;
+public abstract class LiveCollectionModel<S, T extends Collection<S>> implements IModel<T> {
+    private static final long serialVersionUID = 3505518156788420409L;
 
-    public LiveCollectionModel(IModel wrapped) {
+    IModel<? extends Collection<S>> wrapped;
+
+    public LiveCollectionModel(IModel<? extends Collection<S>> wrapped) {
         if (wrapped == null)
-            throw new NullPointerException(
-                    "Live list model cannot wrap a null model");
+            throw new NullPointerException("Live list model cannot wrap a null model");
         this.wrapped = wrapped;
     }
 
-    public void setObject(Object object) {
-        Collection collection = (Collection) wrapped.getObject();
+    public void setObject(T object) {
+        Collection<S> collection = wrapped.getObject();
         collection.clear();
-        collection.addAll((Collection) object);
+        if (object != null) {
+            collection.addAll(object);
+        }
     }
 
     public void detach() {
         wrapped.detach();
     }
 
-    /**
-     * Returns a model for live lists
-     */
-    public static LiveCollectionModel list(IModel wrapped) {
-        return new LiveCollectionModel(wrapped) {
+    /** Returns a model for live lists */
+    public static <S> LiveCollectionModel<S, List<S>> list(
+            IModel<? extends Collection<S>> wrapped) {
+        return new LiveCollectionModel<S, List<S>>(wrapped) {
 
-            public Object getObject() {
-                return new ArrayList((List) wrapped.getObject());
+            private static final long serialVersionUID = 3182237972594668864L;
+
+            public List<S> getObject() {
+                return new ArrayList<>(wrapped.getObject());
             }
-            
         };
     }
-    
-    /**
-     * Returns a model for live sets
-     */
-    public static LiveCollectionModel set(IModel wrapped) {
-        return new LiveCollectionModel(wrapped) {
 
-            public Object getObject() {
-                return new HashSet((Set) wrapped.getObject());
+    /** Returns a model for live sets */
+    public static <S> LiveCollectionModel<S, Set<S>> set(IModel<? extends Collection<S>> wrapped) {
+        return new LiveCollectionModel<S, Set<S>>(wrapped) {
+
+            private static final long serialVersionUID = 7638792616781214296L;
+
+            public Set<S> getObject() {
+                return new HashSet<>(wrapped.getObject());
             }
-            
         };
     }
 }

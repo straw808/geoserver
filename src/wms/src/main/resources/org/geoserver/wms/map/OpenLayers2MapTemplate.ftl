@@ -4,7 +4,7 @@
     <head>
         <title>OpenLayers map preview</title>
         <!-- Import OL CSS, auto import does not work with our minified OL.js build -->
-        <link rel="stylesheet" type="text/css" href="${baseUrl}/openlayers/theme/default/style.css"/>
+        <link rel="stylesheet" type="text/css" href="${relBaseUrl}/openlayers/theme/default/style.css"/>
         <!-- Basic CSS definitions -->
         <style type="text/css">
             /* General settings */
@@ -103,13 +103,14 @@
             }
         </style>
         <!-- Import OpenLayers, reduced, wms read only version -->
-        <script src="${baseUrl}/openlayers/OpenLayers.js" type="text/javascript">
+        <script src="${relBaseUrl}/openlayers/OpenLayers.js" type="text/javascript">
         </script>
         <script defer="defer" type="text/javascript">
             var map;
             var untiled;
             var tiled;
             var pureCoverage = ${pureCoverage?string};
+            var supportsFiltering = ${supportsFiltering?string};
             // pink tile avoidance
             OpenLayers.IMAGE_RELOAD_ATTEMPTS = 5;
             // make OL compute scale according to WMS spec
@@ -120,13 +121,17 @@
                 // and default to jpeg format
                 format = 'image/png';
                 if(pureCoverage) {
-                    document.getElementById('filterType').disabled = true;
-                    document.getElementById('filter').disabled = true;
                     document.getElementById('antialiasSelector').disabled = true;
-                    document.getElementById('updateFilterButton').disabled = true;
-                    document.getElementById('resetFilterButton').disabled = true;
                     document.getElementById('jpeg').selected = true;
                     format = "image/jpeg";
+                }
+
+
+                if (!supportsFiltering) {
+                    document.getElementById('filterType').disabled = true;
+                    document.getElementById('filter').disabled = true;
+                    document.getElementById('updateFilterButton').disabled = true;
+                    document.getElementById('resetFilterButton').disabled = true;
                 }
             
                 var bounds = new OpenLayers.Bounds(
@@ -149,7 +154,9 @@
                         <#list parameters as param>
                         "${param.name?js_string}": '${param.value?js_string}',
                         </#list>
-                        format: format
+                        format: format,
+                        tilesOrigin: map.maxExtent.left + ',' + map.maxExtent.bottom,
+                        tiled: true
                     },
                     {
                         buffer: 0,
@@ -158,7 +165,7 @@
                         yx : {'${request.SRS?js_string}' : ${yx}}
                     } 
                 );
-            
+                  
                 // setup single tiled layer
                 untiled = new OpenLayers.Layer.WMS(
                     "${layerName} - Untiled", "${baseUrl}/${servicePath}",
@@ -404,7 +411,7 @@
             }
             
             function updateFilter(){
-                if(pureCoverage)
+                if(!supportsFiltering)
                   return;
             
                 var filterType = document.getElementById('filterType').value;
@@ -429,7 +436,7 @@
             }
             
             function resetFilter() {
-                if(pureCoverage)
+                if(!supportsFiltering)
                   return;
             
                 document.getElementById('filter').value = "";
@@ -481,6 +488,8 @@
                         <option value="image/png8">PNG 8bit</option>
                         <option value="image/gif">GIF</option>
                         <option id="jpeg" value="image/jpeg">JPEG</option>
+                        <option id="jpeg-png" value="image/vnd.jpeg-png">JPEG-PNG</option>
+                        <option id="jpeg-png8" value="image/vnd.jpeg-png8">JPEG-PNG8</option>
                     </select>
                 </li>
                 <li>

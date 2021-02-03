@@ -7,10 +7,8 @@ package org.geoserver.jdbcconfig.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.List;
 import java.util.logging.Logger;
-
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 
@@ -18,23 +16,18 @@ public class Util {
 
     /**
      * Reads SQL from the specified script and executes against a JdbcOperations instance.
-     * <p>
-     * A few notes about the format of the file:
+     *
+     * <p>A few notes about the format of the file:
+     *
      * <ul>
      *   <li>Statements may span multiple lines, and must be terminated with a ";"
      *   <li>Lines starting with "--" are considered comments and ignored
-     *   <li>Statements may be preceded with "?" to signal that it is ok if the statement fails  
+     *   <li>Statements may be preceded with "?" to signal that it is ok if the statement fails
      * </ul>
-     * </p>
      */
-    public static void runScript(URL script, JdbcOperations jdbc, Logger logger) throws IOException {
-        InputStream stream = script.openStream();
-        List<String> lines;
-        try {
-            lines = org.apache.commons.io.IOUtils.readLines(stream);
-        } finally {
-            stream.close();
-        }
+    public static void runScript(InputStream script, JdbcOperations jdbc, Logger logger)
+            throws IOException {
+        List<String> lines = org.apache.commons.io.IOUtils.readLines(script);
 
         StringBuilder buf = new StringBuilder();
         for (String sql : lines) {
@@ -53,15 +46,14 @@ public class Util {
                 String stmt = buf.toString();
                 boolean skipError = stmt.startsWith("?");
                 if (skipError) {
-                    stmt = stmt.replaceAll("^\\? *" ,"");
+                    stmt = stmt.replaceAll("^\\? *", "");
                 }
 
                 if (logger != null) logger.info("Running: " + stmt);
 
                 try {
                     jdbc.update(stmt);
-                }
-                catch(DataAccessException e) {
+                } catch (DataAccessException e) {
                     if (logger != null) {
                         logger.warning(e.getMessage());
                     }

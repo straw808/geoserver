@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014-2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -6,7 +6,7 @@
 package org.geoserver.test.onlineTest.setup;
 
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import org.geoserver.test.onlineTest.support.AbstractReferenceDataSetup;
 import org.geoserver.test.onlineTest.support.DatabaseUtil;
@@ -15,7 +15,7 @@ import org.geotools.jdbc.JDBCDataStoreFactory;
 
 /**
  * Postgis data setup for the data reference set online test
- * 
+ *
  * @author Victor Tey, CSIRO Earth Science and Resource Engineering
  */
 public class WfsOnlineTestOracleSetup extends AbstractReferenceDataSetup {
@@ -61,29 +61,35 @@ public class WfsOnlineTestOracleSetup extends AbstractReferenceDataSetup {
 
     private void runSqlInsertScript() throws Exception {
         DatabaseUtil du = new DatabaseUtil();
-        ArrayList<String> sqls = du.splitOracleSQLScript(script);
-        for (String sql : sqls) {          
+        List<String> sqls = du.splitOracleSQLScript(script);
+        for (String sql : sqls) {
             if (sql.startsWith("CALL")) {
-                String formattedSP = "{" + sql + "}";            
-                this.runOracleStoreProcedure(formattedSP);
+                String formattedSP = "{" + sql + "}";
+                this.run(formattedSP);
                 continue;
             }
             this.run(sql);
         }
         this.setDataVersion(this.scriptVersion);
-
     }
 
     // these private helper class might be useful in the future. feel free to change its access
     // modifier
     private void setDataVersion(double version) throws Exception {
-        this.runOracleStoreProcedure("{CALL DROP_TABLE('" + versiontbl + "')}");
-        this.run("CREATE TABLE " + versiontbl + " (" + "NAME VARCHAR2(100 BYTE) NOT NULL, "
-                + "VERSION NUMBER(25,2)," + "INSERT_DATE DATE)");
-        this.run("insert into " + versiontbl
-                + "(name,version,insert_date) values('Data reference set'," + version
-                + ",current_timestamp)");
-
+        this.run("{CALL DROP_TABLE('" + versiontbl + "')}");
+        this.run(
+                "CREATE TABLE "
+                        + versiontbl
+                        + " ("
+                        + "NAME VARCHAR2(100 BYTE) NOT NULL, "
+                        + "VERSION NUMBER(25,2),"
+                        + "INSERT_DATE DATE)");
+        this.run(
+                "insert into "
+                        + versiontbl
+                        + "(name,version,insert_date) values('Data reference set',"
+                        + version
+                        + ",current_timestamp)");
     }
 
     @Override
@@ -95,5 +101,4 @@ public class WfsOnlineTestOracleSetup extends AbstractReferenceDataSetup {
     public void setUp() throws Exception {
         runSqlInsertScript();
     }
-
 }

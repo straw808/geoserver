@@ -6,19 +6,17 @@
 package org.geoserver.wfs.xml.v1_1_0;
 
 import javax.xml.namespace.QName;
-
 import net.opengis.wfs.IdentifierGenerationOptionType;
 import net.opengis.wfs.WfsFactory;
-
-import org.geotools.xml.AbstractSimpleBinding;
-import org.geotools.xml.InstanceComponent;
-
+import org.geotools.xsd.AbstractSimpleBinding;
+import org.geotools.xsd.InstanceComponent;
 
 /**
  * Binding object for the type http://www.opengis.net/wfs:IdentifierGenerationOptionType.
  *
  * <p>
- *        <pre>
+ *
+ * <pre>
  *         <code>
  *  &lt;xsd:simpleType name="IdentifierGenerationOptionType"&gt;
  *      &lt;xsd:restriction base="xsd:string"&gt;
@@ -61,7 +59,6 @@ import org.geotools.xml.InstanceComponent;
  *
  *          </code>
  *         </pre>
- * </p>
  *
  * @generated
  */
@@ -72,14 +69,13 @@ public class IdentifierGenerationOptionTypeBinding extends AbstractSimpleBinding
         this.wfsfactory = wfsfactory;
     }
 
-    /**
-     * @generated
-     */
+    /** @generated */
     public QName getTarget() {
         return WFS.IDENTIFIERGENERATIONOPTIONTYPE;
     }
 
     /**
+     *
      * <!-- begin-user-doc -->
      * <!-- end-user-doc -->
      *
@@ -90,13 +86,13 @@ public class IdentifierGenerationOptionTypeBinding extends AbstractSimpleBinding
     }
 
     /**
+     *
      * <!-- begin-user-doc -->
      * <!-- end-user-doc -->
      *
      * @generated modifiable
      */
-    public Object parse(InstanceComponent instance, Object value)
-        throws Exception {
+    public Object parse(InstanceComponent instance, Object value) throws Exception {
         if ("UseExisting".equals(value)) {
             return IdentifierGenerationOptionType.USE_EXISTING_LITERAL;
         }

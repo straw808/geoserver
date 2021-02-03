@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -12,9 +12,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.geoserver.security.CatalogMode;
 import org.junit.Test;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.w3c.dom.Document;
-
-import com.mockrunner.mock.web.MockHttpServletResponse;
 
 public class WPSAccessChallangeTest extends AbstractWPSAccessTest {
 
@@ -41,15 +40,18 @@ public class WPSAccessChallangeTest extends AbstractWPSAccessTest {
     @Test
     public void testNotAuthenticatedDescribeProcessPermission() throws Exception {
         setRequestAuth(null, null);
-        MockHttpServletResponse response = getAsServletResponse("wps?service=wps&request=describeprocess&identifier=JTS:buffer");
-        assertEquals(response.getErrorCode(), 401);
+        MockHttpServletResponse response =
+                getAsServletResponse(
+                        "wps?service=wps&request=describeprocess&identifier=JTS:buffer");
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test
     public void testAuthenticatedDescribeProcessPermission() throws Exception {
         setRequestAuth("test", "test");
         Document d = getAsDOM("wps?service=wps&request=describeprocess&identifier=JTS:buffer");
-        assertXpathEvaluatesTo("1", "count(//ProcessDescription[ows:Identifier = 'JTS:buffer'])", d);
+        assertXpathEvaluatesTo(
+                "1", "count(//ProcessDescription[ows:Identifier = 'JTS:buffer'])", d);
     }
 
     // Execute process
@@ -58,7 +60,7 @@ public class WPSAccessChallangeTest extends AbstractWPSAccessTest {
     public void testNotAuthenticatedExecutePermission() throws Exception {
         setRequestAuth(null, null);
         MockHttpServletResponse response = postAsServletResponse("wps", executeRequestXml);
-        assertEquals(response.getErrorCode(), 401);
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test
@@ -77,5 +79,4 @@ public class WPSAccessChallangeTest extends AbstractWPSAccessTest {
     protected CatalogMode getMode() {
         return CatalogMode.CHALLENGE;
     }
-
 }

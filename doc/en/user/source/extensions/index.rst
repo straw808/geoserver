@@ -1,34 +1,36 @@
-.. _service_extensions:
+.. _extensions:
 
 Extensions
 ==========
 
-Extensions are modules that add functionality to GeoServer.
-They are installed as add-ons to the bsae GeoServer installation.
+Extensions are modules that add functionality to GeoServer. They are installed as add-ons to the base GeoServer installation.
 
-This section describes most of the extensions available for GeoServer.
-For information about extensions that add support for additional data formats, such as ArcSDE or SQL Server,
-see the :ref:`data_vector`, :ref:`data_raster`, and :ref:`data_database` sections.
+This section describes most of the extensions available for GeoServer. Other data formats can be found in the :ref:`data_vector`, :ref:`data_raster`, :ref:`data_database`, and :ref:`styling` sections.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
+   authkey/index
    controlflow/index
-   css/index
    dxf/index   
    excel
-   geosearch
+   grib/grib
    imagemap
    importer/index
    inspire/index
-   monitoring/index
-   ogr
-   querylayer/index
-   styler
-   wps/index
-   xslt/index
-   csw/index
-   wcs20eo/index
+   jp2k/index
    libjpeg-turbo/index
-   jp2k
+   monitoring/index
+   netcdf/netcdf
+   netcdf-out/index
+   ogr
    printing/index
+   querylayer/index
+   vectortiles/index
+   xslt/index
+   wcs20eo/index
+   mongodb/index
+   sldservice/index
+   geofence/index
+   geofence-server/index
+   cas/index

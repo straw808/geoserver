@@ -5,10 +5,10 @@
  */
 package org.geoserver.kml.decorator;
 
-import static org.geoserver.ows.util.ResponseUtils.*;
+import static org.geoserver.ows.util.ResponseUtils.appendPath;
+import static org.geoserver.ows.util.ResponseUtils.buildURL;
 
 import java.io.IOException;
-
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.NamespaceInfo;
 import org.geoserver.config.GeoServer;
@@ -22,7 +22,7 @@ import org.opengis.feature.type.Name;
 
 /**
  * Base class for GeoSearch placemark decorators
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
 public abstract class AbstractGeoSearchDecorator implements KmlDecorator {
@@ -39,7 +39,7 @@ public abstract class AbstractGeoSearchDecorator implements KmlDecorator {
         GetMapRequest request = context.getRequest();
         String baseURL = request.getBaseUrl();
         String prefix = ns.getPrefix();
-        return buildURL(baseURL, appendPath("rest", prefix, featureTypeName), null,
-                URLType.SERVICE);
+        return buildURL(
+                baseURL, appendPath("rest", prefix, featureTypeName), null, URLType.SERVICE);
     }
 }

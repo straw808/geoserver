@@ -16,7 +16,7 @@ This tutorial shows how to use the geotools feature-pregeneralized module in Geo
 
 This module needs features with already generalized geometries, selecting the best fit geometry on demand. 
 
-The full documentation is available here:`<http://docs.geotools.org/latest/userguide/library/data/pregeneralized.html>`_
+The full documentation is available in :geotools:`GeoTools Pregeneralized Plugin <library/data/pregeneralized.html>` documentation.
 
 This tutorial will show two possible scenarios, explaining step by step what to do for using this module in GeoServer.
 
@@ -98,7 +98,7 @@ The next form you see is
 
 .. note::
 
-   **RepositoryClassName** and  **GeneralizationInfosProviderClassName** have default values which suit for GeoTools, not for GeoServer. Change **GeoTools** to **GeoServer** in the package names to instantiate the correct objects for GeoServer. **GeneralizationInfosProviderParam** could be an URL or a datastore from the Geoserver catalog. A datastore is referenced by using *workspacename:datastorename*. This makes sense if you have your own implementation for the **GeneralizationInfosProvider** interface and this implementation reads the infos from a database.
+   **RepositoryClassName** and  **GeneralizationInfosProviderClassName** have default values which suit for GeoTools, not for GeoServer. Change **GeoTools** to **GeoServer** in the package names to instantiate the correct objects for GeoServer. **GeneralizationInfosProviderParam** could be an URL or a datastore from the GeoServer catalog. A datastore is referenced by using *workspacename:datastorename*. This makes sense if you have your own implementation for the **GeneralizationInfosProvider** interface and this implementation reads the infos from a database.
 
 The configuration should look like this
 

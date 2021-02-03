@@ -6,12 +6,10 @@
 package org.geoserver.wps.executor;
 
 import java.io.ByteArrayInputStream;
-
 import net.opengis.wps10.ComplexDataType;
 import net.opengis.wps10.DataType;
 import net.opengis.wps10.InputType;
 import net.opengis.wps10.LiteralDataType;
-
 import org.geoserver.wps.WPSException;
 import org.geoserver.wps.ppio.BoundingBoxPPIO;
 import org.geoserver.wps.ppio.ComplexPPIO;
@@ -20,14 +18,13 @@ import org.geoserver.wps.ppio.ProcessParameterIO;
 import org.geoserver.wps.ppio.RawDataPPIO;
 import org.geoserver.wps.process.ByteArrayRawData;
 import org.geoserver.wps.process.StringRawData;
-import org.geotools.data.Base64;
+import org.geotools.util.Base64;
 import org.opengis.util.ProgressListener;
 
 /**
  * Performs lazy parsing of a specific input
- * 
+ *
  * @author Andrea Aime - GeoSolutions
- * 
  */
 class SimpleInputProvider extends AbstractInputProvider {
 
@@ -89,7 +86,6 @@ class SimpleInputProvider extends AbstractInputProvider {
         }
 
         return result;
-
     }
 
     @Override

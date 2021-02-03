@@ -12,11 +12,14 @@
 # serve to show the default value.
 
 import sys, os, string
+import datetime
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #sys.path.append(os.path.abspath('some/directory'))
+
+now = datetime.datetime.now()
 
 # General configuration
 # ---------------------
@@ -39,18 +42,18 @@ master_doc = 'index'
 # General substitutions.
 project = u'GeoServer'
 manual = u'Documentation Guide'
-copyright = u'2015, Open Source Geospatial Foundation'
+copyright = u'{}, Open Source Geospatial Foundation'.format(now.year)
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '2.8'
+version = '2.19'
 # The full version, including alpha/beta/rc tags.
-release = '2.8-SNAPSHOT'
+release = '2.19-SNAPSHOT'
 # Users don't need to see the "SNAPSHOT" notation when it's there
 if release.find('SNAPSHOT') != -1:
-   release = '2.8.x'
+   release = '2.19.x'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -110,7 +113,7 @@ html_title = project + " " + release + " " + manual
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-#html_favicon = None
+html_favicon = '../../themes/geoserver/static/geoserver.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -142,7 +145,10 @@ html_last_updated_fmt = '%b %d, %Y'
 #html_split_index = False
 
 # If true, the reST sources are included in the HTML build as _sources/<name>.
-#html_copy_source = True
+html_copy_source = True
+
+# If true, links to the page source are added to each page.
+html_show_sourcelink = True
 
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
@@ -155,6 +161,13 @@ html_last_updated_fmt = '%b %d, %Y'
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'GeoServerDocumentationGuide'
 
+html_context = {
+  'display_github': True,
+  'github_user': 'geoserver',
+  'github_repo': 'geoserver',
+  'github_version': 'master',
+  'conf_py_path': 'doc/en/docguide/source'
+}
 
 # Options for LaTeX output
 # ------------------------

@@ -1,4 +1,4 @@
-/* (c) 2014 - 2015 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -7,25 +7,26 @@ package org.geoserver.filters;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
-
 import javax.servlet.http.HttpServletRequest;
-
-import com.mockrunner.mock.web.MockHttpServletRequest;
-import com.mockrunner.mock.web.MockHttpSession;
-import com.mockrunner.mock.web.MockServletContext;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.mock.web.MockServletContext;
 
 public class RequestWrapperTestSupport {
 
-	protected final String[] testStrings = new String[]{
-		"Hello, this is a test",
-		"LongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLong",
-		"",
-        "test\ncontaining\nnewlines"
-	};
-	
-    protected MockHttpServletRequest makeRequest(String body, String queryString) {
-		MockHttpServletRequest request = new MockHttpServletRequest();
+    protected final String[] testStrings =
+            new String[] {
+                "Hello, this is a test",
+                "LongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLong",
+                "",
+                "test\ncontaining\nnewlines"
+            };
+
+    protected MockHttpServletRequest makeRequest(String body, String queryString)
+            throws UnsupportedEncodingException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
         request.setScheme("http");
         request.setServerName("localhost");
         request.setContextPath("/geoserver");
@@ -35,31 +36,30 @@ public class RequestWrapperTestSupport {
         request.setServletPath("/geoserver");
         request.setContentType("application/x-www-form-urlencoded");
 
-		request.setMethod("POST");
-		request.setBodyContent(body);
+        request.setMethod("POST");
+        request.setContent(body.getBytes("UTF-8"));
 
-        MockHttpSession session = new MockHttpSession();
-        session.setupServletContext(new MockServletContext());
+        MockHttpSession session = new MockHttpSession(new MockServletContext());
         request.setSession(session);
 
         request.setUserPrincipal(null);
 
-		return request;
-	}
+        return request;
+    }
 
-	public static void compare(HttpServletRequest reqA, HttpServletRequest reqB){
-		Method[] methods = HttpServletRequest.class.getMethods();
+    public static void compare(HttpServletRequest reqA, HttpServletRequest reqB) {
+        Method[] methods = HttpServletRequest.class.getMethods();
 
-		for (int i = 0; i < methods.length; i++){
-			try {
-				if (methods[i].getParameterTypes().length == 0){
-					Object resultA = methods[i].invoke(reqA);
-					Object resultB = methods[i].invoke(reqB);
-		            assertEquals(resultA, resultB);
-				} 
-			} catch (Exception e){
-				// don't do anything, it's fine
-			}
-		}
-	}
+        for (Method method : methods) {
+            try {
+                if (method.getParameterTypes().length == 0) {
+                    Object resultA = method.invoke(reqA);
+                    Object resultB = method.invoke(reqB);
+                    assertEquals(resultA, resultB);
+                }
+            } catch (Exception e) {
+                // don't do anything, it's fine
+            }
+        }
+    }
 }

@@ -9,14 +9,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
-
 import javax.servlet.http.HttpServletResponse;
-
 import org.geoserver.config.GeoServer;
 import org.geoserver.ows.OWS10ServiceExceptionHandler;
 import org.geoserver.ows.Request;
 import org.geoserver.ows.util.OwsUtils;
 import org.geoserver.ows.util.ResponseUtils;
+import org.geoserver.platform.Service;
 import org.geoserver.platform.ServiceException;
 import org.geoserver.wfs.WFSInfo;
 import org.geoserver.wfs.json.JSONType;
@@ -26,16 +25,13 @@ import org.geoserver.wfs.json.JSONType;
  *
  * @author Justin Deoliveira, The Open Planning Project
  * @author Carlo Cancellieri - GeoSolutions
- *
  */
 public class WfsExceptionHandler extends OWS10ServiceExceptionHandler {
 
     GeoServer gs;
-    
-    /**
-     * @param service The wfs service descriptors.
-     */
-    public WfsExceptionHandler(List services, GeoServer gs) {
+
+    /** @param services The wfs service descriptors. */
+    public WfsExceptionHandler(List<Service> services, GeoServer gs) {
         super(services);
         this.gs = gs;
     }
@@ -43,10 +39,8 @@ public class WfsExceptionHandler extends OWS10ServiceExceptionHandler {
     public WFSInfo getInfo() {
         return gs.getService(WFSInfo.class);
     }
-    
-    /**
-     * Encodes a ogc:ServiceExceptionReport to output.
-     */
+
+    /** Encodes a ogc:ServiceExceptionReport to output. */
     public void handleServiceException(ServiceException exception, Request request) {
 
         boolean verbose = gs.getSettings().isVerboseExceptions();
@@ -75,9 +69,9 @@ public class WfsExceptionHandler extends OWS10ServiceExceptionHandler {
             handleDefault(exception, request, charset, verbose);
         }
     }
-    
-    private void handleDefault(ServiceException exception, Request request, String charset,
-            boolean verbose) {
+
+    private void handleDefault(
+            ServiceException exception, Request request, String charset, boolean verbose) {
         if ("1.0.0".equals(request.getVersion())) {
             handle1_0(exception, request.getHttpResponse());
         } else {
@@ -97,17 +91,19 @@ public class WfsExceptionHandler extends OWS10ServiceExceptionHandler {
             s.append(tab + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");
             s.append(tab);
             s.append("xsi:schemaLocation=\"http://www.opengis.net/ogc ");
-            s.append(ResponseUtils.appendPath(getInfo().getSchemaBaseURL(),
-                    "wfs/1.0.0/OGC-exception.xsd") + "\">\n");
+            s.append(
+                    ResponseUtils.appendPath(
+                                    getInfo().getSchemaBaseURL(), "wfs/1.0.0/OGC-exception.xsd")
+                            + "\">\n");
 
             s.append(tab + "<ServiceException");
 
             if ((e.getCode() != null) && !e.getCode().equals("")) {
-                s.append(" code=\"" + e.getCode() + "\"");
+                s.append(" code=\"" + ResponseUtils.encodeXML(e.getCode()) + "\"");
             }
 
             if ((e.getLocator() != null) && !e.getLocator().equals("")) {
-                s.append(" locator=\"" + e.getLocator() + "\"");
+                s.append(" locator=\"" + ResponseUtils.encodeXML(e.getLocator()) + "\"");
             }
 
             s.append(">");

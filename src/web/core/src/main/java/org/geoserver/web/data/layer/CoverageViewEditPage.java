@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2014 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -8,7 +8,6 @@ package org.geoserver.web.data.layer;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.CatalogBuilder;
 import org.geoserver.catalog.CoverageInfo;
@@ -20,8 +19,16 @@ import org.geoserver.web.wicket.ParamResourceModel;
 
 public class CoverageViewEditPage extends CoverageViewAbstractPage {
 
-    public CoverageViewEditPage(String workspaceName, String storeName, String coverageName,
-            CoverageInfo coverageInfo, ResourceConfigurationPage previusPage) throws IOException {
+    /** serialVersionUID */
+    private static final long serialVersionUID = -3932025430605245513L;
+
+    public CoverageViewEditPage(
+            String workspaceName,
+            String storeName,
+            String coverageName,
+            CoverageInfo coverageInfo,
+            ResourceConfigurationPage previusPage)
+            throws IOException {
         super(workspaceName, storeName, coverageName, coverageInfo);
         this.previousPage = previusPage;
         this.coverageInfo = coverageInfo;
@@ -48,7 +55,9 @@ public class CoverageViewEditPage extends CoverageViewAbstractPage {
             setResponsePage(previousPage);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to create feature type", e);
-            error(new ParamResourceModel("creationFailure", this, getFirstErrorMessage(e)).getString());
+            error(
+                    new ParamResourceModel("creationFailure", this, getFirstErrorMessage(e))
+                            .getString());
         }
     }
 

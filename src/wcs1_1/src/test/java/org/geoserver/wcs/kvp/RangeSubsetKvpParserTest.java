@@ -7,15 +7,14 @@ package org.geoserver.wcs.kvp;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.vfny.geoserver.wcs.WcsException.WcsExceptionCode.InvalidParameterValue;
 
 import java.util.List;
-
 import net.opengis.wcs11.AxisSubsetType;
 import net.opengis.wcs11.FieldSubsetType;
 import net.opengis.wcs11.RangeSubsetType;
-
 import org.junit.Test;
 import org.vfny.geoserver.wcs.WcsException;
 
@@ -29,10 +28,10 @@ public class RangeSubsetKvpParserTest {
         assertEquals(2, rs.getFieldSubset().size());
         FieldSubsetType field = (FieldSubsetType) rs.getFieldSubset().get(0);
         assertEquals("radiance", field.getIdentifier().getValue());
-        assertEquals(null, field.getInterpolationType());
+        assertNull(field.getInterpolationType());
         field = (FieldSubsetType) rs.getFieldSubset().get(1);
         assertEquals("temperature", field.getIdentifier().getValue());
-        assertEquals(null, field.getInterpolationType());
+        assertNull(field.getInterpolationType());
     }
 
     @Test
@@ -74,6 +73,7 @@ public class RangeSubsetKvpParserTest {
         assertEquals("Red", keys.get(0));
     }
 
+    @Test
     public void testAxisKeys() throws Exception {
         RangeSubsetType rs = (RangeSubsetType) parser.parse("radiance[bands[Red,Green,Blue]]");
         assertNotNull(rs);

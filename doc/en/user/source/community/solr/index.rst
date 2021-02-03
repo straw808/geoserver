@@ -3,7 +3,7 @@
 SOLR data store
 ===============
 
-`SORL <http://lucene.apache.org/solr/>`_ is a popular search platform based on Apache Lucene project. 
+`SOLR <http://lucene.apache.org/solr/>`_ is a popular search platform based on Apache Lucene project. 
 Its major features include powerful full-text search, hit highlighting, faceted search, near real-time indexing, 
 dynamic clustering, database integration, rich document (e.g., Word, PDF) handling, and most
 importantly for the GeoServer integration, geospatial search.
@@ -13,27 +13,17 @@ as WKT and index them with a spatial index.
 
 .. note:: GeoServer does not come built-in with support for SOLR; it must be installed through this community module. 
 
-SOLR version
-^^^^^^^^^^^^
-
-The GeoServer SOLR extension has been tested with SORL version 4.8, 4.9, and 4.10.
-
- .. _solr_install:
-
-Supported geometry types
-^^^^^^^^^^^^^^^^^^^^^^^^
+The GeoServer SOLR extension has been tested with SOLR version 4.8, 4.9, and 4.10.
 
 The extension supports all WKT geometry types (all linear types, point, lines and polygons, SQL/MMcurves are not supported), 
 plus "bounding box" (available starting SOLR 4.10).
 It does not support the ``solr.LatLonType`` type yet.
 
-More information
-^^^^^^^^^^^^^^^^
-
-The following pages shows how to use the SOLR data store:
+The following pages shows how to use the SOLR data store.
 
 .. toctree::
    :maxdepth: 2
 
    configure
    load
+   optimize

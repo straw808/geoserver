@@ -1,13 +1,11 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
  */
 package org.geoserver.web.data.store.panel;
 
-import java.awt.Color;
 import java.util.Locale;
-
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.validation.FormComponentFeedbackBorder;
 import org.apache.wicket.markup.html.panel.Panel;
@@ -18,76 +16,78 @@ import org.geoserver.web.wicket.ColorPickerField;
 
 /**
  * A label with a text field. Can receive custom validators for the text field.
- * 
+ *
  * @author Gabriel Roldan
  */
-@SuppressWarnings("serial")
 public class ColorPickerPanel extends Panel {
 
-	/**
-	 * 
-	 * @param id
-	 * @param paramsMap
-	 * @param paramName
-	 * @param paramLabel
-	 * @param required
-	 * @param validators
-	 *            any extra validator that should be added to the input field,
-	 *            or {@code null}
-	 */
-	public ColorPickerPanel(final String id, final IModel paramVale,
-			final IModel paramLabelModel, final boolean required,
-			IValidator... validators) {
-		// make the value of the text field the model of this panel, for easy
-		// value retriaval
-		super(id, paramVale);
+    private static final long serialVersionUID = 6661147317307298452L;
 
-		// the label
-		String requiredMark = required ? " *" : ""; 
-		Label label = new Label("paramName", paramLabelModel.getObject() + requiredMark);
-		add(label);
+    /**
+     * @param validators any extra validator that should be added to the input field, or {@code
+     *     null}
+     */
+    @SafeVarargs
+    public ColorPickerPanel(
+            final String id,
+            final IModel<String> paramVale,
+            final IModel<String> paramLabelModel,
+            final boolean required,
+            IValidator<String>... validators) {
+        // make the value of the text field the model of this panel, for easy
+        // value retriaval
+        super(id, paramVale);
 
-		// the color picker. Notice that we need to convert between RRGGBB and
-		// #RRGGBB,
-		// passing in a Color.class param is just a trick to force the component
-		// to use
-		// the converter both ways
-		ColorPickerField textField = new ColorPickerField("paramValue",
-				paramVale, Color.class) {
-			@Override
-			public IConverter getConverter(Class type) {
-				return new IConverter() {
+        // the label
+        String requiredMark = required ? " *" : "";
+        Label label = new Label("paramName", paramLabelModel.getObject() + requiredMark);
+        add(label);
 
-					public String convertToString(Object value, Locale locale) {
-						String input = (String) value;
-						if (input.startsWith("#"))
-							return input.substring(1);
-						else
-							return input;
-					}
+        // the color picker. Notice that we need to convert between RRGGBB and
+        // #RRGGBB,
+        ColorPickerField textField =
+                new ColorPickerField("paramValue", paramVale) {
+                    private static final long serialVersionUID = 4185457152965032989L;
 
-					public Object convertToObject(String value, Locale locale) {
-						if (value.equals(""))
-							return value;
-						return "#" + value;
-					}
-				};
-			}
-		};
-		textField.setRequired(required);
-		// set the label to be the paramLabelModel otherwise a validation error
-		// would look like
-		// "Parameter 'paramValue' is required"
-		textField.setLabel(paramLabelModel);
+                    @SuppressWarnings("unchecked")
+                    @Override
+                    public <C> IConverter<C> getConverter(Class<C> type) {
+                        if (type.isAssignableFrom(String.class)) {
+                            return (IConverter<C>)
+                                    new IConverter<String>() {
+                                        private static final long serialVersionUID =
+                                                4343895199315509104L;
 
-		if (validators != null) {
-			for (IValidator validator : validators) {
-				textField.add(validator);
-			}
-		}
-		FormComponentFeedbackBorder feedback = new FormComponentFeedbackBorder(
-				"border");
-		feedback.add(textField);
-		add(feedback);
-	}
+                                        public String convertToString(String input, Locale locale) {
+                                            if (input.startsWith("#")) {
+                                                return input.substring(1);
+                                            } else {
+                                                return input;
+                                            }
+                                        }
+
+                                        public String convertToObject(String value, Locale locale) {
+                                            if (value.equals("")) return value;
+                                            return "#" + value;
+                                        }
+                                    };
+                        }
+                        return super.getConverter(type);
+                    }
+                };
+        textField.setRequired(required);
+        // set the label to be the paramLabelModel otherwise a validation error
+        // would look like
+        // "Parameter 'paramValue' is required"
+        textField.setLabel(paramLabelModel);
+
+        if (validators != null) {
+            for (IValidator<String> validator : validators) {
+                textField.add(validator);
+            }
+        }
+        FormComponentFeedbackBorder feedback = new FormComponentFeedbackBorder("border");
+        feedback.add(textField);
+        add(feedback);
+    }
 }

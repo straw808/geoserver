@@ -4,10 +4,12 @@
  */
 package org.geoserver.wps;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.List;
-
 import org.geoserver.wps.executor.ExecutionStatus;
 import org.geoserver.wps.executor.ProcessState;
 import org.geotools.data.Query;
@@ -25,7 +27,7 @@ import org.opengis.filter.sort.SortOrder;
 
 /**
  * Base class for status store tests
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
 public abstract class AbstractProcessStoreTest {
@@ -43,7 +45,7 @@ public abstract class AbstractProcessStoreTest {
     protected ExecutionStatus s4;
 
     @Before
-    public void setup() {
+    public void setup() throws IOException {
         // prepare a few statues
         this.store = buildStore();
 
@@ -62,16 +64,10 @@ public abstract class AbstractProcessStoreTest {
         fillStore();
     }
 
-    /**
-     * Builds the status store for this test
-     * 
-     * @return
-     */
-    protected abstract ProcessStatusStore buildStore();
+    /** Builds the status store for this test */
+    protected abstract ProcessStatusStore buildStore() throws IOException;
 
-    /**
-     * Puts all the test statuses in the store
-     */
+    /** Puts all the test statuses in the store */
     protected void fillStore() {
         store.save(s1);
         store.save(s2);
@@ -99,9 +95,10 @@ public abstract class AbstractProcessStoreTest {
         checkFiltered(store, query("phase = 'RUNNING'", 1, 1, asc("progress")), s4);
         checkFiltered(store, query("phase = 'RUNNING'", 0, 1, desc("progress")), s4);
         checkFiltered(store, query("phase = 'RUNNING'", 1, 1, desc("progress")), s3);
+
         // force a post filter
         String lowercaseRunning = "strToLowerCase(phase) = 'running'";
-        // checkFiltered(store, query(lowercaseRunning), s3, s4);
+        checkFiltered(store, query(lowercaseRunning), s3, s4);
         checkFiltered(store, query(lowercaseRunning, 0, 1, asc("progress")), s3);
         checkFiltered(store, query(lowercaseRunning, 1, 1, asc("progress")), s4);
         checkFiltered(store, query(lowercaseRunning, 0, 1, desc("progress")), s4);
@@ -125,7 +122,8 @@ public abstract class AbstractProcessStoreTest {
         return FF.sort(propertyName, SortOrder.DESCENDING);
     }
 
-    protected void checkFiltered(ProcessStatusStore store, Query query, ExecutionStatus... statuses) {
+    protected void checkFiltered(
+            ProcessStatusStore store, Query query, ExecutionStatus... statuses) {
         List<ExecutionStatus> filtered = store.list(query);
         checkContains(filtered, statuses);
     }
@@ -136,7 +134,8 @@ public abstract class AbstractProcessStoreTest {
 
     private Query query(String cql, int startIndex, int maxFeatures, SortBy... sortBy)
             throws CQLException {
-        Query query = new Query(null, ECQL.toFilter(cql));
+        Filter filter = ECQL.toFilter(cql);
+        Query query = new Query(null, filter);
         query.setStartIndex(startIndex);
         query.setMaxFeatures(maxFeatures);
         query.setSortBy(sortBy);
@@ -167,8 +166,7 @@ public abstract class AbstractProcessStoreTest {
         store.save(status);
         List<ExecutionStatus> statuses = store.list(Query.ALL);
         assertEquals(1, statuses.size());
-        assertEquals(status, statuses.get(0));
+        assertEquals("incorrect status", status, statuses.get(0));
         assertNotSame(status, statuses.get(0));
     }
-
 }

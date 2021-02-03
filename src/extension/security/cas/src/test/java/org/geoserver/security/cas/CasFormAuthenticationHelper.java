@@ -1,9 +1,8 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
  */
-
 
 package org.geoserver.security.cas;
 
@@ -17,72 +16,71 @@ import java.util.Map;
 
 /**
  * A helper class for authentication against a Cas server
- * 
- * supported authentication mechanisms
- * 
- *  - Cas Form login
- * 
- * @author christian
  *
+ * <p>supported authentication mechanisms
+ *
+ * <p>- Cas Form login
+ *
+ * @author christian
  */
-public class CasFormAuthenticationHelper extends CasAuthenticationHelper{
+public class CasFormAuthenticationHelper extends CasAuthenticationHelper {
 
-    
-    String username,password;
+    public static final String CAS_4_0_USER = "casuser";
+    public static final String CAS_4_0_PW = "Mellon";
 
-    public CasFormAuthenticationHelper (URL casUrlPrefix,String username, String password) {
+    String username, password;
+
+    public CasFormAuthenticationHelper(URL casUrlPrefix, String username, String password) {
         super(casUrlPrefix);
-        this.username=username;
-        this.password=password;
+        this.username = username;
+        this.password = password;
     }
-    
-        
-    public boolean ssoLogin() throws IOException{
+
+    public boolean ssoLogin() throws IOException {
         URL loginUrl = createURLFromCasURI("/login");
         HttpURLConnection conn = (HttpURLConnection) loginUrl.openConnection();
         String responseString = readResponse(conn);
-        String loginTicket = extractFormParameter(responseString,"\"lt\"");
-        if (loginTicket==null)
-            throw new IOException (" No login ticket for: "+loginUrl.toString());
-        String execution = extractFormParameter(responseString,"\"execution\"");
-        if (execution==null)
-            throw new IOException (" No hidden execution field for: "+loginUrl.toString());
+        String execution = extractFormParameter(responseString, "\"execution\"");
+        if (execution == null)
+            throw new IOException(" No hidden execution field for: " + loginUrl.toString());
 
         List<HttpCookie> cookies = getCookies(conn);
-        HttpCookie sessionCookie = getCookieNamed(cookies, "JSESSIONID");        
-        String sessionCookieSend=sessionCookie.toString();
-        
-        Map<String,String> paramMap = new HashMap<String,String>();
-        paramMap.put("username",username);
-        paramMap.put("password",password);
-        paramMap.put("lt",loginTicket);
-        paramMap.put("_eventId","submit");
-        paramMap.put("submit","LOGIN");
-        paramMap.put("execution",execution);
-                
+        HttpCookie sessionCookie = getCookieNamed(cookies, "TGC");
+        String sessionCookieSend = sessionCookie.toString();
+
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("username", username);
+        paramMap.put("password", password);
+        paramMap.put("_eventId", "submit");
+        paramMap.put("execution", execution);
+        paramMap.put("geolocation", "");
+
         conn = (HttpURLConnection) loginUrl.openConnection();
-        
+
         conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        conn.setRequestProperty("charset", "utf-8");
         conn.setDoOutput(true);
         conn.setDoInput(true);
-        conn.setRequestProperty("Cookie", sessionCookieSend);
-        
+        // conn.setRequestProperty("Cookie", sessionCookieSend);
+
         writeParamsForPostAndSend(conn, paramMap);
+        if (conn.getResponseCode() == 401) return false;
 
         cookies = getCookies(conn);
         readResponse(conn);
-        
-        extractCASCookies(cookies,conn);
-        
-        return ticketGrantingCookie!=null && ticketGrantingCookie.getValue().startsWith("TGT-"); 
+
+        extractCASCookies(cookies, conn);
+
+        return ticketGrantingCookie != null;
     }
 
-    protected String extractFormParameter(String formLoginHtml, String searchString) {        
+    protected String extractFormParameter(String formLoginHtml, String searchString) {
         int index = formLoginHtml.indexOf(searchString);
-        index+=searchString.length();
+        if (index == -1) return null;
+        index += searchString.length();
         index = formLoginHtml.indexOf("\"", index);
-        int index2 = formLoginHtml.indexOf("\"", index+1);
-        return  formLoginHtml.substring(index+1,index2);        
+        int index2 = formLoginHtml.indexOf("\"", index + 1);
+        return formLoginHtml.substring(index + 1, index2);
     }
-
 }

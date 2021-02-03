@@ -5,21 +5,24 @@
  */
 package org.geoserver.config.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.geoserver.catalog.LayerIdentifierInfo;
 import org.geoserver.catalog.impl.LayerIdentifier;
 import org.junit.Test;
 
 public class LayerIdentifierInfoListConverterTest {
 
-    @Test 
+    @Test
     public void testFromString() {
-        final String serialized = "[{\"authority\":\"auth1\",\"identifier\":\"IDENTIFIER_1\"},{\"authority\":\"auth2\",\"identifier\":\"IDENTIFIER_2\"}]";
-        List<LayerIdentifierInfo> expected = new ArrayList<LayerIdentifierInfo>();
+        final String serialized =
+                "[{\"authority\":\"auth1\",\"identifier\":\"IDENTIFIER_1\"},{\"authority\":\"auth2\",\"identifier\":\"IDENTIFIER_2\"}]";
+        List<LayerIdentifierInfo> expected = new ArrayList<>();
 
         LayerIdentifierInfo id1 = new LayerIdentifier();
         id1.setAuthority("auth1");
@@ -33,7 +36,7 @@ public class LayerIdentifierInfoListConverterTest {
 
         List<LayerIdentifierInfo> actual;
         actual = LayerIdentifierInfoListConverter.fromString(serialized);
-        
+
         assertEquals(expected, actual);
     }
 
@@ -51,7 +54,7 @@ public class LayerIdentifierInfoListConverterTest {
 
     @Test
     public void testToString() {
-        List<LayerIdentifierInfo> list = new ArrayList<LayerIdentifierInfo>();
+        List<LayerIdentifierInfo> list = new ArrayList<>();
 
         LayerIdentifierInfo id1 = new LayerIdentifier();
         id1.setAuthority("auth1");
@@ -64,14 +67,15 @@ public class LayerIdentifierInfoListConverterTest {
         list.add(id2);
 
         String actual = LayerIdentifierInfoListConverter.toString(list);
-        System.out.println(actual);
-        String expected = "[{\"authority\":\"auth1\",\"identifier\":\"IDENTIFIER_1\"},{\"authority\":\"auth2\",\"identifier\":\"IDENTIFIER_2\"}]";
+        // System.out.println(actual);
+        String expected =
+                "[{\"authority\":\"auth1\",\"identifier\":\"IDENTIFIER_1\"},{\"authority\":\"auth2\",\"identifier\":\"IDENTIFIER_2\"}]";
         assertEquals(expected, actual);
     }
 
     @Test
     public void testToStringListWithNullElement() {
-        List<LayerIdentifierInfo> list = new ArrayList<LayerIdentifierInfo>();
+        List<LayerIdentifierInfo> list = new ArrayList<>();
 
         LayerIdentifierInfo id1 = new LayerIdentifier();
         id1.setAuthority("auth1");
@@ -87,18 +91,17 @@ public class LayerIdentifierInfoListConverterTest {
 
     @Test
     public void testToStringListWithOnlyNullElements() {
-        List<LayerIdentifierInfo> list = new ArrayList<LayerIdentifierInfo>();
+        List<LayerIdentifierInfo> list = new ArrayList<>();
         list.add(null);
         list.add(null);
         list.add(null);
 
         assertNull(LayerIdentifierInfoListConverter.toString(list));
-
     }
 
     @Test
     public void testToStringEmptyList() {
-        List<LayerIdentifierInfo> list = new ArrayList<LayerIdentifierInfo>();
+        List<LayerIdentifierInfo> list = new ArrayList<>();
 
         String actual = LayerIdentifierInfoListConverter.toString(list);
         assertNull(actual);

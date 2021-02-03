@@ -1,7 +1,7 @@
 .. _data_database:
 
-Working with Databases
-======================
+Databases
+=========
 
 This section discusses the database data sources that GeoServer can access.
 
@@ -23,7 +23,6 @@ Extensions are available at the `GeoServer download page <http://geoserver.org/d
 .. toctree::
    :maxdepth: 1
 
-   arcsde
    db2
    mysql
    oracle

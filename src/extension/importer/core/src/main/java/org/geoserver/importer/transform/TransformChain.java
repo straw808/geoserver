@@ -12,16 +12,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.geoserver.importer.ImportData;
 import org.geoserver.importer.ImportTask;
 import org.geotools.util.logging.Logging;
 
 /**
  * Chain of transformations to apply during the import process.
- * 
+ *
  * @author Justin Deoliveira, OpenGeo
- * 
  * @see {@link VectorTransformChain} {@link RasterTransformChain}
  */
 public abstract class TransformChain<T extends ImportTransform> implements Serializable {
@@ -31,17 +29,18 @@ public abstract class TransformChain<T extends ImportTransform> implements Seria
     static Logger LOGGER = Logging.getLogger(TransformChain.class);
 
     protected List<T> transforms;
-    
+
     public TransformChain() {
-        this(new ArrayList<T>(3));
+        this(new ArrayList<>(3));
     }
 
     public TransformChain(List<T> transforms) {
         this.transforms = transforms;
     }
 
+    @SafeVarargs
     public TransformChain(T... transforms) {
-        this.transforms = new ArrayList(Arrays.asList(transforms));
+        this.transforms = new ArrayList<>(Arrays.asList(transforms));
     }
 
     public List<T> getTransforms() {
@@ -56,7 +55,8 @@ public abstract class TransformChain<T extends ImportTransform> implements Seria
         return transforms.remove(tx);
     }
 
-    public <X extends T> X get(Class<X> type) {
+    @SuppressWarnings("unchecked")
+    public <X> X get(Class<X> type) {
         for (T tx : transforms) {
             if (type.equals(tx.getClass())) {
                 return (X) tx;
@@ -65,8 +65,9 @@ public abstract class TransformChain<T extends ImportTransform> implements Seria
         return null;
     }
 
-    public <X extends T> List<X> getAll(Class<X> type) {
-        List<X> list = new ArrayList<X>();
+    @SuppressWarnings("unchecked")
+    public <X> List<X> getAll(Class<X> type) {
+        List<X> list = new ArrayList<>();
         for (T tx : transforms) {
             if (type.isAssignableFrom(tx.getClass())) {
                 list.add((X) tx);
@@ -75,21 +76,15 @@ public abstract class TransformChain<T extends ImportTransform> implements Seria
         return list;
     }
 
-    public <X extends T> void removeAll(Class<X> type) {
+    public void removeAll(Class<?> type) {
         for (Iterator<T> it = transforms.iterator(); it.hasNext(); ) {
             if (type.isAssignableFrom(it.next().getClass())) {
                 it.remove();
             }
         }
     }
-    
-    /**
-     * Runs all {@link PreTransform} in the chain
-     * 
-     * @param item
-     * @param data
-     * @throws Exception
-     */
+
+    /** Runs all {@link PreTransform} in the chain */
     public void pre(ImportTask item, ImportData data) throws Exception {
         for (PreTransform tx : filter(transforms, PreTransform.class)) {
             try {
@@ -100,13 +95,7 @@ public abstract class TransformChain<T extends ImportTransform> implements Seria
         }
     }
 
-    /**
-     * Runs all {@link PostTransform} in the chain
-     * 
-     * @param item
-     * @param data
-     * @throws Exception
-     */
+    /** Runs all {@link PostTransform} in the chain */
     public void post(ImportTask task, ImportData data) throws Exception {
         for (PostTransform tx : filter(transforms, PostTransform.class)) {
             try {
@@ -117,9 +106,9 @@ public abstract class TransformChain<T extends ImportTransform> implements Seria
         }
     }
 
-    private Object readResolve() {
+    protected Object readResolve() {
         if (transforms == null) {
-            transforms = new ArrayList();
+            transforms = new ArrayList<>();
         }
         return this;
     }
@@ -133,8 +122,9 @@ public abstract class TransformChain<T extends ImportTransform> implements Seria
         }
     }
 
+    @SuppressWarnings("unchecked")
     protected <T> List<T> filter(List<? extends ImportTransform> transforms, Class<T> type) {
-        List<T> filtered = new ArrayList<T>();
+        List<T> filtered = new ArrayList<>();
         for (ImportTransform tx : transforms) {
             if (type.isInstance(tx)) {
                 filtered.add((T) tx);

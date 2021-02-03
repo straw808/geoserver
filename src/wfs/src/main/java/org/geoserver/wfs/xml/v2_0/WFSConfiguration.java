@@ -6,14 +6,12 @@
 package org.geoserver.wfs.xml.v2_0;
 
 import java.util.Map;
-
+import javax.xml.namespace.QName;
 import org.geotools.geometry.jts.CurvedGeometryFactory;
 import org.geotools.gml3.v3_2.GMLConfiguration;
 import org.geotools.wfs.v2_0.WFS;
 
-/**
- * Extend GeoTools WFSConfiguration to provide a custom binding class for GetFeatureType
- */
+/** Extend GeoTools WFSConfiguration to provide a custom binding class for GetFeatureType */
 public class WFSConfiguration extends org.geotools.wfs.v2_0.WFSConfiguration {
 
     WFSConfiguration() {
@@ -29,8 +27,8 @@ public class WFSConfiguration extends org.geotools.wfs.v2_0.WFSConfiguration {
     }
 
     @Override
-    protected void registerBindings(Map bindings) {
+    protected void registerBindings(Map<QName, Object> bindings) {
         super.registerBindings(bindings);
-        bindings.put(WFS.GetFeatureType,org.geoserver.wfs.xml.v2_0.GetFeatureTypeBinding.class);
+        bindings.put(WFS.GetFeatureType, org.geoserver.wfs.xml.v2_0.GetFeatureTypeBinding.class);
     }
 }

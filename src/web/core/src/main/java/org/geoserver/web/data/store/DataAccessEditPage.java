@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -9,11 +9,10 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.apache.wicket.Component;
-import org.apache.wicket.PageParameters;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
@@ -27,30 +26,29 @@ import org.opengis.feature.type.FeatureType;
 
 /**
  * Provides a form to edit a geotools {@link DataAccess} that already exists in the {@link Catalog}
- * 
+ *
  * @author Gabriel Roldan
  */
 public class DataAccessEditPage extends AbstractDataAccessPage implements Serializable {
 
     public static final String STORE_NAME = "storeName";
     public static final String WS_NAME = "wsName";
-    
-    /**
-     * Dialog to ask for save confirmation in case the store can't be reached
-     */
+
+    /** Dialog to ask for save confirmation in case the store can't be reached */
     private GeoServerDialog dialog;
-    
-    /**
-     * Uses a "name" parameter to locate the datastore
-     * @param parameters
-     */
+
+    /** Uses a "name" parameter to locate the datastore */
     public DataAccessEditPage(PageParameters parameters) {
-        String wsName = parameters.getString(WS_NAME);
-        String storeName = parameters.getString(STORE_NAME);
+        String wsName = parameters.get(WS_NAME).toOptionalString();
+        String storeName = parameters.get(STORE_NAME).toString();
         DataStoreInfo dsi = getCatalog().getDataStoreByName(wsName, storeName);
-        
-        if(dsi == null) {
-            error(new ParamResourceModel("DataAccessEditPage.notFound", this, wsName, storeName).getString());
+
+        if (dsi == null) {
+            getSession()
+                    .error(
+                            new ParamResourceModel(
+                                            "DataAccessEditPage.notFound", this, wsName, storeName)
+                                    .getString());
             doReturn(StorePage.class);
             return;
         }
@@ -63,12 +61,11 @@ public class DataAccessEditPage extends AbstractDataAccessPage implements Serial
             return;
         }
     }
-    
+
     /**
      * Creates a new datastore configuration page to edit the properties of the given data store
-     * 
-     * @param dataStoreInfoId
-     *            the datastore id to modify, as per {@link DataStoreInfo#getId()}
+     *
+     * @param dataStoreInfoId the datastore id to modify, as per {@link DataStoreInfo#getId()}
      */
     public DataAccessEditPage(final String dataStoreInfoId) throws IllegalArgumentException {
         final Catalog catalog = getCatalog();
@@ -81,9 +78,7 @@ public class DataAccessEditPage extends AbstractDataAccessPage implements Serial
         initUI(dataStoreInfo);
     }
 
-    /**
-     * Creates a new edit page directly from a store object.
-     */
+    /** Creates a new edit page directly from a store object. */
     public DataAccessEditPage(DataStoreInfo store) {
         initUI(store);
     }
@@ -92,29 +87,30 @@ public class DataAccessEditPage extends AbstractDataAccessPage implements Serial
         // the confirm dialog
         dialog = new GeoServerDialog("dialog");
         add(dialog);
-        
+
         super.initUI(dataStoreInfo);
 
         if (dataStoreInfo.getId() != null) {
-            //null id means detached from catalog, don't bother with uniqueness check
+            // null id means detached from catalog, don't bother with uniqueness check
             final String wsId = dataStoreInfo.getWorkspace().getId();
-            workspacePanel.getFormComponent().add(
-                    new CheckExistingResourcesInWorkspaceValidator(dataStoreInfo.getId(), wsId));
+            workspacePanel
+                    .getFormComponent()
+                    .add(
+                            new CheckExistingResourcesInWorkspaceValidator(
+                                    dataStoreInfo.getId(), wsId));
         }
     }
 
     /**
      * Callback method called when the submit button have been hit and the parameters validation has
      * succeed.
-     * 
-     * @param paramsForm
-     *            the form to report any error to
+     *
      * @see AbstractDataAccessPage#onSaveDataStore(Form)
      */
-    protected final void onSaveDataStore(final DataStoreInfo info,
-            final AjaxRequestTarget requestTarget) {
-        
-        if(!storeEditPanel.onSave()) {
+    protected final void onSaveDataStore(
+            final DataStoreInfo info, final AjaxRequestTarget requestTarget, boolean doReturn) {
+
+        if (!storeEditPanel.onSave()) {
             return;
         }
 
@@ -127,27 +123,33 @@ public class DataAccessEditPage extends AbstractDataAccessPage implements Serial
             DataAccess<? extends FeatureType, ? extends Feature> dataStore;
             try {
                 dataStore = catalog.getResourcePool().getDataStore(info);
-                LOGGER.finer("connection parameters verified for store " + info.getName()
-                        + ". Got a " + dataStore.getClass().getName());
+                LOGGER.finer(
+                        "connection parameters verified for store "
+                                + info.getName()
+                                + ". Got a "
+                                + dataStore.getClass().getName());
                 doSaveStore(info);
-                doReturn(StorePage.class);
-            } catch (IOException e) {
-                LOGGER.log(Level.WARNING, "Error obtaining datastore with the modified values", e);
-                confirmSaveOnConnectionFailure(info, requestTarget, e);
-            } catch (RuntimeException e) {
+                if (doReturn) {
+                    doReturn(StorePage.class);
+                }
+            } catch (IOException | RuntimeException e) {
                 LOGGER.log(Level.WARNING, "Error obtaining datastore with the modified values", e);
                 confirmSaveOnConnectionFailure(info, requestTarget, e);
             }
         } else {
             // store's disabled, no need to check the connection parameters
             doSaveStore(info);
-            doReturn(StorePage.class);
+            if (doReturn) {
+                doReturn(StorePage.class);
+            }
         }
     }
 
     @SuppressWarnings("serial")
-    private void confirmSaveOnConnectionFailure(final DataStoreInfo info,
-            final AjaxRequestTarget requestTarget, final Exception error) {
+    private void confirmSaveOnConnectionFailure(
+            final DataStoreInfo info,
+            final AjaxRequestTarget requestTarget,
+            final Exception error) {
 
         getCatalog().getResourcePool().clear(info);
 
@@ -160,42 +162,43 @@ public class DataAccessEditPage extends AbstractDataAccessPage implements Serial
             exceptionMessage = message;
         }
 
-        dialog.showOkCancel(requestTarget, new GeoServerDialog.DialogDelegate() {
+        dialog.showOkCancel(
+                requestTarget,
+                new GeoServerDialog.DialogDelegate() {
 
-            boolean accepted = false;
+                    boolean accepted = false;
 
-            @Override
-            protected Component getContents(String id) {
-                return new StoreConnectionFailedInformationPanel(id, info.getName(),
-                        exceptionMessage);
-            }
+                    @Override
+                    protected Component getContents(String id) {
+                        return new StoreConnectionFailedInformationPanel(
+                                id, info.getName(), exceptionMessage);
+                    }
 
-            @Override
-            protected boolean onSubmit(AjaxRequestTarget target, Component contents) {
-                doSaveStore(info);
-                accepted = true;
-                return true;
-            }
+                    @Override
+                    protected boolean onSubmit(AjaxRequestTarget target, Component contents) {
+                        doSaveStore(info);
+                        accepted = true;
+                        return true;
+                    }
 
-            @Override
-            protected boolean onCancel(AjaxRequestTarget target) {
-                return true;
-            }
+                    @Override
+                    protected boolean onCancel(AjaxRequestTarget target) {
+                        return true;
+                    }
 
-            @Override
-            public void onClose(AjaxRequestTarget target) {
-                if (accepted) {
-                    doReturn(StorePage.class);
-                }
-            }
-        });
+                    @Override
+                    public void onClose(AjaxRequestTarget target) {
+                        if (accepted) {
+                            doReturn(StorePage.class);
+                        }
+                    }
+                });
     }
 
     /**
      * Performs the save of the store.
-     * <p>
-     * This method may be subclasses to provide custom save functionality.
-     * </p>
+     *
+     * <p>This method may be subclasses to provide custom save functionality.
      */
     protected void doSaveStore(final DataStoreInfo info) {
         try {
@@ -203,15 +206,20 @@ public class DataAccessEditPage extends AbstractDataAccessPage implements Serial
 
             // The namespace may have changed, in which case we need to update the store resources
             NamespaceInfo namespace = catalog.getNamespaceByPrefix(info.getWorkspace().getName());
-            List<FeatureTypeInfo> configuredResources = catalog.getResourcesByStore(info,
-                    FeatureTypeInfo.class);
+            List<FeatureTypeInfo> configuredResources =
+                    catalog.getResourcesByStore(info, FeatureTypeInfo.class);
             for (FeatureTypeInfo alreadyConfigured : configuredResources) {
                 alreadyConfigured.setNamespace(namespace);
             }
 
             ResourcePool resourcePool = catalog.getResourcePool();
             resourcePool.clear(info);
-            catalog.validate(info, false).throwIfInvalid();
+
+            DataStoreInfo expandedStore = catalog.getResourcePool().clone(info, true);
+
+            // Cloning into "expandedStore" through the super class "clone" method
+            catalog.validate(expandedStore, false).throwIfInvalid();
+
             catalog.save(info);
             // save the resources after saving the store
             for (FeatureTypeInfo alreadyConfigured : configuredResources) {
@@ -223,5 +231,4 @@ public class DataAccessEditPage extends AbstractDataAccessPage implements Serial
             throw new IllegalArgumentException("Error saving data store:" + e.getMessage());
         }
     }
-
 }

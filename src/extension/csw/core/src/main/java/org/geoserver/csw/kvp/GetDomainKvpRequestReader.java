@@ -8,14 +8,12 @@ package org.geoserver.csw.kvp;
 
 import java.util.List;
 import java.util.Map;
-
 import javax.xml.namespace.QName;
-
 import net.opengis.cat.csw20.GetDomainType;
 
 /**
  * GetDomain KVP request reader
- * 
+ *
  * @author Andrea Aime, GeoSolutions
  */
 public class GetDomainKvpRequestReader extends CSWKvpRequestReader {
@@ -26,12 +24,13 @@ public class GetDomainKvpRequestReader extends CSWKvpRequestReader {
     }
 
     @Override
-    public Object read(Object request, Map kvp, Map rawKvp) throws Exception {
+    public Object read(Object request, Map<String, Object> kvp, Map<String, Object> rawKvp)
+            throws Exception {
         // fix propertyName before we get into EMF reflection mode
         Object propertyName = kvp.remove(PROPERTYNAME);
 
         if (propertyName != null) {
-            if (propertyName instanceof List && ((List) propertyName).size() > 0) {
+            if (propertyName instanceof List && !((List) propertyName).isEmpty()) {
                 Object property = null;
 
                 if (((List) propertyName).get(0) instanceof List) {

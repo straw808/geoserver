@@ -6,23 +6,21 @@
 package org.geoserver.wfs.xml.v1_0_0;
 
 import java.math.BigInteger;
-
 import javax.xml.namespace.QName;
-
 import net.opengis.wfs.GetFeatureWithLockType;
 import net.opengis.wfs.QueryType;
 import net.opengis.wfs.WfsFactory;
-
-import org.geotools.xml.AbstractComplexBinding;
-import org.geotools.xml.ElementInstance;
-import org.geotools.xml.Node;
-
+import org.eclipse.emf.common.util.EList;
+import org.geotools.xsd.AbstractComplexBinding;
+import org.geotools.xsd.ElementInstance;
+import org.geotools.xsd.Node;
 
 /**
  * Binding object for the type http://www.opengis.net/wfs:GetFeatureWithLockType.
  *
  * <p>
- *        <pre>
+ *
+ * <pre>
  *         <code>
  *  &lt;xsd:complexType name="GetFeatureWithLockType"&gt;
  *      &lt;xsd:annotation&gt;
@@ -49,7 +47,6 @@ import org.geotools.xml.Node;
  *
  *          </code>
  *         </pre>
- * </p>
  *
  * @generated
  */
@@ -60,14 +57,13 @@ public class GetFeatureWithLockTypeBinding extends AbstractComplexBinding {
         this.wfsfactory = wfsfactory;
     }
 
-    /**
-     * @generated
-     */
+    /** @generated */
     public QName getTarget() {
         return WFS.GETFEATUREWITHLOCKTYPE;
     }
 
     /**
+     *
      * <!-- begin-user-doc -->
      * <!-- end-user-doc -->
      *
@@ -78,15 +74,14 @@ public class GetFeatureWithLockTypeBinding extends AbstractComplexBinding {
     }
 
     /**
+     *
      * <!-- begin-user-doc -->
      * <!-- end-user-doc -->
      *
      * @generated modifiable
      */
-    public Object parse(ElementInstance instance, Node node, Object value)
-        throws Exception {
-        GetFeatureWithLockType getFeatureWithLock = wfsfactory
-            .createGetFeatureWithLockType();
+    public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
+        GetFeatureWithLockType getFeatureWithLock = wfsfactory.createGetFeatureWithLockType();
 
         WFSBindingUtils.service(getFeatureWithLock, node);
         WFSBindingUtils.version(getFeatureWithLock, node);
@@ -96,23 +91,25 @@ public class GetFeatureWithLockTypeBinding extends AbstractComplexBinding {
             getFeatureWithLock.setHandle((String) node.getAttributeValue("handle"));
         }
 
-        //get the max features
-        BigInteger maxFeatures = WFSBindingUtils.asBigInteger((Number) node.getAttributeValue(
-                    "maxFeatures"));
+        // get the max features
+        BigInteger maxFeatures =
+                WFSBindingUtils.asBigInteger((Number) node.getAttributeValue("maxFeatures"));
 
         if (maxFeatures != null) {
             getFeatureWithLock.setMaxFeatures(maxFeatures);
         }
 
-        //get the lock expiry
+        // get the lock expiry
         BigInteger expiry = WFSBindingUtils.asBigInteger((Number) node.getAttributeValue("expiry"));
 
         if (expiry != null) {
             getFeatureWithLock.setExpiry(expiry);
         }
 
-        //queries
-        getFeatureWithLock.getQuery().addAll(node.getChildValues(QueryType.class));
+        // queries
+        @SuppressWarnings("unchecked")
+        EList<QueryType> query = getFeatureWithLock.getQuery();
+        query.addAll(node.getChildValues(QueryType.class));
 
         return getFeatureWithLock;
     }

@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -7,9 +7,8 @@ package org.geoserver.web;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.wicket.IRequestTarget;
-import org.apache.wicket.Page;
+import org.apache.wicket.request.component.IRequestablePage;
+import org.apache.wicket.request.cycle.RequestCycle;
 import org.geotools.filter.function.EnvFunction;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,7 +23,7 @@ public class WicketEnvironmentVariableCallback implements WicketCallback {
         if (auth != null && !(auth instanceof AnonymousAuthenticationToken)) {
             String name = auth.getName();
             if (envVars == null) {
-                envVars = new HashMap<String, Object>();
+                envVars = new HashMap<>();
             }
             envVars.put("GSUSER", name);
         }
@@ -42,15 +41,14 @@ public class WicketEnvironmentVariableCallback implements WicketCallback {
     public void onEndRequest() {
         // clean up when we're done
         EnvFunction.clearLocalValues();
-
     }
 
-    public void onRequestTargetSet(IRequestTarget requestTarget) {
+    @Override
+    public void onRequestTargetSet(
+            RequestCycle cycle, Class<? extends IRequestablePage> requestTarget) {}
+
+    @Override
+    public void onRuntimeException(RequestCycle cycle, Exception ex) {
         // nothing to do
     }
-
-    public void onRuntimeException(Page page, RuntimeException e) {
-        // nothing to do
-    }
-
 }

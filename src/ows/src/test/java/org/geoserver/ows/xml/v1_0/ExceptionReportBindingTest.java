@@ -5,18 +5,19 @@
  */
 package org.geoserver.ows.xml.v1_0;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-
 import net.opengis.ows10.ExceptionReportType;
 import net.opengis.ows10.ExceptionType;
-
-import org.geotools.xml.Configuration;
-import org.geotools.xml.test.XMLTestSupport;
+import org.geotools.xsd.Configuration;
+import org.geotools.xsd.test.XMLTestSupport;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -35,13 +36,16 @@ public class ExceptionReportBindingTest extends XMLTestSupport {
     }
 
     public void testParseServiceException() throws Exception {
-        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<ows:ExceptionReport version=\"1.0.0\"\n"
-                + "  xsi:schemaLocation=\"http://www.opengis.net/ows http://demo.opengeo.org/geoserver/schemas/ows/1.0.0/owsExceptionReport.xsd\"\n"
-                + "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:ows=\"http://www.opengis.net/ows\">\n"
-                + "  <ows:Exception exceptionCode=\"InvalidParameterValue\" locator=\"service\">\n"
-                + "    <ows:ExceptionText>No service: ( madeUp )</ows:ExceptionText>\n"
-                + "  </ows:Exception>\n" + "</ows:ExceptionReport>\n" + "";
+        String xml =
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                        + "<ows:ExceptionReport version=\"1.0.0\"\n"
+                        + "  xsi:schemaLocation=\"http://www.opengis.net/ows http://demo.opengeo.org/geoserver/schemas/ows/1.0.0/owsExceptionReport.xsd\"\n"
+                        + "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:ows=\"http://www.opengis.net/ows\">\n"
+                        + "  <ows:Exception exceptionCode=\"InvalidParameterValue\" locator=\"service\">\n"
+                        + "    <ows:ExceptionText>No service: ( madeUp )</ows:ExceptionText>\n"
+                        + "  </ows:Exception>\n"
+                        + "</ows:ExceptionReport>\n"
+                        + "";
 
         document = dom(xml);
         Object result = parse(OWS.EXCEPTIONREPORT);
@@ -52,7 +56,7 @@ public class ExceptionReportBindingTest extends XMLTestSupport {
 
         assertEquals("1.0.0", er.getVersion());
         assertEquals(1, er.getException().size());
-        ExceptionType ex = (ExceptionType) er.getException().get(0);
+        ExceptionType ex = er.getException().get(0);
         assertEquals("InvalidParameterValue", ex.getExceptionCode());
         assertEquals("service", ex.getLocator());
         assertEquals(1, ex.getExceptionText().size());

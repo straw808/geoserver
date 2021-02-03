@@ -26,12 +26,6 @@
     <param-value>PARTIAL-BUFFER2</param-value>
   </context-param>
   
-  <!-- If true, enable versioning datastore as well -->
-  <context-param>
-    <param-name>enableVersioning</param-name>
-    <param-value>true</param-value>
-  </context-param>
-  
   <context-param>
     <!-- see comments on the PARTIAL-BUFFER strategy -->
     <!-- this sets the size of the buffer.  default is "50" = 50kb -->
@@ -92,6 +86,11 @@
      <filter-class> org.springframework.web.filter.DelegatingFilterProxy</filter-class>
     </filter>
 
+    <filter>
+      <filter-name>xFrameOptionsFilter</filter-name>
+      <filter-class>org.geoserver.filters.XFrameOptionsFilter</filter-class>
+    </filter>
+
    <filter>
      <filter-name>GZIP Compression Filter</filter-name>
      <filter-class>org.geoserver.filters.GZIPFilter</filter-class>
@@ -114,8 +113,16 @@
               parameter defaults to false.
               -->
          <param-name>enabled</param-name>
-         <param-value>true</param-value>
+         <param-value>false</param-value>
      </init-param>
+     <init-param>
+         <!-- The 'log-request-headers' parameter is a boolean value, "true" (case-insensitive) for
+              true or any other value for false.  If enabled, then the logging will include the HTTP 
+              headers of requests.  If not specified, this parameter defaults to false.
+              -->
+         <param-name>log-request-headers</param-name>
+         <param-value>false</param-value>
+     </init-param>  
      <init-param>
      <!-- The 'log-request-bodies' parameter is a boolean value, "true" (case-insensitive) for
           true or any other value for false.  If enabled, then the logging will include the body
@@ -125,7 +132,7 @@
           server.
           -->
      <param-name>log-request-bodies</param-name>
-     <param-value>true</param-value>
+     <param-value>false</param-value>
      </init-param>
    </filter>
    
@@ -160,8 +167,50 @@
      -->
    </filter>
 
+   <!-- Uncomment following filter to enable CORS in Jetty. Do not forget the second config block further down.
+    <filter>
+      <filter-name>cross-origin</filter-name>
+      <filter-class>org.eclipse.jetty.servlets.CrossOriginFilter</filter-class>
+      <init-param>
+        <param-name>chainPreflight</param-name>
+        <param-value>false</param-value>
+      </init-param>
+      <init-param>
+        <param-name>allowedOrigins</param-name>
+        <param-value>*</param-value>
+      </init-param>
+      <init-param>
+        <param-name>allowedMethods</param-name>
+        <param-value>GET,POST,PUT,DELETE,HEAD,OPTIONS</param-value>
+      </init-param>
+      <init-param>
+        <param-name>allowedHeaders</param-name>
+        <param-value>*</param-value>
+      </init-param>
+    </filter>
+    -->
+    
+   <!-- Uncomment following filter to enable CORS in Tomcat. Do not forget the second config block further down.
+    <filter>
+      <filter-name>cross-origin</filter-name>
+      <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>
+      <init-param>
+        <param-name>cors.allowed.origins</param-name>
+        <param-value>*</param-value>
+      </init-param>
+      <init-param>
+        <param-name>cors.allowed.methods</param-name>
+        <param-value>GET,POST,PUT,DELETE,HEAD,OPTIONS</param-value>
+      </init-param>
+      <init-param>
+        <param-name>cors.allowed.headers</param-name>
+        <param-value>*</param-value>
+      </init-param>
+    </filter>
+    -->
+
     <!-- 
-      THIS FILTER MUST BE THE FIRST ONE, otherwise we end up with ruined chars in the input from the GUI
+      THIS FILTER MAPPING MUST BE THE FIRST ONE, otherwise we end up with ruined chars in the input from the GUI
       See the "Note" in the Tomcat character encoding guide:
       http://wiki.apache.org/tomcat/FAQ/CharacterEncoding
     -->
@@ -169,6 +218,13 @@
       <filter-name>Set Character Encoding</filter-name>
       <url-pattern>/*</url-pattern>
     </filter-mapping>
+   
+   <!-- Uncomment following filter to enable CORS
+    <filter-mapping>
+        <filter-name>cross-origin</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    -->
    
     <filter-mapping>
       <filter-name>FlushSafeFilter</filter-name>
@@ -182,6 +238,11 @@
 
     <filter-mapping>
       <filter-name>GZIP Compression Filter</filter-name>
+      <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+      <filter-name>xFrameOptionsFilter</filter-name>
       <url-pattern>/*</url-pattern>
     </filter-mapping>
     
@@ -232,6 +293,11 @@
     <listener>
       <listener-class>org.geoserver.platform.GeoServerHttpSessionListenerProxy</listener-class>
     </listener>
+
+	<!-- request context listener for session-scoped beans -->
+	<listener>
+		<listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+	</listener>
     
     <!-- spring dispatcher servlet, dispatches all incoming requests -->
     <servlet>

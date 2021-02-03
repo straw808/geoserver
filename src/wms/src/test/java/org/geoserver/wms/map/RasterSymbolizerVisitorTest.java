@@ -5,17 +5,18 @@
  */
 package org.geoserver.wms.map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.util.List;
-
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.styling.NamedLayer;
 import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.SLDParser;
 import org.geotools.styling.Style;
 import org.geotools.styling.StyledLayerDescriptor;
+import org.geotools.xml.styling.SLDParser;
 import org.junit.Test;
 import org.opengis.filter.expression.Function;
 
@@ -32,7 +33,7 @@ public class RasterSymbolizerVisitorTest {
         assertNotNull(tx);
         assertEquals("ras:CropCoverage", tx.getName());
     }
-    
+
     @Test
     public void testRasterToVectorTransformation() throws IOException {
         Style style = parseStyle("ContourTransform.sld");
@@ -43,7 +44,7 @@ public class RasterSymbolizerVisitorTest {
         Function tx = (Function) visitor.getRasterRenderingTransformation();
         assertNull(tx);
     }
-    
+
     @Test
     public void testVectorToRasterRenderingTransformation() throws IOException {
         Style style = parseStyle("HeatmapTransform.sld");

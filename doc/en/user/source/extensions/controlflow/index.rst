@@ -16,7 +16,7 @@ The control flow method does not normally reject requests, it just queues up tho
 Rule syntax reference
 ---------------------
 
-The current implementation of the control flow module reads its rules from a ``controlflow.properties`` property file located in the :ref:`GeoServer data directory <data_directory>`.
+The current implementation of the control flow module reads its rules from a ``controlflow.properties`` property file located in the :ref:`datadir`.
 
 Total OWS request count
 .......................
@@ -48,6 +48,24 @@ A few examples::
   ows.wms.getmap=8
   # don't allow more than 2 WFS GetFeature requests with Excel output format
   ows.wfs.getfeature.application/msexcel=2
+  
+Request priority support
+........................
+
+Requests controlled by "ows.*" controllers above can be also executed in priority order, in case there are too many
+the request will block and wait, and will we awoken in priority order (highest to lowest).
+
+Currently the only way to specific a priority for a request is to add it to a request HTTP header::
+
+  ows.priority.http=<headerName>,<defaultPriority>
+  
+The header "headerName" will contain a number defining the priority for the request, the default priority is used
+as a fallback if/when the header is not found.
+
+Using a header implies some other system is involved in the priority management. This is particulary good when using
+a load balancer, as the requests priorities need to be evenly split across cluster elements, control-flow only
+has visibility of a single instance. As an example, the priority will be de-facto ignored at the cluster level
+if there are two nodes, and for whatever chance or design, the high priority requests end up converging on the same cluster node.
 
 Per user concurrency control
 ............................
@@ -145,24 +163,8 @@ Note also that tile request are sensitive to the other rules (user based, ip bas
 A complete example
 ------------------
 
-Assuming the server we want to protect has 4 cores a sample configuration could be::
+Assuming the server we want to protect has 4 cores a sample configuration could be:
 
-  # if a request waits in queue for more than 60 seconds it's not worth executing,
-  # the client will  likely have given up by then
-  timeout=60
-  # don't allow the execution of more than 100 requests total in parallel
-  ows.global=100
-  # don't allow more than 10 GetMap in parallel
-  ows.wms.getmap=10
-  # don't allow more than 4 outputs with Excel output as it's memory bound
-  ows.wfs.getfeature.application/msexcel=4
-  # don't allow a single user to perform more than 6 requests in parallel
-  # (6 being the Firefox default concurrency level at the time of writing)
-  user=6
-  # don't allow the execution of more than 16 tile requests in parallel
-  # (assuming a server with 4 cores, GWC empirical tests show that throughput
-  # peaks up at 4 x number of cores. Adjust as appropriate to your system)
-  ows.gwc=16
-
-
+.. literalinclude:: controlflow.properties
+   :language: properties
 

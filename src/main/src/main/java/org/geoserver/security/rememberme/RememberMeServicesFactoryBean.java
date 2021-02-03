@@ -7,26 +7,26 @@ package org.geoserver.security.rememberme;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.geoserver.security.GeoServerSecurityManager;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.rememberme.AbstractRememberMeServices;
 
 /**
  * Factory bean that proxies for the global remember me service.
- * <p>
- * The actual underlying rememberme service is determined by 
- *   {@link RememberMeServicesConfig#getClassName()}, obtained from 
- *   {@link GeoServerSecurityManager#getSecurityConfig()}.
- * </p>
- * @author Justin Deoliveira, OpenGeo
  *
+ * <p>The actual underlying rememberme service is determined by {@link
+ * RememberMeServicesConfig#getClassName()}, obtained from {@link
+ * GeoServerSecurityManager#getSecurityConfig()}.
+ *
+ * @author Justin Deoliveira, OpenGeo
  */
 public class RememberMeServicesFactoryBean implements FactoryBean<RememberMeServices> {
 
+    static final String PARAMETER_NAME = "_spring_security_remember_me";
     GeoServerSecurityManager securityManager;
 
     public RememberMeServicesFactoryBean(GeoServerSecurityManager securityManager) {
@@ -35,7 +35,7 @@ public class RememberMeServicesFactoryBean implements FactoryBean<RememberMeServ
 
     @Override
     public RememberMeServices getObject() throws Exception {
-        //we return a proxy for the rms, one that instantiates the underlying rms lazily on demand
+        // we return a proxy for the rms, one that instantiates the underlying rms lazily on demand
         // we do this to avoid trigging the security manager configuration from being loaded
         // during startup, before the app context is fully loaded
         return new RememberMeServicesProxy(securityManager);
@@ -71,17 +71,21 @@ public class RememberMeServicesFactoryBean implements FactoryBean<RememberMeServ
         }
 
         @Override
-        public void loginSuccess(HttpServletRequest request, HttpServletResponse response,
+        public void loginSuccess(
+                HttpServletRequest request,
+                HttpServletResponse response,
                 Authentication successfulAuthentication) {
             rms().loginSuccess(request, response, successfulAuthentication);
         }
 
         @Override
-        public void logout(HttpServletRequest request, HttpServletResponse response,
+        public void logout(
+                HttpServletRequest request,
+                HttpServletResponse response,
                 Authentication authentication) {
             RememberMeServices rms = rms();
             if (rms instanceof LogoutHandler) {
-                ((LogoutHandler)rms).logout(request, response, authentication);
+                ((LogoutHandler) rms).logout(request, response, authentication);
             }
         }
 
@@ -90,22 +94,28 @@ public class RememberMeServicesFactoryBean implements FactoryBean<RememberMeServ
                 return rms;
             }
 
-            RememberMeServicesConfig rmsConfig = securityManager.getSecurityConfig().getRememberMeService();
+            RememberMeServicesConfig rmsConfig =
+                    securityManager.getSecurityConfig().getRememberMeService();
             try {
-                rms = (RememberMeServices) Class.forName(rmsConfig.getClassName()).newInstance();
-            }
-            catch(Exception e) {
+                @SuppressWarnings("unchecked")
+                Class<RememberMeServices> rmsClass =
+                        (Class<RememberMeServices>) Class.forName(rmsConfig.getClassName());
+                rms =
+                        rmsClass.getConstructor(String.class, UserDetailsService.class)
+                                .newInstance(
+                                        rmsConfig.getKey(),
+                                        new RememberMeUserDetailsService(securityManager));
+                if (rms instanceof AbstractRememberMeServices) {
+                    ((AbstractRememberMeServices) rms).setParameter(PARAMETER_NAME);
+                }
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
 
-            if (rms instanceof AbstractRememberMeServices) {
-                AbstractRememberMeServices arms = (AbstractRememberMeServices) rms; 
-                arms.setUserDetailsService(new RememberMeUserDetailsService(securityManager));
-                arms.setKey(rmsConfig.getKey());
-            }
-//            if (rms instanceof GeoServerTokenBasedRememberMeServices) {
-//                ((GeoServerTokenBasedRememberMeServices) rms).setUserGroupServiceName(rmsConfig.getUserGroupService());
-//            }
+            //            if (rms instanceof GeoServerTokenBasedRememberMeServices) {
+            //                ((GeoServerTokenBasedRememberMeServices)
+            // rms).setUserGroupServiceName(rmsConfig.getUserGroupService());
+            //            }
             return rms;
         }
     }

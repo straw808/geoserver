@@ -5,14 +5,13 @@ Web archive
 
 GeoServer is packaged as a standalone servlet for use with existing application servers such as `Apache Tomcat <http://tomcat.apache.org/>`_ and `Jetty <http://eclipse.org/jetty/>`_.
 
-.. note:: GeoServer has been mostly tested using Tomcat, and so is the recommended application server. Other application servers have been known to work, but are not guaranteed.
+.. note:: GeoServer has been mostly tested using Tomcat, and so is the recommended application server. GeoServer requires a newer version of Tomcat (7.0.65 or later) that implements Servlet 3 and annotation processing. Other application servers have been known to work, but are not guaranteed.
  
 Installation
 ------------
 
-#. Make sure you have a Java Runtime Environment (JRE) installed on your system. GeoServer requires a **Java 7** environment. The Oracle JRE is preferred, but OpenJDK has been known to work adequately. You can `download JRE 7 from Oracle <http://www.oracle.com/technetwork/java/javase/downloads/>`_.
+#. Make sure you have a Java Runtime Environment (JRE) installed on your system. GeoServer requires a **Java 8** or **Java 11** environment, available from `OpenJDK <http://openjdk.java.net>`__, `AdoptOpenJDK <https://adoptopenjdk.net>`__ for Windows and macOS installers, or provided by your OS distribution.
 
-   .. note:: Java 8 is not currently supported.
 
    .. note:: For more information about Java and GeoServer, please see the section on :ref:`production_java`.
 

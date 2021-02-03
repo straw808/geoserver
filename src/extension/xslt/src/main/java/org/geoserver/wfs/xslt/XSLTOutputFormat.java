@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -22,12 +22,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-
 import org.apache.commons.beanutils.BeanUtils;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -43,10 +41,10 @@ import org.geoserver.wfs.WFSException;
 import org.geoserver.wfs.WFSGetFeatureOutputFormat;
 import org.geoserver.wfs.request.FeatureCollectionResponse;
 import org.geoserver.wfs.request.GetFeatureRequest;
+import org.geoserver.wfs.response.ComplexFeatureAwareFormat;
 import org.geoserver.wfs.xslt.config.TransformInfo;
 import org.geoserver.wfs.xslt.config.TransformRepository;
 import org.geotools.feature.FeatureCollection;
-import org.opengis.feature.Feature;
 import org.opengis.feature.type.FeatureType;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
@@ -55,13 +53,13 @@ import org.springframework.context.ApplicationContextAware;
 
 /**
  * Output format based on XLST transformations
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
-public class XSLTOutputFormat extends WFSGetFeatureOutputFormat implements ApplicationContextAware,
-        DisposableBean {
+public class XSLTOutputFormat extends WFSGetFeatureOutputFormat
+        implements ApplicationContextAware, DisposableBean, ComplexFeatureAwareFormat {
 
-    static Map<String, String> formats = new ConcurrentHashMap<String, String>();
+    static Map<String, String> formats = new ConcurrentHashMap<>();
 
     ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -75,24 +73,26 @@ public class XSLTOutputFormat extends WFSGetFeatureOutputFormat implements Appli
         super(gs, formats.keySet());
         this.repository = repository;
     }
-    
+
     @Override
     public boolean canHandle(Operation operation) {
         // if we don't have formats configured, we cannot respond
-        if(formats.isEmpty()) {
-            System.out.println("Empty formats");
+        if (formats.isEmpty()) {
+            LOGGER.log(Level.FINE, "Empty formats");
             return false;
         }
-        
-        if(!super.canHandle(operation)) {
+
+        if (!super.canHandle(operation)) {
             return false;
         }
-        
+
         // check the format matches, the Dispatcher just does a case insensitive match,
         // but WFS is supposed to be case sensitive and so is the XSLT code
         Request request = Dispatcher.REQUEST.get();
-        if(request != null && (request.getOutputFormat() == null || !formats.containsKey(request.getOutputFormat()))) {
-            System.out.println("Formats are: " + formats);
+        if (request != null
+                && (request.getOutputFormat() == null
+                        || !formats.containsKey(request.getOutputFormat()))) {
+            LOGGER.log(Level.FINE, "Formats are: " + formats);
             return false;
         } else {
             return true;
@@ -103,7 +103,7 @@ public class XSLTOutputFormat extends WFSGetFeatureOutputFormat implements Appli
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         // find all the responses we could use as a source
         List<Response> all = GeoServerExtensions.extensions(Response.class, applicationContext);
-        responses = new ArrayList<Response>();
+        responses = new ArrayList<>();
         for (Response response : all) {
             if (response.getBinding().equals(FeatureCollectionResponse.class) && response != this) {
                 responses.add(response);
@@ -112,8 +112,8 @@ public class XSLTOutputFormat extends WFSGetFeatureOutputFormat implements Appli
     }
 
     public static void updateFormats(Set<String> newFormats) {
-        if (!formats.equals(newFormats)) {
-            Map<String, String> replacement = new HashMap<String, String>();
+        if (!formats.keySet().equals(newFormats)) {
+            Map<String, String> replacement = new HashMap<>();
             for (String format : newFormats) {
                 replacement.put(format, format);
             }
@@ -121,63 +121,67 @@ public class XSLTOutputFormat extends WFSGetFeatureOutputFormat implements Appli
             formats.putAll(replacement);
         }
     }
-    
+
     @Override
     public String getMimeType(Object value, Operation operation) throws ServiceException {
         try {
             TransformInfo info = locateTransformation((FeatureCollectionResponse) value, operation);
             return info.mimeType();
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw new WFSException("Failed to load the required transformation", e);
         }
     }
-    
+
     @Override
-    public String getAttachmentFileName(Object value, Operation operation) {      
+    @SuppressWarnings("unchecked")
+    public String getAttachmentFileName(Object value, Operation operation) {
         try {
             FeatureCollectionResponse featureCollections = (FeatureCollectionResponse) value;
             TransformInfo info = locateTransformation(featureCollections, operation);
-            
+
             // concatenate all feature types requested
             StringBuilder sb = new StringBuilder();
-            for (FeatureCollection<FeatureType, Feature> fc : featureCollections.getFeatures()) {
+            for (FeatureCollection fc : featureCollections.getFeatures()) {
                 sb.append(fc.getSchema().getName().getLocalPart());
                 sb.append("_");
             }
             sb.setLength(sb.length() - 1);
-            
+
             String extension = info.getFileExtension();
-            if(extension == null) {
+            if (extension == null) {
                 extension = ".txt";
                 sb.append(extension);
-            } 
-            if(!extension.startsWith(".")) {
+            }
+            if (!extension.startsWith(".")) {
                 sb.append(".");
             }
             sb.append(extension);
-    
+
             return sb.toString();
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw new WFSException("Failed to locate the XSLT transformation", e);
         }
     }
 
     @Override
-    protected void write(final FeatureCollectionResponse featureCollection, OutputStream output,
-            Operation operation) throws IOException, ServiceException {
+    protected void write(
+            final FeatureCollectionResponse featureCollection,
+            OutputStream output,
+            Operation operation)
+            throws IOException, ServiceException {
         // get the transformation we need
         TransformInfo info = locateTransformation(featureCollection, operation);
         Transformer transformer = repository.getTransformer(info);
         // force Xalan to indent the output
-        if(transformer.getOutputProperties() != null && "yes".equals(transformer.getOutputProperties().getProperty("indent"))) {
+        if (transformer.getOutputProperties() != null
+                && "yes".equals(transformer.getOutputProperties().getProperty("indent"))) {
             try {
                 transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            } catch(IllegalArgumentException e) {
+            } catch (IllegalArgumentException e) {
                 LOGGER.log(Level.FINE, "Could not set indent amount", e);
                 // in case it's not Xalan
             }
         }
-        
 
         // prepare the fake operation we're providing to the source output format
         final Operation sourceOperation = buildSourceOperation(operation, info);
@@ -187,53 +191,52 @@ public class XSLTOutputFormat extends WFSGetFeatureOutputFormat implements Appli
         if (sourceResponse == null) {
             throw new WFSException(
                     "Could not locate a response that can generate the desired source format '"
-                            + info.getSourceFormat() + "' for transformation '" + info.getName() + "'");
-
+                            + info.getSourceFormat()
+                            + "' for transformation '"
+                            + info.getName()
+                            + "'");
         }
 
         // prepare the stream connections, so that we can do the transformation on the fly
         PipedInputStream pis = new PipedInputStream();
-        final PipedOutputStream pos = new PipedOutputStream(pis);
+        try (PipedOutputStream pos = new PipedOutputStream(pis)) {
 
-        // submit the source output format execution, tracking exceptions
-        Future<Void> future = executor.submit(new Callable<Void>() {
+            // submit the source output format execution, tracking exceptions
+            Future<Void> future =
+                    executor.submit(
+                            new Callable<Void>() {
 
-            @Override
-            public Void call() throws Exception {
-                try {
-                    sourceResponse.write(featureCollection, pos, sourceOperation);
-                } finally {
-                    // close the stream to make sure the transformation won't keep on waiting
-                    pos.close();
-                }
+                                @Override
+                                public Void call() throws Exception {
+                                    sourceResponse.write(featureCollection, pos, sourceOperation);
+                                    pos.close(); // or the piped input stream will never finish
+                                    return null;
+                                }
+                            });
 
-                return null;
+            // run the transformation
+            TransformerException transformerException = null;
+            try {
+                transformer.transform(new StreamSource(pis), new StreamResult(output));
+            } catch (TransformerException e) {
+                transformerException = e;
+            } finally {
+                pis.close();
             }
-        });
 
-        // run the transformation
-        TransformerException transformerException = null;
-        try {
-            transformer.transform(new StreamSource(pis), new StreamResult(output));
-        } catch (TransformerException e) {
-            transformerException = e;
-        } finally {
-            pis.close();
+            // now handle exceptions, starting from the source
+            try {
+                future.get();
+            } catch (Exception e) {
+                throw new WFSException(
+                        "Failed to run the output format generating the source for the XSTL transformation",
+                        e);
+            }
+            if (transformerException != null) {
+                throw new WFSException(
+                        "Failed to run the the XSTL transformation", transformerException);
+            }
         }
-
-        // now handle exceptions, starting from the source
-        try {
-            future.get();
-        } catch (Exception e) {
-            throw new WFSException(
-                    "Failed to run the output format generating the source for the XSTL transformation",
-                    e);
-        }
-        if (transformerException != null) {
-            throw new WFSException("Failed to run the the XSTL transformation",
-                    transformerException);
-        }
-
     }
 
     private Operation buildSourceOperation(Operation operation, TransformInfo info) {
@@ -241,8 +244,12 @@ public class XSLTOutputFormat extends WFSGetFeatureOutputFormat implements Appli
             EObject originalParam = (EObject) operation.getParameters()[0];
             EObject copy = EcoreUtil.copy(originalParam);
             BeanUtils.setProperty(copy, "outputFormat", info.getSourceFormat());
-            final Operation sourceOperation = new Operation(operation.getId(),
-                    operation.getService(), operation.getMethod(), new Object[] { copy });
+            final Operation sourceOperation =
+                    new Operation(
+                            operation.getId(),
+                            operation.getService(),
+                            operation.getMethod(),
+                            new Object[] {copy});
             return sourceOperation;
         } catch (Exception e) {
             throw new WFSException(
@@ -261,28 +268,34 @@ public class XSLTOutputFormat extends WFSGetFeatureOutputFormat implements Appli
         return null;
     }
 
-    private TransformInfo locateTransformation(FeatureCollectionResponse collections,
-            Operation operation) throws IOException {
+    private TransformInfo locateTransformation(
+            FeatureCollectionResponse collections, Operation operation) throws IOException {
         GetFeatureRequest req = GetFeatureRequest.adapt(operation.getParameters()[0]);
         String outputFormat = req.getOutputFormat();
 
         // locate the transformation, and make sure it's the same for all feature types
         Set<FeatureType> featureTypes = getFeatureTypes(collections);
         TransformInfo result = null;
-        FeatureType reference = null;
         for (FeatureType ft : featureTypes) {
             TransformInfo curr = locateTransform(outputFormat, ft);
             if (curr == null) {
-                throw new WFSException("Could not find a XSLT transformation generating "
-                        + outputFormat + " for feature type " + ft.getName(), ServiceException.INVALID_PARAMETER_VALUE, "typeName");
+                throw new WFSException(
+                        "Could not find a XSLT transformation generating "
+                                + outputFormat
+                                + " for feature type "
+                                + ft.getName(),
+                        ServiceException.INVALID_PARAMETER_VALUE,
+                        "typeName");
             } else if (result == null) {
-                reference = ft;
                 result = curr;
             } else if (!result.equals(curr)) {
                 throw new WFSException(
                         "Multiple feature types are mapped to different XLST transformations, cannot proceed: "
-                                + result.getXslt() + ", " + curr.getXslt(), ServiceException.INVALID_PARAMETER_VALUE, "typeName");
-
+                                + result.getXslt()
+                                + ", "
+                                + curr.getXslt(),
+                        ServiceException.INVALID_PARAMETER_VALUE,
+                        "typeName");
             }
         }
 
@@ -307,7 +320,8 @@ public class XSLTOutputFormat extends WFSGetFeatureOutputFormat implements Appli
         return result;
     }
 
-    private TransformInfo filterByOutputFormat(String outputFormat, List<TransformInfo> transforms) {
+    private TransformInfo filterByOutputFormat(
+            String outputFormat, List<TransformInfo> transforms) {
         for (TransformInfo tx : transforms) {
             if (outputFormat.equals(tx.getOutputFormat())) {
                 return tx;
@@ -317,9 +331,10 @@ public class XSLTOutputFormat extends WFSGetFeatureOutputFormat implements Appli
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     private Set<FeatureType> getFeatureTypes(FeatureCollectionResponse collections) {
-        Set<FeatureType> result = new HashSet<FeatureType>();
-        for (FeatureCollection<FeatureType, Feature> fc : collections.getFeatures()) {
+        Set<FeatureType> result = new HashSet<>();
+        for (FeatureCollection fc : collections.getFeatures()) {
             result.add(fc.getSchema());
         }
 
@@ -335,7 +350,7 @@ public class XSLTOutputFormat extends WFSGetFeatureOutputFormat implements Appli
             executor = null;
         }
     }
-    
+
     @Override
     public List<String> getCapabilitiesElementNames() {
         return getAllCapabilitiesElementNames();

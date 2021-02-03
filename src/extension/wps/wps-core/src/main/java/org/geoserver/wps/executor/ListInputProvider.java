@@ -7,17 +7,15 @@ package org.geoserver.wps.executor;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.geoserver.wps.WPSException;
-import org.geotools.util.NullProgressListener;
-import org.geotools.util.SubProgressListener;
+import org.geotools.data.util.NullProgressListener;
+import org.geotools.data.util.SubProgressListener;
 import org.opengis.util.ProgressListener;
 
 /**
  * A InputProvider that handles a list of simple providers (used for multi-valued inputs)
- * 
+ *
  * @author Andrea Aime - GeoSolutions
- * 
  */
 class ListInputProvider implements InputProvider {
 
@@ -30,7 +28,7 @@ class ListInputProvider implements InputProvider {
     int maxItems;
 
     public ListInputProvider(InputProvider provider, int maxItems) {
-        this.providers = new ArrayList<InputProvider>();
+        this.providers = new ArrayList<>();
         this.providers.add(provider);
         this.inputId = provider.getInputId();
         this.maxItems = maxItems;
@@ -43,17 +41,22 @@ class ListInputProvider implements InputProvider {
         if (value == null) {
             // check we are not going above the limit
             if (maxItems > 0 && providers.size() > maxItems) {
-                throw new WPSException("Too many values for input " + getInputId()
-                        + ", the max is " + maxItems, "NoApplicableCode", getInputId());
+                throw new WPSException(
+                        "Too many values for input " + getInputId() + ", the max is " + maxItems,
+                        "NoApplicableCode",
+                        getInputId());
             }
 
-            value = new ArrayList<Object>();
+            value = new ArrayList<>();
             for (InputProvider provider : providers) {
                 float providerLongSteps = provider.longStepCount();
                 ProgressListener subListener;
                 if (providerLongSteps > 0) {
-                    subListener = new SubProgressListener(listener,
-                            (stepsSoFar / totalSteps) * 100, (providerLongSteps / totalSteps) * 100);
+                    subListener =
+                            new SubProgressListener(
+                                    listener,
+                                    (stepsSoFar / totalSteps) * 100,
+                                    (providerLongSteps / totalSteps) * 100);
                 } else {
                     subListener = new NullProgressListener();
                 }
@@ -85,9 +88,7 @@ class ListInputProvider implements InputProvider {
         for (InputProvider ip : providers) {
             count += ip.longStepCount();
         }
-        
+
         return count;
     }
-
-
 }

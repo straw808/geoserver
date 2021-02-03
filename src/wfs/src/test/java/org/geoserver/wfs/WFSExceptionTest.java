@@ -9,7 +9,6 @@ import net.opengis.wfs.GetFeatureType;
 import net.opengis.wfs.WfsFactory;
 import net.opengis.wfs20.DeleteType;
 import net.opengis.wfs20.Wfs20Factory;
-
 import org.geoserver.wfs.request.Delete;
 import org.geoserver.wfs.request.GetFeatureRequest;
 import org.junit.Assert;
@@ -18,7 +17,7 @@ import org.junit.Test;
 
 /**
  * Testcases for {@link WFSException}.
- * 
+ *
  * @author awaterme
  */
 public class WFSExceptionTest {
@@ -41,9 +40,9 @@ public class WFSExceptionTest {
     }
 
     /**
-     * Test {@link WFSException#init(Object)} for Exception with a WFS11
-     * {@link Delete}-Action.
-     * @see https://jira.codehaus.org/browse/GEOS-5857
+     * Test {@link WFSException#init(Object)} for Exception with a WFS11 {@link Delete}-Action.
+     *
+     * @see "https://osgeo-org.atlassian.net/browse/GEOS-5857"
      */
     @Test
     public void testWFS11Delete() {
@@ -53,9 +52,9 @@ public class WFSExceptionTest {
     }
 
     /**
-     * Test {@link WFSException#init(Object)} for Exception with a WFS20
-     * {@link Delete}-Action.
-     * @see https://jira.codehaus.org/browse/GEOS-5857
+     * Test {@link WFSException#init(Object)} for Exception with a WFS20 {@link Delete}-Action.
+     *
+     * @see "https://osgeo-org.atlassian.net/browse/GEOS-5857"
      */
     @Test
     public void testWFS20Delete() {
@@ -64,26 +63,28 @@ public class WFSExceptionTest {
     }
 
     /**
-     * Test {@link WFSException#init(Object)} for Exception with a WFS11
-     * {@link GetFeatureRequest}-Action.
-     * @see https://jira.codehaus.org/browse/GEOS-5857
+     * Test {@link WFSException#init(Object)} for Exception with a WFS11 {@link
+     * GetFeatureRequest}-Action.
+     *
+     * @see "https://osgeo-org.atlassian.net/browse/GEOS-5857"
      */
     @Test
     public void testWFS11GetFeatureType() {
         WFSException tmpEx = new WFSException(new GetFeatureRequest.WFS11(getFeatureType1), "test");
-        // WFS 1.x: no locator, GetFeature type is a top-level request and provides a default version (1.1.0)
+        // WFS 1.x: no locator, GetFeature type is a top-level request and provides a default
+        // version (1.1.0)
         Assert.assertNull(tmpEx.getLocator());
     }
 
     /**
-     * Test {@link WFSException#init(Object)} for Exception with a WFS20
-     * {@link GetFeatureRequest}-Action.
-     * @see https://jira.codehaus.org/browse/GEOS-5857
+     * Test {@link WFSException#init(Object)} for Exception with a WFS20 {@link
+     * GetFeatureRequest}-Action.
+     *
+     * @see "https://osgeo-org.atlassian.net/browse/GEOS-5857"
      */
     @Test
     public void testWFS20GetFeatureType() {
         WFSException tmpEx = new WFSException(new GetFeatureRequest.WFS20(getFeatureType2), "test");
         Assert.assertEquals("GetFeature", tmpEx.getLocator());
     }
-
 }

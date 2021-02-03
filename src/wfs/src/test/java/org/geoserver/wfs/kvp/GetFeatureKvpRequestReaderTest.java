@@ -5,23 +5,18 @@
  */
 package org.geoserver.wfs.kvp;
 
-import static org.junit.Assert.*;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.xml.namespace.QName;
-
 import net.opengis.wfs.GetFeatureType;
 import net.opengis.wfs.QueryType;
 import net.opengis.wfs.WfsFactory;
-import org.eclipse.emf.common.util.EList;
-
 import org.geoserver.data.test.SystemTestData;
 import org.geoserver.test.GeoServerSystemTestSupport;
-import org.geoserver.wfs.GetFeature;
 import org.geoserver.wfs.WFSException;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.Test;
@@ -32,13 +27,14 @@ public class GetFeatureKvpRequestReaderTest extends GeoServerSystemTestSupport {
 
     @Override
     protected void onSetUp(SystemTestData data) throws Exception {
-        reader = new GetFeatureKvpRequestReader(GetFeatureType.class, getCatalog(),
-                CommonFactoryFinder.getFilterFactory(null));
+        reader =
+                new GetFeatureKvpRequestReader(
+                        GetFeatureType.class,
+                        getGeoServer(),
+                        CommonFactoryFinder.getFilterFactory(null));
     }
 
-    /**
-     * http://jira.codehaus.org/browse/GEOS-1875
-     */
+    /** https://osgeo-org.atlassian.net/browse/GEOS-1875 */
     @Test
     @SuppressWarnings("unchecked")
     public void testInvalidTypeNameBbox() throws Exception {
@@ -58,16 +54,12 @@ public class GetFeatureKvpRequestReaderTest extends GeoServerSystemTestSupport {
         } catch (WFSException e) {
             assertEquals("InvalidParameterValue", e.getCode());
             assertEquals("typeName", e.getLocator());
-            System.out.println(e.getMessage());
+            // System.out.println(e.getMessage());
             assertTrue(e.getMessage().contains("cite:InvalidTypeName"));
         }
     }
 
-    /**
-     * Same as GEOS-1875, but let's check without bbox and without name prefix
-     * 
-     * @throws Exception
-     */
+    /** Same as GEOS-1875, but let's check without bbox and without name prefix */
     @SuppressWarnings("unchecked")
     @Test
     public void testInvalidTypeName() throws Exception {
@@ -83,16 +75,12 @@ public class GetFeatureKvpRequestReaderTest extends GeoServerSystemTestSupport {
         } catch (WFSException e) {
             assertEquals("InvalidParameterValue", e.getCode());
             assertEquals("typeName", e.getLocator());
-            //System.out.println(e.getMessage());
+            // System.out.println(e.getMessage());
             assertTrue(e.getMessage().contains("InvalidTypeName"));
         }
     }
 
-    /**
-     * See http://jira.codehaus.org/browse/GEOS-1875
-     * 
-     * @throws Exception
-     */
+    /** See https://osgeo-org.atlassian.net/browse/GEOS-1875 */
     @SuppressWarnings("unchecked")
     @Test
     public void testUserProvidedNamespace() throws Exception {
@@ -101,7 +89,7 @@ public class GetFeatureKvpRequestReaderTest extends GeoServerSystemTestSupport {
         final String alternamePrefix = "ex";
         final String alternameTypeName = alternamePrefix + ":" + localPart;
 
-        Map<String, String> raw = new HashMap<String, String>();
+        Map<String, Object> raw = new HashMap<>();
         raw.put("service", "WFS");
         raw.put("version", "1.1.0");
         raw.put("request", "GetFeature");
@@ -119,11 +107,7 @@ public class GetFeatureKvpRequestReaderTest extends GeoServerSystemTestSupport {
         assertEquals(SystemTestData.MLINES, typeNames.get(0));
     }
 
-    /**
-     * See http://jira.codehaus.org/browse/GEOS-1875
-     * 
-     * @throws Exception
-     */
+    /** See https://osgeo-org.atlassian.net/browse/GEOS-1875 */
     @SuppressWarnings("unchecked")
     @Test
     public void testUserProvidedDefaultNamespace() throws Exception {
@@ -131,7 +115,7 @@ public class GetFeatureKvpRequestReaderTest extends GeoServerSystemTestSupport {
         final String typeName = qName.getLocalPart();
         final String defaultNamespace = qName.getNamespaceURI();
 
-        Map<String, String> raw = new HashMap<String, String>();
+        Map<String, Object> raw = new HashMap<>();
         raw.put("service", "WFS");
         raw.put("version", "1.1.0");
         raw.put("request", "GetFeature");
@@ -148,10 +132,10 @@ public class GetFeatureKvpRequestReaderTest extends GeoServerSystemTestSupport {
         assertEquals(1, typeNames.size());
         assertEquals(qName, typeNames.get(0));
     }
-    
+
     @Test
     public void testViewParams() throws Exception {
-        Map<String, String> raw = new HashMap<String, String>();
+        Map<String, Object> raw = new HashMap<>();
         raw.put("service", "WFS");
         raw.put("version", "1.1.0");
         raw.put("request", "GetFeature");
@@ -164,44 +148,57 @@ public class GetFeatureKvpRequestReaderTest extends GeoServerSystemTestSupport {
         Object read = reader.read(req, parsed, raw);
         GetFeatureType parsedReq = (GetFeatureType) read;
         assertEquals(1, parsedReq.getViewParams().size());
-        List<Map> viewParams = (EList<Map>) parsedReq.getViewParams();
+        List viewParams = parsedReq.getViewParams();
         assertEquals(1, viewParams.size());
-        Map<String, String> vp1 = viewParams.get(0);
+        @SuppressWarnings("unchecked")
+        Map<String, String> vp1 = (Map) viewParams.get(0);
         assertEquals("WHERE PERSONS > 1000000", vp1.get("where"));
         assertEquals("ABCD", vp1.get("str"));
     }
-    
+
     @Test
     public void testViewParamsMulti() throws Exception {
-        Map<String, String> raw = new HashMap<String, String>();
+        Map<String, Object> raw = new HashMap<>();
         raw.put("service", "WFS");
         raw.put("version", "1.1.0");
         raw.put("request", "GetFeature");
-        raw.put("typeName", getLayerId(SystemTestData.STREAMS) + "," + getLayerId(SystemTestData.BASIC_POLYGONS));
-        raw.put("viewParams", "where:WHERE PERSONS > 1000000;str:ABCD,where:WHERE PERSONS > 10;str:FOO");
+        raw.put(
+                "typeName",
+                getLayerId(SystemTestData.STREAMS)
+                        + ","
+                        + getLayerId(SystemTestData.BASIC_POLYGONS));
+        raw.put(
+                "viewParams",
+                "where:WHERE PERSONS > 1000000;str:ABCD,where:WHERE PERSONS > 10;str:FOO");
 
         Map<String, Object> parsed = parseKvp(raw);
 
         GetFeatureType req = WfsFactory.eINSTANCE.createGetFeatureType();
         Object read = reader.read(req, parsed, raw);
         GetFeatureType parsedReq = (GetFeatureType) read;
-        List<Map> viewParams = (EList<Map>) parsedReq.getViewParams();
+        List viewParams = parsedReq.getViewParams();
         assertEquals(2, viewParams.size());
-        Map<String, String> vp1 = viewParams.get(0);
+        @SuppressWarnings("unchecked")
+        Map<String, String> vp1 = (Map) viewParams.get(0);
         assertEquals("WHERE PERSONS > 1000000", vp1.get("where"));
         assertEquals("ABCD", vp1.get("str"));
-        Map<String, String> vp2 = viewParams.get(1);
+        @SuppressWarnings("unchecked")
+        Map<String, String> vp2 = (Map) viewParams.get(1);
         assertEquals("WHERE PERSONS > 10", vp2.get("where"));
         assertEquals("FOO", vp2.get("str"));
     }
-    
+
     @Test
     public void testViewParamsFanOut() throws Exception {
-        Map<String, String> raw = new HashMap<String, String>();
+        Map<String, Object> raw = new HashMap<>();
         raw.put("service", "WFS");
         raw.put("version", "1.1.0");
         raw.put("request", "GetFeature");
-        raw.put("typeName", getLayerId(SystemTestData.STREAMS) + "," + getLayerId(SystemTestData.BASIC_POLYGONS));
+        raw.put(
+                "typeName",
+                getLayerId(SystemTestData.STREAMS)
+                        + ","
+                        + getLayerId(SystemTestData.BASIC_POLYGONS));
         raw.put("viewParams", "where:WHERE PERSONS > 1000000;str:ABCD");
 
         Map<String, Object> parsed = parseKvp(raw);
@@ -209,12 +206,14 @@ public class GetFeatureKvpRequestReaderTest extends GeoServerSystemTestSupport {
         GetFeatureType req = WfsFactory.eINSTANCE.createGetFeatureType();
         Object read = reader.read(req, parsed, raw);
         GetFeatureType parsedReq = (GetFeatureType) read;
-        List<Map> viewParams = (EList<Map>) parsedReq.getViewParams();
+        List viewParams = parsedReq.getViewParams();
         assertEquals(2, viewParams.size());
-        Map<String, String> vp1 = viewParams.get(0);
+        @SuppressWarnings("unchecked")
+        Map<String, String> vp1 = (Map) viewParams.get(0);
         assertEquals("WHERE PERSONS > 1000000", vp1.get("where"));
         assertEquals("ABCD", vp1.get("str"));
-        Map<String, String> vp2 = viewParams.get(1);
+        @SuppressWarnings("unchecked")
+        Map<String, String> vp2 = (Map) viewParams.get(1);
         assertEquals("WHERE PERSONS > 1000000", vp2.get("where"));
         assertEquals("ABCD", vp2.get("str"));
     }

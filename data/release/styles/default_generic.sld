@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <StyledLayerDescriptor version="1.0.0" 
                        xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" 
                        xmlns="http://www.opengis.net/sld" 
@@ -13,7 +13,7 @@
       <FeatureTypeStyle>
         <Rule>
           <Name>raster</Name>
-          <Title>raster</Title>
+          <Title>Opaque Raster</Title>
           <ogc:Filter>
             <ogc:PropertyIsEqualTo>
               <ogc:Function name="isCoverage"/>
@@ -26,7 +26,7 @@
         </Rule>
         <Rule>
           <Name>Polygon</Name>
-          <Title>Polygon</Title>
+          <Title>Grey Polygon</Title>
           <ogc:Filter>
             <ogc:PropertyIsEqualTo>
               <ogc:Function name="dimension">
@@ -47,7 +47,7 @@
         </Rule>
         <Rule>
           <Name>Line</Name>
-          <Title>Line</Title>
+          <Title>Blue Line</Title>
           <ogc:Filter>
             <ogc:PropertyIsEqualTo>
               <ogc:Function name="dimension">
@@ -65,7 +65,7 @@
         </Rule>
         <Rule>
           <Name>point</Name>
-          <Title>Point</Title>
+          <Title>Red Square Point</Title>
           <ElseFilter/>
           <PointSymbolizer>
             <Graphic>

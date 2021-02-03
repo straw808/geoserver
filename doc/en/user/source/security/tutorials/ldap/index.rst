@@ -1,17 +1,17 @@
-.. _sec_tutorials_ldap:
+.. _security_tutorials_ldap:
 
 Authentication with LDAP
 ========================
 
 This tutorial introduces GeoServer LDAP support and walks through the process of
 setting up authentication aganist an LDAP server. It is recommended that the 
-:ref:`sec_auth_provider_ldap` section be read before proceeding.
+:ref:`security_auth_provider_ldap` section be read before proceeding.
 
 LDAP server setup
 -----------------
 
 A mock LDAP server will be used for this tutorial. Download and run the 
-`acme-ldap <http://files.opengeo.org/geoserver/acme-ldap.jar>`_ jar:: 
+`acme-ldap <http://geoserver-docs.s3-website.eu-south-1.amazonaws.com/acme-ldap-1.0.jar>`_ jar:: 
 
   java -jar acme-ldap.jar
 
@@ -132,6 +132,15 @@ bill is a member of the ``admin`` group so he would be assigned a role named
    * Set ``Group to use as ADMIN`` to "ADMIN"
    * Set ``Group to use as GROUP_ADMIN`` to "ADMIN"
 
+   If you want support for hierarchical LDAP groups:
+   
+   * Check :guilabel:`Enable Hierarchical groups search` box.
+   * Set ``Max depth for hierarchical groups search`` to 10 (-1 for infinite depth, or the depth number you want to support).
+   * Set ``Nested group search filter`` to "member={0}"
+
+   .. figure:: images/ldap14.jpg
+      :align: center
+
    These settings let users in the LDAP admin group to be recognized as GeoServer administrators.
    
 #. Save.
@@ -156,7 +165,7 @@ from the LDAP repository and allow access rights to be assigned to those roles.
 
 #. Click the ``LDAP`` option under the  ``New Role Service`` section.
 
-   .. figure:: images/ldap13.jpg
+   .. figure:: images/ldap15.jpg
       :align: center
       
 #. Enter ``ldaprs`` in the  ``Name`` text field.
@@ -176,6 +185,14 @@ Then we need to a choose a user to authenticate on the server (many LDAP server 
 #. Enter ``uid=bill,ou=people,dc=acme,dc=org`` in the  ``Username`` text field.
 
 #. Enter ``hello`` in the  ``Password`` text field.
+
+If we want Hierarchical groups working we need:
+
+#. Check the ``Enable Hierarchical groups search`` checkbox.
+
+#. Enter ``10`` in the  ``Max depth for hierarchical groups search`` text field.
+
+#. Enter ``member={1}`` in the  ``Nested group search filter`` text field.
 
 #. Save.
 

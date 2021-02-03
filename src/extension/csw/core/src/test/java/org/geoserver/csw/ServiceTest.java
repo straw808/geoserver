@@ -5,14 +5,14 @@
  */
 package org.geoserver.csw;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.geotools.util.Version;
 import org.junit.Test;
 
 /**
- * Checks the service is registered and reachable 
- * 
+ * Checks the service is registered and reachable
+ *
  * @author Andrea Aime - GeoSolutions
  */
 public class ServiceTest extends CSWSimpleTestSupport {
@@ -23,5 +23,4 @@ public class ServiceTest extends CSWSimpleTestSupport {
         assertEquals(1, csw.getVersions().size());
         assertEquals(new Version("2.0.2"), csw.getVersions().get(0));
     }
-
 }

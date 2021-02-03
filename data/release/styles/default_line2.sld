@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <StyledLayerDescriptor version="1.0.0" 
 		xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" 
 		xmlns="http://www.opengis.net/sld" 
@@ -12,7 +12,7 @@
 		<UserStyle>
 		    <!-- they have names, titles and abstracts -->
 		  
-			<Title>A boring default style</Title>
+			<Title>Green line</Title>
 			<Abstract>A sample style that just prints out a green line</Abstract>
 			<!-- FeatureTypeStyles describe how to render different features -->
 			<!-- a feature type for lines -->

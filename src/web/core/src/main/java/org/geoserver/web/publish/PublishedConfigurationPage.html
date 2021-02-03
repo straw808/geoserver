@@ -1,0 +1,18 @@
+<html xmlns:wicket="http://wicket.apache.org/">
+<head>
+</head>
+<body>
+<wicket:extend>
+<h1><span wicket:id="publishedinfoname"></span></h1>
+<p><wicket:message key="configureTheResourceAndPublishingInformation">Configure the resource and publishing information for the current layer</wicket:message></p>
+<form wicket:id="publishedinfo" name="publishedinfo">
+    <div wicket:id="tabs" class="tabpanel"></div>
+    <div class="button-group toolbar-sticky selfclear">
+      <a href="#" class="form-button-save" wicket:id="save"><wicket:message key="save">Save</wicket:message></a>
+      <a href="#a" class="form-button-apply" wicket:id="apply"><wicket:message key="apply">Apply</wicket:message></a>
+      <a href="#" class="form-button-cancel" wicket:id="cancel"><wicket:message key="cancel">Cancel</wicket:message></a>
+    </div>
+</form>
+</wicket:extend>
+</body>
+</html>

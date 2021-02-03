@@ -7,31 +7,27 @@ package org.geoserver.wfs.xml.v1_0_0;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-
 import javax.xml.namespace.QName;
-
 import net.opengis.wfs.QueryType;
 import net.opengis.wfs.WfsFactory;
-
 import org.geoserver.wfs.WFSException;
 import org.geotools.gml2.bindings.GML2ParsingUtils;
-import org.geotools.xml.AbstractComplexBinding;
-import org.geotools.xml.ElementInstance;
-import org.geotools.xml.Node;
+import org.geotools.xsd.AbstractComplexBinding;
+import org.geotools.xsd.ElementInstance;
+import org.geotools.xsd.Node;
 import org.opengis.filter.Filter;
 import org.opengis.filter.expression.PropertyName;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.picocontainer.MutablePicoContainer;
 import org.xml.sax.helpers.NamespaceSupport;
 
-
 /**
  * Binding object for the type http://www.opengis.net/wfs:QueryType.
  *
  * <p>
- *        <pre>
+ *
+ * <pre>
  *         <code>
  *  &lt;xsd:complexType name="QueryType"&gt;
  *                  &lt;xsd:annotation&gt;
@@ -96,19 +92,14 @@ import org.xml.sax.helpers.NamespaceSupport;
  *
  *          </code>
  *         </pre>
- * </p>
  *
  * @generated
  */
 public class QueryTypeBinding extends AbstractComplexBinding {
-    /**
-     * Wfs Factory
-     */
+    /** Wfs Factory */
     WfsFactory wfsfactory;
 
-    /**
-     * namespace mappings
-     */
+    /** namespace mappings */
     NamespaceSupport namespaceSupport;
 
     public QueryTypeBinding(WfsFactory wfsfactory, NamespaceSupport namespaceSupport) {
@@ -116,14 +107,13 @@ public class QueryTypeBinding extends AbstractComplexBinding {
         this.namespaceSupport = namespaceSupport;
     }
 
-    /**
-     * @generated
-     */
+    /** @generated */
     public QName getTarget() {
         return WFS.QUERYTYPE;
     }
 
     /**
+     *
      * <!-- begin-user-doc -->
      * <!-- end-user-doc -->
      *
@@ -133,66 +123,67 @@ public class QueryTypeBinding extends AbstractComplexBinding {
         return QueryType.class;
     }
 
-    public void initializeChildContext(ElementInstance childInstance,
-            Node node, MutablePicoContainer context) {
-        //if an srsName is set for this geometry, put it in the context for
+    public void initializeChildContext(
+            ElementInstance childInstance, Node node, MutablePicoContainer context) {
+        // if an srsName is set for this geometry, put it in the context for
         // children, so they can use it as well
-        if ( node.hasAttribute("srsName") ) {
+        if (node.hasAttribute("srsName")) {
             try {
                 CoordinateReferenceSystem crs = GML2ParsingUtils.crs(node);
-                if ( crs != null ) {
+                if (crs != null) {
                     context.registerComponentInstance(CoordinateReferenceSystem.class, crs);
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 throw new WFSException(e, "InvalidParameterValue");
             }
         }
     }
-    
+
     /**
+     *
      * <!-- begin-user-doc -->
      * <!-- end-user-doc -->
      *
      * @generated modifiable
      */
-    public Object parse(ElementInstance instance, Node node, Object value)
-        throws Exception {
+    @SuppressWarnings("unchecked") // EMF model not having generics
+    public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         QueryType queryType = wfsfactory.createQueryType();
 
-        //<xsd:element maxOccurs="unbounded" minOccurs="0" ref="ogc:PropertyName">
-        //JD:difference in spec here, moved from ogc:PropertyName to string
-        List propertyNames = node.getChildValues(PropertyName.class);
+        // <xsd:element maxOccurs="unbounded" minOccurs="0" ref="ogc:PropertyName">
+        // JD:difference in spec here, moved from ogc:PropertyName to string
+        List<PropertyName> propertyNames = node.getChildValues(PropertyName.class);
 
-        for (Iterator p = propertyNames.iterator(); p.hasNext();) {
-            PropertyName propertyName = (PropertyName) p.next();
+        for (PropertyName propertyName : propertyNames) {
             queryType.getPropertyName().add(propertyName.getPropertyName());
         }
 
-        //<xsd:element maxOccurs="1" minOccurs="0" ref="ogc:Filter">
-        Filter filter = (Filter) node.getChildValue(Filter.class);
+        // <xsd:element maxOccurs="1" minOccurs="0" ref="ogc:Filter">
+        Filter filter = node.getChildValue(Filter.class);
 
         if (filter == null) {
-            filter = (Filter) Filter.INCLUDE;
+            filter = Filter.INCLUDE;
         }
 
         queryType.setFilter(filter);
 
-        //<xsd:attribute name="handle" type="xsd:string" use="optional"/>
+        // <xsd:attribute name="handle" type="xsd:string" use="optional"/>
         queryType.setHandle((String) node.getAttributeValue("handle"));
 
-        //<xsd:attribute name="typeName" type="xsd:QName" use="required"/>
-        List typeNameList = new ArrayList();
-        typeNameList.add(node.getAttributeValue("typeName"));
+        // <xsd:attribute name="typeName" type="xsd:QName" use="required"/>
+        @SuppressWarnings("unchecked")
+        List<QName> typeNameList = new ArrayList();
+        typeNameList.add((QName) node.getAttributeValue("typeName"));
         queryType.setTypeName(typeNameList);
 
-        //<xsd:attribute name="featureVersion" type="xsd:string" use="optional">  
+        // <xsd:attribute name="featureVersion" type="xsd:string" use="optional">
         queryType.setFeatureVersion((String) node.getAttributeValue("featureVersion"));
 
-        //JD: even though reprojection is not supported in 1.0 we handle it 
+        // JD: even though reprojection is not supported in 1.0 we handle it
         // anyways
-        //&lt;xsd:attribute name="srsName" type="xsd:anyURI" use="optional"&gt;
+        // &lt;xsd:attribute name="srsName" type="xsd:anyURI" use="optional"&gt;
         if (node.hasAttribute("srsName")) {
-            queryType.setSrsName(new URI((String)node.getAttributeValue("srsName")));
+            queryType.setSrsName(new URI((String) node.getAttributeValue("srsName")));
         }
 
         return queryType;

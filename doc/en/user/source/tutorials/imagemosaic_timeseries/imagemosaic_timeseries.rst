@@ -9,13 +9,13 @@ Introduction
 
 This step-by-step tutorial describes how to build a time-series coverage using the ImageMosaic plugin. The ImageMosaic plugin allows the creation of a time-series layer of a raster dataset. The single images are held in a queryable structure to allow access to a specific dataset with a temporal filter.
 
-This tutorial assumes knowledge of the concepts explained in :ref:`tutorial_imagemosaic_extension`.
+This tutorial assumes knowledge of the concepts explained in :ref:`data_imagemosaic` section.
 
 This tutorial contains four sections:
 
 * The first section, **Configuration**, describes the configuration files needed to set up an ImageMosaic store from GeoServer.
 * The second section, **Configuration examples**, providing examples of the configuration files needed.
-* The last two sections, **Coverage based on filestore** and **Coverage based on database** describe, once the previous configurations steps are done, how to create and configure an Imagemosaic store using the GeoServer GUI.
+* The last two sections, **Coverage based on filestore** and **Coverage based on database** describe, once the previous configurations steps are done, how to create and configure an ImageMosaic store using the GeoServer GUI.
 
 The dataset used in the tutorial can be downloaded :download:`Here <snowLZWdataset.zip>`. It contains 3 image files and a .sld file representing a style needed for correctly render the images.
 
@@ -114,7 +114,7 @@ Here is shown an example of datastore.properties suitable for Postgis.
      - **N** default 'false'
      - Boolean flag that specifies if for the database queries prepared statements should be used. This improves performance, because the database query parser has to parse the query only once     
 
-.. note:: The first 8 parameters are valid for each DBMS used, the last 4 may vary from different DBMS. for more information see `GeoTools JDBC documentation <http://docs.geotools.org/latest/userguide/library/jdbc/index.html>`_
+.. note:: The first 8 parameters are valid for each DBMS used, the last 4 may vary from different DBMS. for more information see :geotools`GeoTools JDBC documentation <jdbc/index.html>`.
  
 indexer.properties
 """"""""""""""""""
@@ -216,7 +216,7 @@ In the timeregex property file you specify the pattern describing the date(time)
 
 indexer.properties:
 """""""""""""""""""
-Here the user can specify the information that Geoserver uses to create the index table in the database. In this example, the time values are stored in the column ingestion.
+Here the user can specify the information that GeoServer uses to create the index table in the database. In this example, the time values are stored in the column ingestion.
 
 .. include:: src/indexer.properties
    :literal:
@@ -233,7 +233,7 @@ We create a new data store of type raster data and choose ImageMosaic.
    :align: center
 
 
-.. note:: Be aware that Geoserver creates a table which is identical with the name of your layer. If the table already exists, it will not be dropped from the DB and the following error message will appear. The same message wwill appear if the generated property file already exists in the directory or there are incorrect connection parameters in datastore.properties file.
+.. note:: Be aware that GeoServer creates a table which is identical with the name of your layer. If the table already exists, it will not be dropped from the DB and the following error message will appear. The same message wwill appear if the generated property file already exists in the directory or there are incorrect connection parameters in datastore.properties file.
 
 .. figure:: img/errormessage.png
    :align: center

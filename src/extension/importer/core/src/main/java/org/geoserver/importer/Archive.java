@@ -10,8 +10,14 @@ import java.io.IOException;
 
 public class Archive extends Directory {
 
+    private static final long serialVersionUID = -6007727652626093242L;
+
+    /**
+     * Create archive from a file.
+     *
+     * @param file the file
+     */
     public Archive(File file) throws IOException {
         super(Directory.createFromArchive(file).getFile());
     }
-
 }

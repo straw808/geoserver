@@ -1,14 +1,21 @@
+/* (c) 2017 Open Source Geospatial Foundation - all rights reserved
+ * This code is licensed under the GPL 2.0 license, available at the root
+ * application directory.
+ */
 package org.geoserver.platform.resource;
 
-import static org.junit.Assert.*;
+import static org.geoserver.platform.resource.Paths.extension;
+import static org.geoserver.platform.resource.Paths.name;
+import static org.geoserver.platform.resource.Paths.names;
+import static org.geoserver.platform.resource.Paths.parent;
+import static org.geoserver.platform.resource.Paths.path;
+import static org.geoserver.platform.resource.Paths.sidecar;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-
 import org.junit.Test;
-
-import static org.geoserver.platform.resource.Paths.*;
 
 public class PathsTest {
 
@@ -54,12 +61,12 @@ public class PathsTest {
         }
 
         // test path elements that are always valid regardless of strictPath
-        for (String name : new String[] { "foo", "foo.txt", "directory/bar" }) {
+        for (String name : new String[] {"foo", "foo.txt", "directory/bar"}) {
             assertEquals(name, Paths.path(true, name));
             assertEquals(name, Paths.path(false, name));
         }
         // test path elements that are always invalid regardless of strictPath
-        for (String name : new String[] { ".", "..", "foo\\" }) {
+        for (String name : new String[] {".", "..", "foo\\"}) {
             try {
                 assertEquals(name, Paths.path(true, name));
                 fail("invalid: " + name);
@@ -75,8 +82,8 @@ public class PathsTest {
         }
         // test path elements that are invalid if and only if strictPath is true
         for (char c : "*:,'&?\"<>|".toCharArray()) {
-            for (String prefix : new String[] { "foo", "" }) {
-                for (String suffix : new String[] { "bar", "" }) {
+            for (String prefix : new String[] {"foo", ""}) {
+                for (String suffix : new String[] {"bar", ""}) {
                     String name = prefix + c + suffix;
                     try {
                         assertEquals(name, Paths.path(true, name));
@@ -93,12 +100,12 @@ public class PathsTest {
     @Test
     public void validTest() {
         // test path elements that are always valid regardless of strictPath
-        for (String name : new String[] { "foo", "foo.txt", "directory/bar" }) {
+        for (String name : new String[] {"foo", "foo.txt", "directory/bar"}) {
             assertEquals(name, Paths.valid(true, name));
             assertEquals(name, Paths.valid(false, name));
         }
         // test path elements that are always invalid regardless of strictPath
-        for (String name : new String[] { ".", "..", "foo\\" }) {
+        for (String name : new String[] {".", "..", "foo\\"}) {
             try {
                 assertEquals(name, Paths.valid(true, name));
                 fail("invalid: " + name);
@@ -114,8 +121,8 @@ public class PathsTest {
         }
         // test path elements that are invalid if and only if strictPath is true
         for (char c : "*:,'&?\"<>|".toCharArray()) {
-            for (String prefix : new String[] { "foo", "" }) {
-                for (String suffix : new String[] { "bar", "" }) {
+            for (String prefix : new String[] {"foo", ""}) {
+                for (String suffix : new String[] {"bar", ""}) {
                     String name = prefix + c + suffix;
                     try {
                         assertEquals(name, Paths.valid(true, name));

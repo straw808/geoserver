@@ -5,12 +5,12 @@
 	<fieldset><legend><span><wicket:message
 		key="processing">processing</wicket:message></span></legend>
 	<ul>
-		<li><input class="field checkbox" type="checkbox"
-			wicket:id="subsamplingEnabled"></input> <label class="choice"><wicket:message
+		<li class="choiceItem"><input class="field checkbox" type="checkbox"
+			wicket:id="subsamplingEnabled"></input> <label for="subsamplingEnabled"><wicket:message
 			key="subsampling">subsampling</wicket:message></label></li>
 		<li><label><wicket:message key="overviewPolicy">overview</wicket:message></label>
 		<select wicket:id="overviewPolicy" class="field"></select></li>
-		<li><input wicket:id="latLon" type="checkbox"></input> <label class="choice"><wicket:message
+		<li class="choiceItem"><input wicket:id="latLon" type="checkbox"></input> <label for="latLon"><wicket:message
 			key="latLonOrder">subsampling</wicket:message></label></li>		
 	</ul>
 	</fieldset>
@@ -23,6 +23,10 @@
 		<input type="text" wicket:id="maxInputMemory" class="field text" /></li>
 		<li><label><wicket:message key="maxOutputMemory">maxoutput</wicket:message></label>
 		<input type="text" wicket:id="maxOutputMemory" class="field text" />
+		</li>
+		<li>
+			<label><wicket:message key="maxRequestedDimensionValues">Max requested dimension values</wicket:message></label>
+			<input type="text" wicket:id="maxRequestedDimensionValues" class="field text"/>
 		</li>
 	</ul>
 	</fieldset>

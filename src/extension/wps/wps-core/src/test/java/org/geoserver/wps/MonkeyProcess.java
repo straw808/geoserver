@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.process.ProcessException;
 import org.geotools.process.ProcessFactory;
@@ -24,10 +23,13 @@ import org.opengis.util.ProgressListener;
 public class MonkeyProcess {
 
     enum CommandType {
-        Exit, SetProgress, Exception, Wait
+        Exit,
+        SetProgress,
+        Exception,
+        Wait
     }
 
-    static Map<String, BlockingQueue<Command>> commands = new ConcurrentHashMap<String, BlockingQueue<MonkeyProcess.Command>>();
+    static Map<String, BlockingQueue<Command>> commands = new ConcurrentHashMap<>();
 
     private static class Command {
         CommandType type;
@@ -38,7 +40,6 @@ public class MonkeyProcess {
             this.type = type;
             this.value = value;
         }
-
     }
 
     public static void exit(String id, SimpleFeatureCollection value, boolean wait)
@@ -51,10 +52,10 @@ public class MonkeyProcess {
         }
     }
 
-    private synchronized static BlockingQueue<Command> getCommandQueue(String id) {
+    private static synchronized BlockingQueue<Command> getCommandQueue(String id) {
         BlockingQueue<Command> queue = commands.get(id);
         if (queue == null) {
-            queue = new LinkedBlockingQueue<MonkeyProcess.Command>();
+            queue = new LinkedBlockingQueue<>();
             commands.put(id, queue);
         }
 
@@ -69,7 +70,6 @@ public class MonkeyProcess {
                 Thread.sleep(10);
             }
         }
-
     }
 
     public static void wait(String id, long wait) throws InterruptedException {
@@ -85,11 +85,14 @@ public class MonkeyProcess {
             }
         }
     }
+
     @DescribeResult(name = "result")
-    public SimpleFeatureCollection execute(@DescribeParameter(name = "id") String id,
+    public SimpleFeatureCollection execute(
+            @DescribeParameter(name = "id") String id,
             @DescribeParameter(name = "fc", min = 0) SimpleFeatureCollection fc,
             @DescribeParameter(name = "extra", min = 0) String extra,
-            ProgressListener listener) throws Exception {
+            ProgressListener listener)
+            throws Exception {
         BlockingQueue<Command> queue = getCommandQueue(id);
         while (true) {
             Command command = queue.take();
@@ -113,15 +116,18 @@ public class MonkeyProcess {
         }
     }
 
-    static final ProcessFactory getFactory() {
+    public static final ProcessFactory getFactory() {
         return new MonkeyProcessFactory();
     }
 
     public static void clearCommands() {
         for (Map.Entry<String, BlockingQueue<MonkeyProcess.Command>> entry : commands.entrySet()) {
             if (entry.getValue().size() > 0) {
-                throw new IllegalStateException("The command queue is not clean, queue "
-                        + entry.getKey() + " still has commands in: " + entry.getValue());
+                throw new IllegalStateException(
+                        "The command queue is not clean, queue "
+                                + entry.getKey()
+                                + " still has commands in: "
+                                + entry.getValue());
             }
         }
 
@@ -133,7 +139,5 @@ public class MonkeyProcess {
         public MonkeyProcessFactory() {
             super(new SimpleInternationalString("Monkey process"), "gs", MonkeyProcess.class);
         }
-
     }
-
 }

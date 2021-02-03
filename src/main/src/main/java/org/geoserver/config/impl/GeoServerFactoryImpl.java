@@ -6,8 +6,6 @@
 package org.geoserver.config.impl;
 
 import java.util.Collection;
-import java.util.Iterator;
-
 import org.geoserver.catalog.MetadataLinkInfo;
 import org.geoserver.catalog.impl.MetadataLinkInfoImpl;
 import org.geoserver.config.ContactInfo;
@@ -22,18 +20,16 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-public class GeoServerFactoryImpl implements GeoServerFactory,
-        ApplicationContextAware {
+public class GeoServerFactoryImpl implements GeoServerFactory, ApplicationContextAware {
 
     GeoServer gs;
     ApplicationContext applicationContext;
 
-    public GeoServerFactoryImpl( GeoServer gs ) {
+    public GeoServerFactoryImpl(GeoServer gs) {
         this.gs = gs;
     }
-    
-    public void setApplicationContext(ApplicationContext applicationContext)
-            throws BeansException {
+
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 
@@ -52,25 +48,25 @@ public class GeoServerFactoryImpl implements GeoServerFactory,
     public JAIInfo createJAI() {
         return new JAIInfoImpl();
     }
-    
+
     public MetadataLinkInfo createMetadataLink() {
         return new MetadataLinkInfoImpl();
     }
-    
+
     public ServiceInfo createService() {
         return new ServiceInfoImpl();
     }
-    
+
     public LoggingInfo createLogging() {
         return new LoggingInfoImpl();
     }
 
-    public Object create(Class clazz) {
+    public <T> T create(Class<T> clazz) {
         if (applicationContext != null) {
-            Collection extensions = applicationContext.getBeansOfType(
-                    GeoServerFactory.Extension.class).values();
-            for (Iterator e = extensions.iterator(); e.hasNext();) {
-                Extension extension = (Extension) e.next();
+            Collection extensions =
+                    applicationContext.getBeansOfType(GeoServerFactory.Extension.class).values();
+            for (Object o : extensions) {
+                Extension extension = (Extension) o;
                 if (extension.canCreate(clazz)) {
                     return extension.create(clazz);
                 }

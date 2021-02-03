@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -6,9 +6,8 @@
 package org.geoserver.wms;
 
 import java.util.List;
-
 import org.geoserver.catalog.Catalog;
-import org.geoserver.catalog.LayerInfo;
+import org.geoserver.catalog.PublishedInfo;
 import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.ows.Request;
 import org.geoserver.ows.WorkspaceQualifyingCallback;
@@ -23,8 +22,9 @@ public class WMSWorkspaceQualifier extends WorkspaceQualifyingCallback {
     }
 
     @Override
-    protected void qualifyRequest(WorkspaceInfo ws, LayerInfo l, Service service, Request request) {
-        if (WebMapService.class.isInstance(service.getService())) {
+    protected void qualifyRequest(
+            WorkspaceInfo ws, PublishedInfo l, Service service, Request request) {
+        if (WebMapService.class.isInstance(service.getService()) && request.getRawKvp() != null) {
             String layers = (String) request.getRawKvp().get("LAYERS");
             if (layers != null) {
                 request.getRawKvp().put("LAYERS", qualifyLayerNamesKVP(layers, ws));
@@ -52,8 +52,8 @@ public class WMSWorkspaceQualifier extends WorkspaceQualifyingCallback {
         }
     }
 
-    protected void qualifyRequest(WorkspaceInfo ws, LayerInfo l, Operation operation,
-            Request request) {
+    protected void qualifyRequest(
+            WorkspaceInfo ws, PublishedInfo l, Operation operation, Request request) {
         GetCapabilitiesRequest gc = parameter(operation, GetCapabilitiesRequest.class);
         if (gc != null) {
             gc.setNamespace(ws.getName());
@@ -67,7 +67,7 @@ public class WMSWorkspaceQualifier extends WorkspaceQualifyingCallback {
 
         return toCommaSeparatedList(list);
     }
-    
+
     /**
      * Overriding the base class behavior as we want to avoid qualifying global layer group names
      */
@@ -109,12 +109,6 @@ public class WMSWorkspaceQualifier extends WorkspaceQualifyingCallback {
     }
 
     private String toCommaSeparatedList(List<String> list) {
-        StringBuffer sb = new StringBuffer();
-        for (String s : list) {
-            sb.append(s).append(",");
-        }
-        sb.setLength(sb.length() - 1);
-        return sb.toString();
+        return String.join(",", list);
     }
-
 }

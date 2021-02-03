@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <StyledLayerDescriptor version="1.0.0" 
 		xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" 
 		xmlns="http://www.opengis.net/sld" 
@@ -12,8 +12,8 @@
 		<UserStyle>
 		    <!-- they have names, titles and abstracts -->
 		  
-			<Title>A boring default style</Title>
-			<Abstract>A sample style that just prints out a purple square</Abstract>
+			<Title>Red Square point</Title>
+			<Abstract>A sample style that just prints out a red square</Abstract>
 			<!-- FeatureTypeStyles describe how to render different features -->
 			<!-- a feature type for points -->
 
@@ -21,8 +21,8 @@
 				<!--FeatureTypeName>Feature</FeatureTypeName-->
 				<Rule>
 					<Name>Rule 1</Name>
-					<Title>RedSquare</Title>
-					<Abstract>A red fill with an 11 pixel size</Abstract>
+					<Title>Red Square point</Title>
+					<Abstract>A red fill with 6 pixel size</Abstract>
 
 					<!-- like a linesymbolizer but with a fill too -->
 					<PointSymbolizer>

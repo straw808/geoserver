@@ -1,6 +1,10 @@
+/* (c) 2017 Open Source Geospatial Foundation - all rights reserved
+ * This code is licensed under the GPL 2.0 license, available at the root
+ * application directory.
+ */
 package org.geoserver.wcs2_0.eo.web;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.model.Model;
@@ -24,13 +28,14 @@ public class WCSEOAdminPanelTest extends GeoServerWicketTestSupport {
         wcs = getGeoServer().getService(WCSInfo.class);
         getGeoServer().save(wcs);
 
-        tester.startPage(new FormTestPage(new ComponentBuilder() {
+        tester.startPage(
+                new FormTestPage(
+                        new ComponentBuilder() {
 
-            public Component buildComponent(String id) {
-                return new WCSEOAdminPanel(id, new Model(wcs));
-            }
-        }));
-
+                            public Component buildComponent(String id) {
+                                return new WCSEOAdminPanel(id, new Model<>(wcs));
+                            }
+                        }));
     }
 
     @Test
@@ -43,8 +48,6 @@ public class WCSEOAdminPanelTest extends GeoServerWicketTestSupport {
         // print(tester.getLastRenderedPage(), true, true);
 
         tester.assertModelValue("form:panel:enabled", true);
-        assertTrue((boolean) wcs.getMetadata().get(WCSEOMetadata.ENABLED.key, Boolean.class));
-        
+        assertTrue(wcs.getMetadata().get(WCSEOMetadata.ENABLED.key, Boolean.class));
     }
-
 }

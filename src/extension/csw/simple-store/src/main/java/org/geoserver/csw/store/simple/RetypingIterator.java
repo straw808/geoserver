@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
 import org.geoserver.csw.records.CSWRecordDescriptor;
 import org.geotools.feature.ComplexFeatureBuilder;
 import org.geotools.feature.FeatureIterator;
@@ -22,27 +21,26 @@ import org.opengis.filter.expression.PropertyName;
 
 /**
  * Basic attribute shaver, works properly only against {@link CSWRecordDescriptor#RECORD}
- * 
+ *
  * @author Andrea Aime - GeoSolutions
- * 
  */
-class RetypingIterator implements Iterator<Feature>, Closeable {
+class RetypingIterator<F extends Feature> implements Iterator<F>, Closeable {
 
-    FeatureIterator<Feature> delegate;
+    FeatureIterator<F> delegate;
 
-    Set names;
+    Set<Object> names;
 
     ComplexFeatureBuilder builder;
 
-    public RetypingIterator(FeatureIterator<Feature> delegate, FeatureType schema,
-            List<PropertyName> properties) {
+    public RetypingIterator(
+            FeatureIterator<F> delegate, FeatureType schema, List<PropertyName> properties) {
         this.delegate = delegate;
         this.builder = new ComplexFeatureBuilder(schema);
         this.names = buildNames(properties);
     }
 
-    private Set buildNames(List<PropertyName> properties) {
-        Set result = new HashSet();
+    private Set<Object> buildNames(List<PropertyName> properties) {
+        Set<Object> result = new HashSet<>();
         for (PropertyName pn : properties) {
             String fullName = pn.getPropertyName();
             if (fullName.indexOf('@') != -1 || fullName.indexOf('/') != -1) {
@@ -79,20 +77,21 @@ class RetypingIterator implements Iterator<Feature>, Closeable {
     }
 
     @Override
-    public Feature next() {
-        Feature original = delegate.next();
+    public F next() {
+        F original = delegate.next();
         // this does not really work...
-//        for (PropertyDescriptor pd : original.getType().getDescriptors()) {
-//            Collection<Property> properties = original.getProperties(pd.getName());
-//            if(properties != null) {
-//                for (Property p : properties) {
-//                    if (names.contains(p.getName()) || names.contains(p.getName().getLocalPart())) {
-//                        builder.append(pd.getName(), p);
-//                    }
-//                }
-//            }
-//        }
-        
+        //        for (PropertyDescriptor pd : original.getType().getDescriptors()) {
+        //            Collection<Property> properties = original.getProperties(pd.getName());
+        //            if(properties != null) {
+        //                for (Property p : properties) {
+        //                    if (names.contains(p.getName()) ||
+        // names.contains(p.getName().getLocalPart())) {
+        //                        builder.append(pd.getName(), p);
+        //                    }
+        //                }
+        //            }
+        //        }
+
         for (Property p : original.getProperties()) {
             if (names.contains(p.getName()) || names.contains(p.getName().getLocalPart())) {
                 // this makes the thing type specific, but at least it works for the record case
@@ -105,9 +104,17 @@ class RetypingIterator implements Iterator<Feature>, Closeable {
             }
         }
 
-        return builder.buildFeature(original.getIdentifier().getID());
+        Feature feature = builder.buildFeature(original.getIdentifier().getID());
+
+        if (original.hasUserData()) {
+            feature.getUserData().putAll(original.getUserData());
+        }
+
+        @SuppressWarnings("unchecked")
+        F result = (F) feature;
+        return result;
     }
-    
+
     @Override
     public void remove() {
         throw new UnsupportedOperationException();
@@ -116,5 +123,4 @@ class RetypingIterator implements Iterator<Feature>, Closeable {
     public void close() {
         delegate.close();
     }
-
 }

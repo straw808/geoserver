@@ -13,10 +13,23 @@
         <include>gs-importer-web-*.jar</include>
         <include>gs-importer-rest-*.jar</include>
         <include>gt-xsd-kml-*.jar</include>
+        <include>gt-csv-*.jar</include>
         <include>*javacsv*</include>
         <include>*prettytime*</include>
         <include>*fileupload*</include>
+        <include>*commons-vfs2*</include>
+        <include>*commons-exec*</include>
       </includes>
+    </fileSet>
+    <fileSet>
+        <directory>release</directory>
+        <outputDirectory></outputDirectory>
+        <includes>
+            <include>LGPL.md</include>
+            <include>GEOTOOLS_NOTICE.txt</include>
+            <include>GPL.md</include>
+            <include>NOTICE.md</include>
+        </includes>
     </fileSet>
   </fileSets>
 </assembly>

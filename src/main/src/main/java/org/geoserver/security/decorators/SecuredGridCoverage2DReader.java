@@ -1,4 +1,4 @@
-/* (c) 2014-2015 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-
 import org.geoserver.catalog.Predicates;
 import org.geoserver.data.util.CoverageUtils;
 import org.geoserver.security.CoverageAccessLimits;
@@ -19,9 +18,14 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.coverage.processing.CoverageProcessor;
 import org.geotools.coverage.processing.operation.Crop;
-import org.geotools.factory.Hints;
+import org.geotools.data.ResourceInfo;
+import org.geotools.data.ServiceInfo;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.util.factory.Hints;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.opengis.coverage.grid.Format;
 import org.opengis.filter.Filter;
 import org.opengis.parameter.GeneralParameterDescriptor;
@@ -29,19 +33,24 @@ import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValue;
 import org.opengis.parameter.ParameterValueGroup;
 
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.MultiPolygon;
-
 /**
  * Applies access limits policies around the wrapped reader
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
 public class SecuredGridCoverage2DReader extends DecoratingGridCoverage2DReader {
 
-    private static final CoverageProcessor processor = CoverageProcessor.getInstance(new Hints(
-            Hints.LENIENT_DATUM_SHIFT, Boolean.TRUE));
+    /** Parameters used to control the {@link Crop} operation. */
+    private static final ParameterValueGroup cropParams;
+
+    /** Cached crop factory */
+    private static final Crop coverageCropFactory = new Crop();
+
+    static {
+        final CoverageProcessor processor =
+                new CoverageProcessor(new Hints(Hints.LENIENT_DATUM_SHIFT, Boolean.TRUE));
+        cropParams = processor.getOperation("CoverageCrop").getParameters();
+    }
 
     WrapperPolicy policy;
 
@@ -55,12 +64,19 @@ public class SecuredGridCoverage2DReader extends DecoratingGridCoverage2DReader 
         if (format == null) {
             return null;
         } else {
-            return (Format) SecuredObjects.secure(format, policy);
+            return SecuredObjects.secure(format, policy);
         }
     }
 
-    public GridCoverage2D read(GeneralParameterValue[] parameters) throws IllegalArgumentException,
-            IOException {
+    public GridCoverage2D read(GeneralParameterValue[] parameters)
+            throws IllegalArgumentException, IOException {
+        return SecuredGridCoverage2DReader.read(delegate, policy, parameters);
+    }
+
+    static GridCoverage2D read(
+            GridCoverage2DReader delegate, WrapperPolicy policy, GeneralParameterValue[] parameters)
+            throws IllegalArgumentException, IOException {
+        // Package private static method to share reading code with Structured reader
         MultiPolygon rasterFilter = null;
         if (policy.getLimits() instanceof CoverageAccessLimits) {
             CoverageAccessLimits limits = (CoverageAccessLimits) policy.getLimits();
@@ -75,32 +91,29 @@ public class SecuredGridCoverage2DReader extends DecoratingGridCoverage2DReader 
                 parameters = limitParams;
             } else if (limitParams != null) {
                 // scan the input params, add and overwrite with the limits params as needed
-                List<GeneralParameterValue> params = new ArrayList<GeneralParameterValue>(Arrays
-                        .asList(parameters));
+                List<GeneralParameterValue> params = new ArrayList<>(Arrays.asList(parameters));
                 for (GeneralParameterValue lparam : limitParams) {
                     // remove the overwritten param, if any
-                    final GeneralParameterDescriptor ldescriptor = lparam.getDescriptor();
-                    for (Iterator it = params.iterator(); it.hasNext();) {
+                    for (Iterator it = params.iterator(); it.hasNext(); ) {
                         GeneralParameterValue param = (GeneralParameterValue) it.next();
                         if (param.getDescriptor().equals(lparam.getDescriptor())) {
                             it.remove();
                             break;
-                        } 
+                        }
                     }
                     // add the overwrite param (will be an overwrite if it was already there, an
                     // addition otherwise)
                     params.add(lparam);
                 }
 
-                parameters = params
-                        .toArray(new GeneralParameterValue[params.size()]);
+                parameters = params.toArray(new GeneralParameterValue[params.size()]);
             }
-            
-            if(readFilter != null && !Filter.INCLUDE.equals(readFilter)) {
+
+            if (readFilter != null && !Filter.INCLUDE.equals(readFilter)) {
                 Format format = delegate.getFormat();
                 ParameterValueGroup readParameters = format.getReadParameters();
-                List<GeneralParameterDescriptor> descriptors = readParameters.getDescriptor()
-                        .descriptors();
+                List<GeneralParameterDescriptor> descriptors =
+                        readParameters.getDescriptor().descriptors();
 
                 // scan all the params looking for the one we want to add
                 boolean replacedOriginalFilter = false;
@@ -119,32 +132,48 @@ public class SecuredGridCoverage2DReader extends DecoratingGridCoverage2DReader 
                     }
                 }
                 if (!replacedOriginalFilter) {
-                    parameters = CoverageUtils.mergeParameter(descriptors, parameters, readFilter,
-                            "FILTER", "Filter");
+                    parameters =
+                            CoverageUtils.mergeParameter(
+                                    descriptors, parameters, readFilter, "FILTER", "Filter");
                 }
-
-                
             }
         }
 
         GridCoverage2D grid = delegate.read(parameters);
 
         // crop if necessary
-        if (rasterFilter != null) {
-            
-            Geometry coverageBounds = JTS.toGeometry((Envelope) new ReferencedEnvelope(grid.getEnvelope2D()));
-            if(coverageBounds.intersects(rasterFilter)) {
-                final ParameterValueGroup param = processor.getOperation("CoverageCrop").getParameters();
+        if (rasterFilter != null && grid != null) {
+            Geometry coverageBounds =
+                    JTS.toGeometry((Envelope) new ReferencedEnvelope(grid.getEnvelope2D()));
+            if (coverageBounds.intersects(rasterFilter)) {
+                final ParameterValueGroup param = cropParams.clone();
                 param.parameter("source").setValue(grid);
                 param.parameter("ROI").setValue(rasterFilter);
-                grid = (GridCoverage2D) ((Crop)processor.getOperation("CoverageCrop")).doOperation(param, null);
+                grid = (GridCoverage2D) coverageCropFactory.doOperation(param, null);
             } else {
                 return null;
             }
         }
-            
-
         return grid;
     }
 
+    @Override
+    public ServiceInfo getInfo() {
+        ServiceInfo info = delegate.getInfo();
+        if (info == null) {
+            return null;
+        } else {
+            return SecuredObjects.secure(info, policy);
+        }
+    }
+
+    @Override
+    public ResourceInfo getInfo(String coverageName) {
+        ResourceInfo info = delegate.getInfo(coverageName);
+        if (info == null) {
+            return null;
+        } else {
+            return SecuredObjects.secure(info, policy);
+        }
+    }
 }

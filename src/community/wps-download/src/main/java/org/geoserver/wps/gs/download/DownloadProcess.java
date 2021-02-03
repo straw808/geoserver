@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -6,48 +6,55 @@
 package org.geoserver.wps.gs.download;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.apache.commons.io.IOUtils;
+import javax.media.jai.Interpolation;
+import javax.media.jai.JAI;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.CoverageInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.catalog.ResourceInfo;
 import org.geoserver.config.GeoServer;
+import org.geoserver.platform.resource.Resource;
+import org.geoserver.platform.resource.Resources;
+import org.geoserver.wps.gs.GeoServerProcess;
 import org.geoserver.wps.ppio.ZipArchivePPIO;
 import org.geoserver.wps.resource.WPSFileResource;
 import org.geoserver.wps.resource.WPSResourceManager;
+import org.geotools.image.util.ImageUtilities;
 import org.geotools.process.ProcessException;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
-import org.geotools.process.gs.GSProcess;
 import org.geotools.util.Utilities;
 import org.geotools.util.logging.Logging;
+import org.locationtech.jts.geom.Geometry;
 import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.util.ProgressListener;
-
-import com.vividsolutions.jts.geom.Geometry;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 /**
  * The main DownloadProcess class.
- * 
- * This class is simply responsible for deciding who is going to take care of the request and then for putting together the final result as a zip file
- * adding the needed styles.
- * 
- * 
+ *
+ * <p>This class is simply responsible for deciding who is going to take care of the request and
+ * then for putting together the final result as a zip file adding the needed styles.
+ *
  * @author "Alessio Fabiani - alessio.fabiani@geo-solutions.it"
  * @author Simone Giannecchini, GeoSolutions SAS
  */
 @SuppressWarnings("deprecation")
-@DescribeProcess(title = "Enterprise Download Process", description = "Downloads Layer Stream and provides a ZIP.")
-public class DownloadProcess implements GSProcess {
+@DescribeProcess(
+    title = "Enterprise Download Process",
+    description = "Downloads Layer Stream and provides a ZIP."
+)
+public class DownloadProcess implements GeoServerProcess, ApplicationContextAware {
 
     /** The LOGGER. */
     private static final Logger LOGGER = Logging.getLogger(DownloadProcess.class);
@@ -60,15 +67,18 @@ public class DownloadProcess implements GSProcess {
 
     private WPSResourceManager resourceManager;
 
+    private ApplicationContext context;
+
     /**
      * Instantiates a new download process.
-     * 
+     *
      * @param geoServer the geo server
-     * @param sendMail the send mail
      * @param estimator the estimator
      * @param resourceManager the resourceManager to track resources to be cleaned up
      */
-    public DownloadProcess(GeoServer geoServer, DownloadEstimatorProcess estimator,
+    public DownloadProcess(
+            GeoServer geoServer,
+            DownloadEstimatorProcess estimator,
             WPSResourceManager resourceManager) {
         Utilities.ensureNonNull("geoServer", geoServer);
         this.catalog = geoServer.getCatalog();
@@ -78,29 +88,144 @@ public class DownloadProcess implements GSProcess {
 
     /**
      * This process returns a zipped file containing the selected layer, cropped if needed.
-     * 
+     *
      * @param layerName the layer name
      * @param filter the filter
-     * @param email the email
      * @param mimeType the output format
      * @param targetCRS the target crs
      * @param roiCRS the roi crs
      * @param roi the roi
      * @param clip the crop to geometry
+     * @param interpolation interpolation method to use when reprojecting / scaling
+     * @param targetSizeX the size of the target image along the X axis
+     * @param targetSizeY the size of the target image along the Y axis
+     * @param bandIndices the band indices selected for output, in case of raster input
+     * @param writeParameters optional writing parameters
+     * @param minimizeReprojections When dealing with a Heterogeneous CRS mosaic, avoid
+     *     reprojections of the granules within the ROI, having their nativeCRS equal to the
+     *     targetCRS
+     * @param bestResolutionOnMatchingCRS When dealing with a Heterogeneous CRS mosaic, given a ROI
+     *     and a TargetCRS, with no target size being specified, get the best resolution of data
+     *     having nativeCrs matching the TargetCRS
+     * @param resolutionsDifferenceTolerance the parameter allows to specify a tolerance value to
+     *     control the use of native resolution of the data, when no target size has been specified
+     *     and granules are reprojected. If the percentage difference between original and
+     *     reprojected coverages resolutions is below the specified tolerance value, native
+     *     resolution is the same for all the requested granules, the unit of measure is the same
+     *     for native and target CRS, the reprojected coverage will be forced to use native
+     *     resolutions. i.e. by specifying a value of 5.0, if the percentage difference between
+     *     native and reprojected data is below 5%, assuming that also the other two conditions are
+     *     respected, the native resolutions will be preserved. Default values is 0.
+     * @param targetVerticalCRS the target VerticalCRS when downloading elevation/height related
+     *     data
      * @param progressListener the progress listener
      * @return the file
      * @throws ProcessException the process exception
      */
     @DescribeResult(name = "result", description = "Zipped output files to download")
     public File execute(
-            @DescribeParameter(name = "layerName", min = 1, description = "Original layer to download") String layerName,
-            @DescribeParameter(name = "filter", min = 0, description = "Optional Vector Filter") Filter filter,
-            @DescribeParameter(name = "outputFormat", min = 1, description = "Output Format Mime-Type") String mimeType,
-            @DescribeParameter(name = "targetCRS", min = 0, description = "Optional Target CRS") CoordinateReferenceSystem targetCRS,
-            @DescribeParameter(name = "RoiCRS", min = 0, description = "Optional Region Of Interest CRS") CoordinateReferenceSystem roiCRS,
-            @DescribeParameter(name = "ROI", min = 0, description = "Optional Region Of Interest (Polygon)") Geometry roi,
-            @DescribeParameter(name = "cropToROI", min = 0, description = "Crop to ROI") Boolean clip,
-            final ProgressListener progressListener) throws ProcessException {
+            @DescribeParameter(
+                        name = "layerName",
+                        min = 1,
+                        description = "Original layer to download"
+                    )
+                    String layerName,
+            @DescribeParameter(name = "filter", min = 0, description = "Optional Vector Filter")
+                    Filter filter,
+            @DescribeParameter(
+                        name = "outputFormat",
+                        min = 1,
+                        description = "Output Format Mime-Type"
+                    )
+                    String mimeType,
+            @DescribeParameter(name = "targetCRS", min = 0, description = "Optional Target CRS")
+                    CoordinateReferenceSystem targetCRS,
+            @DescribeParameter(
+                        name = "RoiCRS",
+                        min = 0,
+                        description = "Optional Region Of Interest CRS"
+                    )
+                    CoordinateReferenceSystem roiCRS,
+            @DescribeParameter(
+                        name = "ROI",
+                        min = 0,
+                        description = "Optional Region Of Interest (Polygon)"
+                    )
+                    Geometry roi,
+            @DescribeParameter(name = "cropToROI", min = 0, description = "Crop to ROI")
+                    Boolean clip,
+            @DescribeParameter(
+                        name = "interpolation",
+                        description =
+                                "Interpolation function to use when reprojecting / scaling raster data.  Values are NEAREST (default), BILINEAR, BICUBIC2, BICUBIC",
+                        min = 0
+                    )
+                    Interpolation interpolation,
+            @DescribeParameter(
+                        name = "targetSizeX",
+                        min = 0,
+                        minValue = 1,
+                        description =
+                                "X Size of the Target Image (applies to raster data only), or native resolution if missing"
+                    )
+                    Integer targetSizeX,
+            @DescribeParameter(
+                        name = "targetSizeY",
+                        min = 0,
+                        minValue = 1,
+                        description =
+                                "Y Size of the Target Image (applies to raster data only), or native resolution if missing"
+                    )
+                    Integer targetSizeY,
+            @DescribeParameter(
+                        name = "selectedBands",
+                        description = "Band Selection Indices",
+                        min = 0
+                    )
+                    int[] bandIndices,
+            @DescribeParameter(
+                        name = "writeParameters",
+                        description = "Optional writing parameters",
+                        min = 0
+                    )
+                    Parameters writeParameters,
+            @DescribeParameter(
+                        name = "minimizeReprojections",
+                        description =
+                                "When dealing with a Heterogeneous CRS mosaic, avoid reprojections of "
+                                        + "the granules within the ROI, having their nativeCRS equal to the targetCRS",
+                        min = 0
+                    )
+                    Boolean minimizeReprojections,
+            @DescribeParameter(
+                        name = "bestResolutionOnMatchingCRS",
+                        description =
+                                "When dealing with a Heterogeneous CRS mosaic given a ROI "
+                                        + "and a TargetCRS, with no target size being specified, get the best "
+                                        + " resolution of data having nativeCrs matching the TargetCRS",
+                        min = 0
+                    )
+                    Boolean bestResolutionOnMatchingCRS,
+            @DescribeParameter(
+                        name = "resolutionsDifferenceTolerance",
+                        description =
+                                "the parameter allows to specify a tolerance value to control the use of native"
+                                        + " resolution of the data, when no target size has been specified and granules are reprojected. If "
+                                        + " the percentage difference between original and reprojected coverages resolutions is below the specified tolerance value,"
+                                        + " native resolutions is the same for all the requested granules,"
+                                        + " the unit of measure is the same for native and target CRS, "
+                                        + "the reprojected coverage will be forced to use native resolutions",
+                        min = 0
+                    )
+                    Double resolutionsDifferenceTolerance,
+            @DescribeParameter(
+                        name = "targetVerticalCRS",
+                        description = "Optional Target VerticalCRS ",
+                        min = 0
+                    )
+                    CoordinateReferenceSystem targetVerticalCRS,
+            final ProgressListener progressListener)
+            throws ProcessException {
 
         try {
 
@@ -133,13 +258,54 @@ public class DownloadProcess implements GSProcess {
                 roi.setUserData(roiCRS);
             }
 
+            // set default interpolation value
+            if (interpolation == null) {
+                if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.log(
+                            Level.FINE,
+                            "Interpolation parameter not specified, using default (Nearest Neighbor)");
+                }
+                interpolation =
+                        (Interpolation)
+                                ImageUtilities.NN_INTERPOLATION_HINT.get(JAI.KEY_INTERPOLATION);
+            }
+
+            // Default behavior is false for backward compatibility
+            if (bestResolutionOnMatchingCRS == null) {
+                bestResolutionOnMatchingCRS = false;
+                if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.log(Level.FINE, "best resolution on MatchingCRS is disabled");
+                }
+            }
+            if (minimizeReprojections == null) {
+                minimizeReprojections = false;
+                if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.log(Level.FINE, "Minimize reprojections is disabled");
+                }
+            }
+
+            if (resolutionsDifferenceTolerance == null) {
+                resolutionsDifferenceTolerance = 0d;
+                if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.log(Level.FINE, "Use native resolution is disabled");
+                }
+            }
             //
             // do we respect limits?
             //
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.log(Level.FINE, "Running the estimator");
             }
-            if (!estimator.execute(layerName, filter, targetCRS, roiCRS, roi, clip,
+            if (!estimator.execute(
+                    layerName,
+                    filter,
+                    targetCRS,
+                    roiCRS,
+                    roi,
+                    clip,
+                    targetSizeX,
+                    targetSizeY,
+                    bandIndices,
                     progressListener)) {
                 throw new IllegalArgumentException("Download Limits Exceeded. Unable to proceed!");
             }
@@ -152,14 +318,13 @@ public class DownloadProcess implements GSProcess {
             if (layerInfo == null) {
                 // could not find any layer ... abruptly interrupt the process
                 throw new IllegalArgumentException("Unable to locate layer: " + layerName);
-
             }
             ResourceInfo resourceInfo = layerInfo.getResource();
             if (resourceInfo == null) {
-                // could not find any data store associated to the specified layer ... abruptly interrupt the process
-                throw new IllegalArgumentException("Unable to locate ResourceInfo for layer:"
-                        + layerName);
-
+                // could not find any data store associated to the specified layer ... abruptly
+                // interrupt the process
+                throw new IllegalArgumentException(
+                        "Unable to locate ResourceInfo for layer:" + layerName);
             }
 
             //
@@ -174,7 +339,7 @@ public class DownloadProcess implements GSProcess {
             }
 
             // CORE CODE
-            File internalOutput = null;
+            Resource internalOutput = null;
             if (resourceInfo instanceof FeatureTypeInfo) {
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.log(Level.FINE, "The resource to work on is a vector layer");
@@ -183,9 +348,16 @@ public class DownloadProcess implements GSProcess {
                 // VECTOR
                 //
                 // perform the actual download of vectorial data accordingly to the request inputs
-                internalOutput = new VectorDownload(limits, resourceManager).execute(
-                        (FeatureTypeInfo) resourceInfo, mimeType, roi, clip, filter, targetCRS,
-                        progressListener);
+                internalOutput =
+                        new VectorDownload(limits, resourceManager, context)
+                                .execute(
+                                        (FeatureTypeInfo) resourceInfo,
+                                        mimeType,
+                                        roi,
+                                        clip,
+                                        filter,
+                                        targetCRS,
+                                        progressListener);
 
             } else if (resourceInfo instanceof CoverageInfo) {
                 if (LOGGER.isLoggable(Level.FINE)) {
@@ -196,15 +368,31 @@ public class DownloadProcess implements GSProcess {
                 //
                 CoverageInfo cInfo = (CoverageInfo) resourceInfo;
                 // convert/reproject/crop if needed the coverage
-                internalOutput = new RasterDownload(limits, resourceManager).execute(mimeType,
-                        progressListener, cInfo, roi, targetCRS, clip, filter);
+                internalOutput =
+                        new RasterDownload(limits, resourceManager, context, catalog)
+                                .execute(
+                                        mimeType,
+                                        progressListener,
+                                        cInfo,
+                                        roi,
+                                        targetCRS,
+                                        clip,
+                                        filter,
+                                        interpolation,
+                                        targetSizeX,
+                                        targetSizeY,
+                                        bandIndices,
+                                        writeParameters,
+                                        minimizeReprojections,
+                                        bestResolutionOnMatchingCRS,
+                                        resolutionsDifferenceTolerance,
+                                        targetVerticalCRS);
             } else {
 
                 // wrong type
                 throw new IllegalArgumentException(
                         "Could not complete the Download Process, requested layer was of wrong type-->"
                                 + resourceInfo.getClass());
-
             }
 
             //
@@ -216,12 +404,11 @@ public class DownloadProcess implements GSProcess {
                 throw new IllegalStateException(
                         "Could not complete the Download Process, output file is null");
             }
-            if (!internalOutput.exists() || !internalOutput.canRead()) {
+            if (!Resources.exists(internalOutput) || !Resources.canRead(internalOutput)) {
                 // wrong type
                 throw new IllegalStateException(
                         "Could not complete the Download Process, output file invalid! --> "
-                                + internalOutput.getAbsolutePath());
-
+                                + internalOutput.path());
             }
 
             // adding the style and zipping
@@ -229,38 +416,35 @@ public class DownloadProcess implements GSProcess {
                 LOGGER.log(Level.FINE, "Preparing the result");
             }
             // build output zip
-            final File result = resourceManager.getOutputResource(
-                    resourceManager.getExecutionId(true), resourceInfo.getName() + ".zip").file();
+            final Resource result =
+                    resourceManager.getOutputResource(
+                            resourceManager.getExecutionId(true), resourceInfo.getName() + ".zip");
 
-            FileOutputStream os1 = null;
-            try {
-                os1 = new FileOutputStream(result);
-
+            try (OutputStream os1 = result.out()) {
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.log(Level.FINE, "Listing files");
                 }
                 // output
                 List<File> filesToDownload = new ArrayList<File>();
-                filesToDownload.add(internalOutput);
+                filesToDownload.add(internalOutput.file());
 
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.log(Level.FINE, "Collecting styles");
                 }
                 // add all SLD to zip
-                List<File> styles = DownloadUtilities.collectStyles(layerInfo);
-                filesToDownload.addAll(styles);
+                for (Resource style : DownloadUtilities.collectStyles(layerInfo)) {
+                    filesToDownload.add(style.file());
+                }
 
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.log(Level.FINE, "Zipping files");
                 }
                 // zip them all
-                new ZipArchivePPIO(estimator.getDownloadServiceConfiguration()
-                        .getCompressionLevel()).encode(filesToDownload, os1);
+                new ZipArchivePPIO(
+                                estimator.getDownloadServiceConfiguration().getCompressionLevel())
+                        .encode(filesToDownload, os1);
 
             } finally {
-                if (os1 != null) {
-                    IOUtils.closeQuietly(os1);
-                }
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.log(Level.FINE, "Prepare the result for deletion");
                 }
@@ -277,7 +461,7 @@ public class DownloadProcess implements GSProcess {
             }
 
             // return
-            return result;
+            return result.file();
         } catch (Throwable e) {
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.log(Level.FINE, "Download failed");
@@ -291,5 +475,10 @@ public class DownloadProcess implements GSProcess {
             }
             throw processException;
         }
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.context = applicationContext;
     }
 }

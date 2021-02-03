@@ -1,8 +1,13 @@
+/* (c) 2016 Open Source Geospatial Foundation - all rights reserved
+ * This code is licensed under the GPL 2.0 license, available at the root
+ * application directory.
+ */
+
 ; GeoServer Windows installer creation file.
 
 ; Define your application name
 !define APPNAME "GeoServer"
-!define VERSION "2.8-SNAPSHOT"
+!define VERSION "2.19-SNAPSHOT"
 ;!define LONGVERSION "2.0.0.0"
 !define APPNAMEANDVERSION "${APPNAME} ${VERSION}"
 
@@ -37,9 +42,10 @@ Var DataDirTemp
 Var DataDirHWND
 Var BrowseDataDirHWND
 Var DataDirPathCheck
-Var IsExisting
+Var DataDirType
 Var DefaultDataDir
 Var ExistingDataDir
+Var IsExistingDataDir
 Var GSUser
 Var GSPass
 Var GSUserHWND
@@ -53,25 +59,11 @@ Var PortHWND
 ;Version Information (Version tab for EXE properties)
 ;VIProductVersion ${LONGVERSION}
 ;VIAddVersionKey ProductName "${APPNAME}"
-;VIAddVersionKey LegalCopyright "Copyright (c) 1999 - 2011 The Open Planning Project"
+;VIAddVersionKey LegalCopyright "Copyright (c) 1999-2016 Open Source Geospatial Foundation"
 ;VIAddVersionKey FileDescription "GeoServer Installer"
 ;VIAddVersionKey ProductVersion "${VERSION}"
 ;VIAddVersionKey FileVersion "${VERSION}"
 ;VIAddVersionKey Comments "http://geoserver.org"
-
-; Install options page headers
-LangString TEXT_JRE_TITLE ${LANG_ENGLISH} "Java Runtime Environment"
-LangString TEXT_JRE_SUBTITLE ${LANG_ENGLISH} "Java Runtime Environment path selection"
-LangString TEXT_DATADIR_TITLE ${LANG_ENGLISH} "GeoServer Data Directory"
-LangString TEXT_DATADIR_SUBTITLE ${LANG_ENGLISH} "GeoServer Data Directory path selection"
-LangString TEXT_TYPE_TITLE ${LANG_ENGLISH} "Type of Installation"
-LangString TEXT_TYPE_SUBTITLE ${LANG_ENGLISH} "Select the type of installation"
-LangString TEXT_READY_TITLE ${LANG_ENGLISH} "Ready to Install"
-LangString TEXT_READY_SUBTITLE ${LANG_ENGLISH} "GeoServer is ready to be installed"
-LangString TEXT_CREDS_TITLE ${LANG_ENGLISH} "GeoServer Administrator"
-LangString TEXT_CREDS_SUBTITLE ${LANG_ENGLISH} "Set administrator credentials"
-LangString TEXT_PORT_TITLE ${LANG_ENGLISH} "GeoServer Web Server Port"
-LangString TEXT_PORT_SUBTITLE ${LANG_ENGLISH} "Set the port that GeoServer will respond on"
 
 ;Interface Settings
 !define MUI_ICON "gs.ico"
@@ -121,6 +113,20 @@ Page custom Ready                                             ; Summary page
 ; Set languages (first is default language)
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_RESERVEFILE_LANGDLL
+
+; Install options page headers
+LangString TEXT_JRE_TITLE ${LANG_ENGLISH} "Java Runtime Environment"
+LangString TEXT_JRE_SUBTITLE ${LANG_ENGLISH} "Java Runtime Environment path selection"
+LangString TEXT_DATADIR_TITLE ${LANG_ENGLISH} "GeoServer Data Directory"
+LangString TEXT_DATADIR_SUBTITLE ${LANG_ENGLISH} "GeoServer Data Directory path selection"
+LangString TEXT_TYPE_TITLE ${LANG_ENGLISH} "Type of Installation"
+LangString TEXT_TYPE_SUBTITLE ${LANG_ENGLISH} "Select the type of installation"
+LangString TEXT_READY_TITLE ${LANG_ENGLISH} "Ready to Install"
+LangString TEXT_READY_SUBTITLE ${LANG_ENGLISH} "GeoServer is ready to be installed"
+LangString TEXT_CREDS_TITLE ${LANG_ENGLISH} "GeoServer Administrator"
+LangString TEXT_CREDS_SUBTITLE ${LANG_ENGLISH} "Set administrator credentials"
+LangString TEXT_PORT_TITLE ${LANG_ENGLISH} "GeoServer Web Server Port"
+LangString TEXT_PORT_SUBTITLE ${LANG_ENGLISH} "Set the port that GeoServer will respond on"
 
 ; Startup tasks
 Function .onInit
@@ -215,10 +221,10 @@ Function JRE
 
   ${NSD_CreateLabel} 0 0 100% 36u "Please select the path to your Java Runtime Environment (JRE).\
                                    $\r$\n$\r$\nIf you don't have a JRE installed, you can use the \
-                                   link below to go to Oracle's website to download and install the \
+                                   link below to go to AdoptOpenJDK website to download and install the \
                                    correct JRE for your system."
 
-  ${NSD_CreateLink} 12u 40u 100% 12u "http://www.oracle.com/technetwork/java/javase/downloads/index.html"
+  ${NSD_CreateLink} 12u 40u 100% 12u "https://adoptopenjdk.net"
   Pop $LinkHWND
   ${NSD_OnClick} $LinkHWND Link
 
@@ -253,7 +259,7 @@ FunctionEnd
 Function Link
 
   Pop $0
-  ExecShell "open" "http://www.oracle.com/technetwork/java/javase/downloads/index.html"
+  ExecShell "open" "https://adoptopenjdk.net"
 
 FunctionEnd
 
@@ -324,18 +330,39 @@ Function FindDataDirPath
 
   NoErrors:
     ClearErrors
-    StrCpy $IsExisting 1
+    StrCpy $DataDirType 1
     Goto End
 
   Errors:
     ClearErrors
     StrCpy $1 "" ; not found
-    StrCpy $IsExisting 0
+    StrCpy $DataDirType 0
     Goto End
 
   End:
     ClearErrors
     Push $1
+
+FunctionEnd
+
+; Find Marlin JAR file and write service wrapper configuration to enable the Marlin renderer
+Function SetServiceMarlinRenderer
+
+  ClearErrors
+  FindFirst $0 $1 "$INSTDIR\webapps\geoserver\WEB-INF\lib\marlin*.jar"  
+  IfErrors End
+
+  FileOpen $9 "$INSTDIR\wrapper\marlin.conf" w ; Opens a Empty File and fills it
+  FileWrite $9 '# Marlin Renderer$\r$\n'
+  FileWrite $9 'set.default.MARLIN_JAR=$1$\r$\n'
+  FileWrite $9 'set.default.GEOSERVER_HOME=$INSTDIR$\r$\n'
+  FileWrite $9 'wrapper.java.additional.4=-Xbootclasspath/a:"%GEOSERVER_HOME%\webapps\geoserver\WEB-INF\lib\%MARLIN_JAR%"$\r$\n'
+  FileWrite $9 'wrapper.java.additional.5=-Dsun.java2d.renderer=org.marlin.pisces.MarlinRenderingEngine'
+  FileClose $9 ; Closes the file
+
+  End:
+    FindClose $0
+    ClearErrors
 
 FunctionEnd
 
@@ -394,7 +421,7 @@ Function DataDir
     EnableWindow $0 1 ; Turns on
   ${EndIf}
   ${If} $8 == "novalidDataDir"
-    ${If} $IsExisting == 1  ; Dont' turn off unless the radio box is checked!
+    ${If} $DataDirType == 1  ; Dont' turn off unless the radio box is checked!
       ${NSD_SetText} $DataDirPathCheck "This path does not contain a valid data directory"
       GetDlgItem $0 $HWNDPARENT 1 ; Next
       EnableWindow $0 0 ; Turns off
@@ -402,7 +429,7 @@ Function DataDir
   ${EndIf}
 
   ; default check box
-  ${If} $IsExisting == 1
+  ${If} $DataDirType == 1
     ${NSD_Check} $ExistingDataDir
   ${Else}
     ${NSD_Check} $DefaultDataDir
@@ -477,7 +504,7 @@ Function CheckBoxDataDirExisting
 
   End:
     ClearErrors
-    StrCpy $IsExisting 1
+    StrCpy $DataDirType 1
 
 FunctionEnd
 
@@ -486,7 +513,7 @@ Function CheckBoxDataDirDefault
 
   GetDlgItem $0 $HWNDPARENT 1 ; Next
   EnableWindow $0 1 ; Turns on
-  StrCpy $IsExisting 0
+  StrCpy $DataDirType 0
 
 FunctionEnd
 
@@ -500,7 +527,7 @@ Function BrowseDataDir
     ${NSD_SetText} $DataDirHWND $1 ; populate the field
     ${NSD_Check} $ExistingDataDir ; change the check box
     ${NSD_UnCheck} $DefaultDataDir ; change the check box
-    StrCpy $IsExisting 1 ; now using existing datadir
+    StrCpy $DataDirType 1 ; now using existing datadir
   ${EndIf}  
 
 FunctionEnd
@@ -508,18 +535,30 @@ FunctionEnd
 ; When done, set variable permanently
 Function DataDirLeave
 
-  ${If} $IsExisting == 0 ; use the default
+  ${If} $DataDirType == 0 ; use the default
     StrCpy $DataDir "$INSTDIR\data_dir"
-  ${ElseIf} $IsExisting == 1
+  ${ElseIf} $DataDirType == 1
     StrCpy $DataDir $DataDirTemp
   ${EndIf}
+
+  ; check to see wether the data_dir exist
+  IfFileExists $DataDir DataDirExists
+
+  ; does NOT exists
+  StrCpy $IsExistingDataDir 0
+  Goto End
+
+  DataDirExists:
+  StrCpy $IsExistingDataDir 1
+
+  End:
 
 FunctionEnd
 
 ; Will build a page to input default GS admin creds
 Function Creds
 
-  StrCmp $IsExisting 1 SkipCreds
+  StrCmp $IsExistingDataDir 1 SkipCreds
   
   !insertmacro MUI_HEADER_TEXT "$(TEXT_CREDS_TITLE)" "$(TEXT_CREDS_SUBTITLE)"
   nsDialogs::Create 1018
@@ -608,7 +647,7 @@ Function Port
   Pop $PortHWND
   ${NSD_OnChange} $PortHWND PortCheck
 
-  ${NSD_CreateLabel} 110u 40u 120u 14u "Valid range is 1024-65535." 
+  ${NSD_CreateLabel} 110u 40u 120u 14u "Valid range is 80, 1024-65535." 
 
   nsDialogs::Show
 
@@ -623,15 +662,20 @@ Function PortCheck
 
 
   ; Check for illegal values of $Port
-  ${If} $Port < 1024        ; Too low
-  ${OrIf} $Port > 65535     ; Too high
-    GetDlgItem $0 $HWNDPARENT 1 ; Next
-    EnableWindow $0 0 ; Disable
-  ${Else}
+  ${If} $Port = 80
     GetDlgItem $0 $HWNDPARENT 1 ; Next
     EnableWindow $0 1 ; Enable
-  ${EndIf}
-
+  ${Else}  
+     ${If} $Port < 1024        ; Too low
+     ${OrIf} $Port > 65535     ; Too high
+      GetDlgItem $0 $HWNDPARENT 1 ; Next
+      EnableWindow $0 0 ; Disable
+     ${Else}
+      GetDlgItem $0 $HWNDPARENT 1 ; Next
+      EnableWindow $0 1 ; Enable
+     ${EndIf}
+   ${EndIf}
+   
 FunctionEnd
 
 ; Manual vs service selection
@@ -699,14 +743,14 @@ Function Ready
 
   ; Data dir
   ${NSD_CreateLabel} 10u 85u 35% 24u "Data Directory:"
-  ${If} $IsExisting == 1
+  ${If} $IsExistingDataDir == 1
     ${NSD_CreateLabel} 40% 85u 60% 24u "Using existing data directory:$\r$\n$DataDir"
   ${Else}
     ${NSD_CreateLabel} 40% 85u 60% 24u "Using default data directory:$\r$\n$DataDir"
   ${EndIf}
 
   ; Creds
-  ${If} $IsExisting == 1
+  ${If} $IsExistingDataDir == 1
     ${NSD_CreateLabel} 10u 112u 35% 24u "Port:"
     ${NSD_CreateLabel} 40% 112u 60% 24u "$Port"
   ${Else}
@@ -755,17 +799,24 @@ Section "Main" SectionMain
   CreateDirectory "$INSTDIR"
   SetOutPath "$INSTDIR"
   File /a start.jar
+  File /a start.ini
   File /a GPL.txt
   File /a LICENSE.txt
   File /a README.txt
   File /a RUNNING.txt
-  File /r data_dir
   File /r etc
+  File /r modules
   File /r lib
   File /r logs
   File /r resources
   File /r webapps
   File /r gs.ico
+
+  ; Special handling of the 'data_dir'
+  ${If} $IsExistingDataDir == 0 ; Only place files, when NOT using an existing folder
+  File /r data_dir
+  ${EndIf}
+
 
   ; Write environment variables
   Push "JAVA_HOME"
@@ -794,9 +845,13 @@ Section "Main" SectionMain
     SetOutPath "$INSTDIR\wrapper\lib"
     File /a wrapper.jar
     File /a wrapper.dll
-	
+
+    CreateDirectory "$INSTDIR\work"
+
+    Call SetServiceMarlinRenderer
+    
     ; Install the service (and start it)
-    nsExec::Exec "$INSTDIR\wrapper.exe -it ./wrapper/wrapper.conf wrapper.java.additional.4=-Djetty.port=$Port"
+    nsExec::Exec "$INSTDIR\wrapper.exe -it ./wrapper/wrapper.conf wrapper.app.parameter.4=jetty.port=$Port"
 
   ${EndIf}
 
@@ -815,7 +870,7 @@ SectionEnd
 Section -FinishSection
 
   ; New users.properties file is created here
-  StrCmp $IsExisting 1 NoWriteCreds WriteCreds
+  StrCmp $IsExistingDataDir 1 NoWriteCreds WriteCreds
 
   WriteCreds:
     Delete "$DataDir\security\users.properties"
@@ -825,16 +880,7 @@ Section -FinishSection
 	
   NoWriteCreds:
 
-  ;Start Menu
-  !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
-
-  ;Create shortcuts
-  CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\GeoServer Homepage.lnk" "http://geoserver.org"
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\GeoServer Web Admin Page.lnk" "http://localhost:$Port/geoserver/web"
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\GeoServer Data Directory.lnk" "$DataDir"
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
-
+  ; Startup and Shutdown batch files
   CreateDirectory "$INSTDIR\bin"
   SetOutPath "$INSTDIR\bin"
 
@@ -851,7 +897,9 @@ Section -FinishSection
   ${ElseIf} $IsManual == 1 ; manual
 
     FileOpen $9 startup.bat w ; Opens a Empty File and fills it
-    FileWrite $9 'call "$JavaHome\bin\java.exe" -DGEOSERVER_DATA_DIR="$DataDir" -Xmx512m -XX:MaxPermSize=128m -DSTOP.PORT=8079 -DSTOP.KEY=geoserver -Djetty.port=$Port -Djetty.logs="$INSTDIR\logs" -jar "$INSTDIR\start.jar"'
+    FileWrite $9 'for /f "delims=" %%i in ($\'dir /b/s "%~dp0..\webapps\geoserver\WEB-INF\lib\marlin*.jar"$\') do set MARLIN_JAR=%%i$\r$\n'
+    FileWrite $9 'if not "%MARLIN_JAR%" == "" set MARLIN_ENABLER=-Xbootclasspath/a:"%MARLIN_JAR%" -Dsun.java2d.renderer=org.marlin.pisces.MarlinRenderingEngine$\r$\n$\r$\n'
+    FileWrite $9 'call "$JavaHome\bin\java.exe" %MARLIN_ENABLER% -DGEOSERVER_DATA_DIR="$DataDir" -Xmx512m -DSTOP.PORT=8079 -DSTOP.KEY=geoserver -Djetty.base="$INSTDIR" -Djetty.logs="$INSTDIR\logs" -jar "$INSTDIR\start.jar" --module=http jetty.port=$Port'
     FileClose $9 ; Closes the file
 
     FileOpen $9 shutdown.bat w ; Opens a Empty File and fills it
@@ -859,7 +907,18 @@ Section -FinishSection
     FileClose $9 ; Closes the file
 
   ${EndIf}
+  
+  ;Start Menu
+  !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 
+  ;Create shortcuts
+  CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\GeoServer Homepage.lnk" "http://geoserver.org"
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\GeoServer Web Admin Page.lnk" "http://localhost:$Port/geoserver/web"
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\GeoServer Data Directory.lnk" "$DataDir"
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
+
+  SetOutPath "$INSTDIR"
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Start GeoServer.lnk" "$INSTDIR\bin\startup.bat" \
                  "" "$INSTDIR\gs.ico" 0
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Stop GeoServer.lnk" "$INSTDIR\bin\shutdown.bat" \
@@ -917,12 +976,14 @@ Section Uninstall
   RMDir /r "$SMPROGRAMS\${APPNAMEANDVERSION}"
 
   ; Delete files/folders
-  RMDir /r "$INSTDIR\data_dir"
+;  RMDir /r "$INSTDIR\data_dir" - do not remove this, as it might be the actual application 'data_dir'
   RMDir /r "$INSTDIR\bin"
   RMDir /r "$INSTDIR\etc"
+  RMDir /r "$INSTDIR\modules"
   RMDir /r "$INSTDIR\lib"
   RMDir /r "$INSTDIR\logs"
   RMDir /r "$INSTDIR\resources"
+  RMDir /r "$INSTDIR\work" ; working data
   RMDir /r "$INSTDIR\webapps"
   RMDir /r "$INSTDIR\v*" ; EPSG DB
   Delete "$INSTDIR\*.*"

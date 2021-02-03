@@ -1,34 +1,46 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
  */
 package org.geoserver.gwc;
 
+import com.google.common.collect.Lists;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.geoserver.catalog.PublishedInfo;
-import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.PublishedType;
+import org.geoserver.catalog.StoreInfo;
+import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.catalog.impl.DataStoreInfoImpl;
 import org.geoserver.catalog.impl.FeatureTypeInfoImpl;
 import org.geoserver.catalog.impl.LayerGroupInfoImpl;
 import org.geoserver.catalog.impl.LayerInfoImpl;
 import org.geoserver.catalog.impl.NamespaceInfoImpl;
 import org.geoserver.catalog.impl.StyleInfoImpl;
+import org.geoserver.catalog.impl.WorkspaceInfoImpl;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 
-import com.google.common.collect.Lists;
-
 public class GWCTestHelpers {
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static LayerInfoImpl mockLayer(String resourceName, String[] extraStyles, PublishedType type) {
+    public static LayerInfoImpl mockLayer(
+            String resourceName, String[] extraStyles, PublishedType type) {
+        return mockLayer(resourceName, null, extraStyles, type);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static LayerInfoImpl mockLayer(
+            String resourceName, String workSpaceName, String[] extraStyles, PublishedType type) {
         StoreInfo store = new DataStoreInfoImpl(null);
         store.setName(resourceName + "-store");
         store.setEnabled(true);
+
+        if (workSpaceName != null) {
+            WorkspaceInfo workspace = new WorkspaceInfoImpl();
+            workspace.setName(workSpaceName);
+            store.setWorkspace(workspace);
+        }
 
         NamespaceInfoImpl ns = new NamespaceInfoImpl();
         ns.setPrefix("test");
@@ -63,11 +75,11 @@ public class GWCTestHelpers {
         }
 
         layer.setType(type);
-        
+
         return layer;
     }
 
-    public static LayerGroupInfoImpl mockGroup(String name, PublishedInfo ... layers) {
+    public static LayerGroupInfoImpl mockGroup(String name, PublishedInfo... layers) {
         LayerGroupInfoImpl lg = new LayerGroupInfoImpl();
         lg.setId("id-" + name);
         lg.setName(name);
@@ -75,5 +87,4 @@ public class GWCTestHelpers {
         lg.setBounds(new ReferencedEnvelope(-180, -90, 180, 90, DefaultGeographicCRS.WGS84));
         return lg;
     }
-
 }

@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014-2015 Open Source Geospatial Foundation - all rights reserved
  * (c) 2014 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -8,12 +8,14 @@ package org.geoserver.platform.resource;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Empty ResourceStore implementation (any attempt to access content will result in IllegalStateException). This implementation prevents client code
- * from requiring null checks on {@link ResourceStore#get(String)}. IllegalStateException are thrown by in(), out() and file() which are the usual
- * methods clients require error handling.
+ * Empty ResourceStore implementation (any attempt to access content will result in
+ * IllegalStateException). This implementation prevents client code from requiring null checks on
+ * {@link ResourceStore#get(String)}. IllegalStateException are thrown by in(), out() and file()
+ * which are the usual methods clients require error handling.
  */
 final class NullResourceStore implements ResourceStore {
     final long MODIFIED = System.currentTimeMillis();
@@ -22,6 +24,7 @@ final class NullResourceStore implements ResourceStore {
     @Override
     public Resource get(final String resourcePath) {
         return new Resource() {
+
             String path = resourcePath;
 
             @Override
@@ -43,16 +46,17 @@ final class NullResourceStore implements ResourceStore {
             public Lock lock() {
                 return locks.acquire(path);
             }
-            
+
             @Override
             public void addListener(ResourceListener listener) {
                 // no events provided
             }
+
             @Override
             public void removeListener(ResourceListener listener) {
                 // no events provided
             }
-            
+
             @Override
             public OutputStream out() {
                 throw new IllegalStateException("Unable to write to ResourceStore.EMPTY");
@@ -84,7 +88,7 @@ final class NullResourceStore implements ResourceStore {
 
             @Override
             public List<Resource> list() {
-                return null;
+                return Collections.emptyList();
             }
 
             @Override
@@ -102,18 +106,13 @@ final class NullResourceStore implements ResourceStore {
 
             @Override
             public boolean equals(Object obj) {
-                if (this == obj)
-                    return true;
-                if (obj == null)
-                    return false;
-                if (getClass() != obj.getClass())
-                    return false;
+                if (this == obj) return true;
+                if (obj == null) return false;
+                if (getClass() != obj.getClass()) return false;
                 Resource other = (Resource) obj;
                 if (path == null) {
-                    if (other.path() != null)
-                        return false;
-                } else if (!path.equals(other.path()))
-                    return false;
+                    if (other.path() != null) return false;
+                } else if (!path.equals(other.path())) return false;
                 return true;
             }
 
@@ -148,4 +147,8 @@ final class NullResourceStore implements ResourceStore {
         return false; // unable to move empty resource
     }
 
+    @Override
+    public ResourceNotificationDispatcher getResourceNotificationDispatcher() {
+        return null;
+    }
 }

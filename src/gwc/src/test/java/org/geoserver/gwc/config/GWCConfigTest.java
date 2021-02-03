@@ -1,15 +1,15 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
  */
 package org.geoserver.gwc.config;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotSame;
-import static junit.framework.Assert.assertSame;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import org.geoserver.data.test.SystemTestData;
 import org.geoserver.test.GeoServerSystemTestSupport;
@@ -27,7 +27,7 @@ public class GWCConfigTest extends GeoServerSystemTestSupport {
     protected void onSetUp(SystemTestData testData) throws Exception {
         super.onSetUp(testData);
     }
-    
+
     @Before
     public void setup() throws Exception {
         oldDefaults = GWCConfig.getOldDefaults();
@@ -68,7 +68,6 @@ public class GWCConfigTest extends GeoServerSystemTestSupport {
         config.getDefaultVectorCacheFormats().clear();
         assertFalse(config.isSane());
         assertTrue((config = config.saneConfig()).isSane());
-
     }
 
     @Test
@@ -76,8 +75,8 @@ public class GWCConfigTest extends GeoServerSystemTestSupport {
         GWCConfig clone = config.clone();
         assertEquals(config, clone);
         assertNotSame(config.getDefaultCachingGridSetIds(), clone.getDefaultCachingGridSetIds());
-        assertNotSame(config.getDefaultCoverageCacheFormats(),
-                clone.getDefaultCoverageCacheFormats());
+        assertNotSame(
+                config.getDefaultCoverageCacheFormats(), clone.getDefaultCoverageCacheFormats());
         assertNotSame(config.getDefaultOtherCacheFormats(), clone.getDefaultOtherCacheFormats());
         assertNotSame(config.getDefaultVectorCacheFormats(), clone.getDefaultVectorCacheFormats());
         assertNotSame(config.getCacheConfigurations(), clone.getCacheConfigurations());
@@ -88,12 +87,9 @@ public class GWCConfigTest extends GeoServerSystemTestSupport {
     public void testIsServiceEnabled() {
         config.setWMSCEnabled(!config.isWMSCEnabled());
         config.setTMSEnabled(!config.isTMSEnabled());
-        config.setWMTSEnabled(!config.isWMTSEnabled());
 
         assertEquals(config.isEnabled("wms"), config.isWMSCEnabled());
         assertEquals(config.isEnabled("WMS"), config.isWMSCEnabled());
-        assertEquals(config.isEnabled("wmts"), config.isWMTSEnabled());
-        assertEquals(config.isEnabled("WMTS"), config.isWMTSEnabled());
         assertEquals(config.isEnabled("tms"), config.isTMSEnabled());
         assertEquals(config.isEnabled("TMS"), config.isTMSEnabled());
 

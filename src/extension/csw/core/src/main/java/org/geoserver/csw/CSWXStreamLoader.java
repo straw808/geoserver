@@ -6,9 +6,9 @@
 
 package org.geoserver.csw;
 
+import com.thoughtworks.xstream.XStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import org.geoserver.catalog.MetadataMap;
 import org.geoserver.config.GeoServer;
 import org.geoserver.config.util.XStreamPersister;
@@ -16,11 +16,9 @@ import org.geoserver.config.util.XStreamServiceLoader;
 import org.geoserver.platform.GeoServerResourceLoader;
 import org.geotools.util.Version;
 
-import com.thoughtworks.xstream.XStream;
-
 /**
  * Service loader for the Catalog Services for the Web
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
 public class CSWXStreamLoader extends XStreamServiceLoader<CSWInfo> {
@@ -54,19 +52,19 @@ public class CSWXStreamLoader extends XStreamServiceLoader<CSWInfo> {
     protected CSWInfo initialize(CSWInfo service) {
         // TODO: move this code block to the parent class
         if (service.getKeywords() == null) {
-            ((CSWInfoImpl) service).setKeywords(new ArrayList());
+            ((CSWInfoImpl) service).setKeywords(new ArrayList<>());
         }
         if (service.getExceptionFormats() == null) {
-            ((CSWInfoImpl) service).setExceptionFormats(new ArrayList());
+            ((CSWInfoImpl) service).setExceptionFormats(new ArrayList<>());
         }
         if (service.getMetadata() == null) {
             ((CSWInfoImpl) service).setMetadata(new MetadataMap());
         }
         if (service.getClientProperties() == null) {
-            ((CSWInfoImpl) service).setClientProperties(new HashMap());
+            ((CSWInfoImpl) service).setClientProperties(new HashMap<>());
         }
         if (service.getVersions() == null) {
-            ((CSWInfoImpl) service).setVersions(new ArrayList());
+            ((CSWInfoImpl) service).setVersions(new ArrayList<>());
         }
         if (service.getVersions().isEmpty()) {
             service.getVersions().add(new Version("2.0.2"));
@@ -74,5 +72,4 @@ public class CSWXStreamLoader extends XStreamServiceLoader<CSWInfo> {
 
         return service;
     }
-
 }

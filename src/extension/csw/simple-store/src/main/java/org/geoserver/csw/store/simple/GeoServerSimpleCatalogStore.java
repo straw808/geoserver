@@ -6,7 +6,6 @@
 package org.geoserver.csw.store.simple;
 
 import java.io.IOException;
-
 import org.geoserver.config.GeoServerDataDirectory;
 
 /**
@@ -16,7 +15,6 @@ import org.geoserver.config.GeoServerDataDirectory;
 public class GeoServerSimpleCatalogStore extends SimpleCatalogStore {
 
     public GeoServerSimpleCatalogStore(GeoServerDataDirectory dataDirectory) throws IOException {
-        super(dataDirectory.findOrCreateDir("catalog"));
+        super(dataDirectory.get("catalog"));
     }
-
 }

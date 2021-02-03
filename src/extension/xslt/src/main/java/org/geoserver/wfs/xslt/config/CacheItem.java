@@ -5,15 +5,14 @@
  */
 package org.geoserver.wfs.xslt.config;
 
-import java.io.File;
+import org.geoserver.platform.resource.Resource;
 
 /**
  * A cache item for a resource loaded from a file. Helps checking if the cached item is up to date,
  * and avoids flooding the file system with excessive IO requests by preventing the up-to-date check
  * to be hitting the file system too often (at most once per second)
- * 
+ *
  * @author Andrea Aime - GeoSolutions
- * 
  * @param <T>
  */
 class CacheItem<T extends Object> {
@@ -26,22 +25,22 @@ class CacheItem<T extends Object> {
 
     long lastChecked;
 
-    public CacheItem(T item, File sourceFile) {
+    public CacheItem(T item, Resource sourceFile) {
         this.item = item;
-        this.lastModified = sourceFile.lastModified();
+        this.lastModified = sourceFile.lastmodified();
     }
 
     public T getItem() {
         return item;
     }
 
-    public boolean isUpToDate(File file) {
+    public boolean isUpToDate(Resource file) {
         long now = System.currentTimeMillis();
         if (now - lastChecked < MIN_INTERVALS_CHECK) {
             return true;
         } else {
             lastChecked = now;
-            long actualLastModified = file.lastModified();
+            long actualLastModified = file.lastmodified();
             return actualLastModified == lastModified;
         }
     }

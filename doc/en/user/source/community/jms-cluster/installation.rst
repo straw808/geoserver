@@ -9,8 +9,12 @@ To install the JMS Cluster modules you simply have to:
 
 * Download the ``geoserver-jms-cluster-<version>.zip`` file from the nightly builds, community section
 * Stop GeoServer
-* Unpack the zip file in ``webapps/geoserver/WEB-lib``
+* Unpack the zip file in ``webapps/geoserver/WEB-INF/lib``
 * Start again GeoServer
+
+: .. warning::
+  
+  In GeoServer versions 2.10.4, 2.11.1 and 2.12-beta default topic name was renamed from ``VirtualTopic.>``, which has a special meaning in ActiveMQ, to ``VirtualTopic.geoserver``. When upgrading to one of this versions or above the virtual topic name will be automatically updated. Note that only GeoServer instances that use the same topic name will be synchronized.
 
 As a recommendation, for the first tests try to run the cluster module on a cluster
 of GeoServer all having their own data directory.

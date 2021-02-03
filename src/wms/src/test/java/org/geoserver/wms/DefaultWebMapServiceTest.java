@@ -5,29 +5,21 @@
  */
 package org.geoserver.wms;
 
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.geoserver.data.test.MockData;
 import org.geotools.referencing.CRS;
 import org.junit.Test;
+import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-
-import com.vividsolutions.jts.geom.Envelope;
 
 public class DefaultWebMapServiceTest extends WMSTestSupport {
 
-   
-    /**
-     * This is just a very basic test, mostly testing defaults
-     * 
-     * @throws Exception
-     */
-    @Test 
+    /** This is just a very basic test, mostly testing defaults */
+    @Test
     public void testBasic() throws Exception {
         GetMapRequest mockGMR = createGetMapRequest(MockData.BASIC_POLYGONS);
 
@@ -53,19 +45,18 @@ public class DefaultWebMapServiceTest extends WMSTestSupport {
         assertTrue("EPSG:WGS 84".equalsIgnoreCase(crsString));
         assertTrue("EPSG:4326".equalsIgnoreCase(srs));
         // mockGMR.getBbox() actually returns (-180 , 90 , -90 , 180 ) <- foo
-        assertTrue(bbox.getMinX() == -180.0 && bbox.getMaxX() == 180.0 && bbox.getMinY() == -90.0
-                && bbox.getMaxY() == 90.0);
+        assertTrue(
+                bbox.getMinX() == -180.0
+                        && bbox.getMaxX() == 180.0
+                        && bbox.getMinY() == -90.0
+                        && bbox.getMaxY() == 90.0);
         assertEquals("image/png", format);
         assertEquals(width, 768);
         assertEquals(height, 384);
     }
 
-    /**
-     * Tests basic reprojection
-     * 
-     * @throws Exception
-     */
-    @Test 
+    /** Tests basic reprojection */
+    @Test
     public void testReprojection() throws Exception {
         GetMapRequest mockGMR = createGetMapRequest(MockData.BASIC_POLYGONS);
 
@@ -93,10 +84,11 @@ public class DefaultWebMapServiceTest extends WMSTestSupport {
         assertTrue("WGS84 / Simple Mercator".equalsIgnoreCase(crsString));
         assertTrue("EPSG:41001".equalsIgnoreCase(srs));
         // mockGMR.getBbox() actually returns (-180 , 90 , -90 , 180 ) <- foo
-        assertTrue(Math.abs(bbox.getMinX() + 1.9236008009077676E7) < 1E-4
-                && Math.abs(bbox.getMinY() + 2.2026354993694823E7) < 1E-4
-                && Math.abs(bbox.getMaxX() - 1.9236008009077676E7) < 1E-4
-                && Math.abs(bbox.getMaxY() - 2.2026354993694823E7) < 1E-4);
+        assertTrue(
+                Math.abs(bbox.getMinX() + 1.9236008009077676E7) < 1E-4
+                        && Math.abs(bbox.getMinY() + 2.2026354993694823E7) < 1E-4
+                        && Math.abs(bbox.getMaxX() - 1.9236008009077676E7) < 1E-4
+                        && Math.abs(bbox.getMaxY() - 2.2026354993694823E7) < 1E-4);
         assertEquals("image/gif", format);
         assertEquals(670, width);
         assertEquals(768, height);
@@ -105,15 +97,13 @@ public class DefaultWebMapServiceTest extends WMSTestSupport {
     /**
      * This test is incomplete because I (arneke) had trouble finding mock data with proper bounding
      * boxes
-     * 
-     * @throws Exception
      */
     @Test
     public void testAutoSetWidthHeight() throws Exception {
         GetMapRequest mockStreams = createGetMapRequest(MockData.BRIDGES);
         GetMapRequest mockBridges = createGetMapRequest(MockData.STREAMS);
 
-        List<MapLayerInfo> mls = new ArrayList<MapLayerInfo>(2);
+        List<MapLayerInfo> mls = new ArrayList<>(2);
         mls.add(mockBridges.getLayers().get(0));
         mls.add(mockStreams.getLayers().get(0));
 
@@ -140,10 +130,11 @@ public class DefaultWebMapServiceTest extends WMSTestSupport {
         String crsString = crs.getName().toString();
         assertTrue("WGS84 / Simple Mercator".equalsIgnoreCase(crsString));
         assertTrue("EPSG:41001".equalsIgnoreCase(srs));
-        assertTrue(Math.abs(bbox.getMinX() + 1.9236008009077676E7) < 1E-4
-                && Math.abs(bbox.getMinY() + 2.2026354993694823E7) < 1E-4
-                && Math.abs(bbox.getMaxX() - 1.9236008009077676E7) < 1E-4
-                && Math.abs(bbox.getMaxY() - 2.2026354993694823E7) < 1E-4);
+        assertTrue(
+                Math.abs(bbox.getMinX() + 1.9236008009077676E7) < 1E-4
+                        && Math.abs(bbox.getMinY() + 2.2026354993694823E7) < 1E-4
+                        && Math.abs(bbox.getMaxX() - 1.9236008009077676E7) < 1E-4
+                        && Math.abs(bbox.getMaxY() - 2.2026354993694823E7) < 1E-4);
         assertEquals("image/gif", format);
         assertEquals(670, width);
         assertEquals(768, height);
@@ -152,8 +143,6 @@ public class DefaultWebMapServiceTest extends WMSTestSupport {
     /**
      * This test is incomplete because I (arneke) had trouble finding mock data with proper bounding
      * boxes
-     * 
-     * @throws Exception
      */
     @Test
     public void testAutoSetWidthHeightOL() throws Exception {
@@ -181,5 +170,4 @@ public class DefaultWebMapServiceTest extends WMSTestSupport {
         // Ensure that by default advanced projection handling is enabled
         assertTrue(getWMS().isAdvancedProjectionHandlingEnabled());
     }
-
 }

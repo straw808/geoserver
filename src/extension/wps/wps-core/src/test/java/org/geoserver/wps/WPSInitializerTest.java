@@ -1,12 +1,19 @@
+/* (c) 2017 Open Source Geospatial Foundation - all rights reserved
+ * This code is licensed under the GPL 2.0 license, available at the root
+ * application directory.
+ */
 package org.geoserver.wps;
 
-import static org.easymock.EasyMock.*;
-import static org.easymock.classextension.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.createNiceMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.easymock.IArgumentMatcher;
 import org.easymock.internal.LastControl;
 import org.geoserver.config.ConfigurationListener;
@@ -30,7 +37,8 @@ public class WPSInitializerTest {
         WPSStorageCleaner cleaner = createNiceMock(WPSStorageCleaner.class);
         WPSResourceManager resources = createNiceMock(WPSResourceManager.class);
         expect(resources.getArtifactsStore())
-                .andReturn(createNiceMock(ProcessArtifactsStore.class)).anyTimes();
+                .andReturn(createNiceMock(ProcessArtifactsStore.class))
+                .anyTimes();
         replay(resources);
         GeoServerResourceLoader loader = createNiceMock(GeoServerResourceLoader.class);
 
@@ -43,17 +51,17 @@ public class WPSInitializerTest {
     public void testNoSave() throws Exception {
         GeoServer gs = createMock(GeoServer.class);
 
-        List<ConfigurationListener> listeners = new ArrayList();
+        List<ConfigurationListener> listeners = new ArrayList<>();
         gs.addListener(capture(listeners));
         expectLastCall().atLeastOnce();
 
-        //load all process groups so there is no call to save
+        // load all process groups so there is no call to save
         List<ProcessGroupInfo> procGroups = WPSInitializer.lookupProcessGroups();
 
         WPSInfo wps = createNiceMock(WPSInfo.class);
         expect(wps.getProcessGroups()).andReturn(procGroups).anyTimes();
         replay(wps);
-        
+
         expect(gs.getService(WPSInfo.class)).andReturn(wps).anyTimes();
         replay(gs);
 
@@ -70,20 +78,20 @@ public class WPSInitializerTest {
 
     @Test
     public void testSingleSave() throws Exception {
-        
+
         GeoServer gs = createMock(GeoServer.class);
 
-        List<ConfigurationListener> listeners = new ArrayList();
+        List<ConfigurationListener> listeners = new ArrayList<>();
         gs.addListener(capture(listeners));
         expectLastCall().atLeastOnce();
 
-        //empty list should cause save
-        List<ProcessGroupInfo> procGroups = new ArrayList();
+        // empty list should cause save
+        List<ProcessGroupInfo> procGroups = new ArrayList<>();
 
         WPSInfo wps = createNiceMock(WPSInfo.class);
         expect(wps.getProcessGroups()).andReturn(procGroups).anyTimes();
         replay(wps);
-        
+
         expect(gs.getService(WPSInfo.class)).andReturn(wps).anyTimes();
         gs.save(wps);
         expectLastCall().once();
@@ -112,6 +120,7 @@ public class WPSInitializerTest {
         public ListenerCapture(List<ConfigurationListener> listeners) {
             this.listeners = listeners;
         }
+
         @Override
         public boolean matches(Object argument) {
             if (argument instanceof ConfigurationListener) {
@@ -125,6 +134,5 @@ public class WPSInitializerTest {
         public void appendTo(StringBuffer buffer) {
             buffer.append("ListenerCapture");
         }
-    
     }
 }

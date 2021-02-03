@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -10,13 +10,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.OnChangeAjaxBehavior;
-import org.apache.wicket.behavior.SimpleAttributeModifier;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.DropDownChoice;
@@ -57,7 +56,7 @@ class GridSubsetsEditor extends FormComponentPanel<Set<XMLGridSubset>> {
 
     private class GridSubsetListValidator implements IValidator<Set<XMLGridSubset>> {
 
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -2646310164736911748L;
 
         private boolean validate;
 
@@ -71,7 +70,7 @@ class GridSubsetsEditor extends FormComponentPanel<Set<XMLGridSubset>> {
                 return;
             }
             Set<XMLGridSubset> gridSubsets = validatable.getValue();
-            if (gridSubsets == null || gridSubsets.size() == 0) {
+            if (gridSubsets == null || gridSubsets.isEmpty()) {
                 error(validatable, "GridSubsetsEditor.validation.empty");
                 return;
             }
@@ -115,7 +114,9 @@ class GridSubsetsEditor extends FormComponentPanel<Set<XMLGridSubset>> {
             }
         }
 
-        private void error(IValidatable<Set<XMLGridSubset>> validatable, final String resourceKey,
+        private void error(
+                IValidatable<Set<XMLGridSubset>> validatable,
+                final String resourceKey,
                 final String... params) {
 
             ValidationError error = new ValidationError();
@@ -123,8 +124,10 @@ class GridSubsetsEditor extends FormComponentPanel<Set<XMLGridSubset>> {
             if (params == null) {
                 message = new ResourceModel(resourceKey).getObject();
             } else {
-                message = new ParamResourceModel(resourceKey, GridSubsetsEditor.this,
-                        (Object[]) params).getObject();
+                message =
+                        new ParamResourceModel(
+                                        resourceKey, GridSubsetsEditor.this, (Object[]) params)
+                                .getObject();
             }
             error.setMessage(message);
             validatable.error(error);
@@ -150,223 +153,260 @@ class GridSubsetsEditor extends FormComponentPanel<Set<XMLGridSubset>> {
 
         container.add(table);
 
-        grids = new ListView<XMLGridSubset>("gridSubsets", new ArrayList<XMLGridSubset>(
-                model.getObject())) {
+        grids =
+                new ListView<XMLGridSubset>("gridSubsets", new ArrayList<>(model.getObject())) {
 
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            protected void onBeforeRender() {
-                super.onBeforeRender();
-            }
-
-            @Override
-            protected void populateItem(final ListItem<XMLGridSubset> item) {
-                // odd/even style
-                final int index = item.getIndex();
-                item.add(new SimpleAttributeModifier("class", index % 2 == 0 ? "even" : "odd"));
-
-                final XMLGridSubset gridSubset = item.getModelObject();
-                GridSetBroker gridSetBroker = GWC.get().getGridSetBroker();
-
-                String gridsetDescription = null;
-                int gridsetLevels;
-                boolean gridsetExists;
-                {
-                    final GridSet gridSet = gridSetBroker.get(gridSubset.getGridSetName());
-                    gridsetExists = gridSet != null;
-                    if (gridsetExists) {
-                        gridsetLevels = gridSet.getNumLevels();
-                        gridsetDescription = gridSet.getDescription();
-                    } else {
-                        gridsetLevels = gridSubset.getZoomStop() == null ? 1 : gridSubset
-                                .getZoomStop().intValue();
-                    }
-                }
-                final Label gridSetLabel;
-                final Component gridSetBounds;
-
-                gridSetLabel = new Label("gridSet", new PropertyModel<String>(item.getModel(),
-                        "gridSetName"));
-                if(!gridsetExists){
-                    gridSetLabel.add(new AttributeModifier("style", true, new Model<String>("color:red;text-decoration:line-through;")));
-                    getPage().warn("GridSet " + gridSubset.getGridSetName() + " does not exist");
-                }
-                item.add(gridSetLabel);
-                if (null != gridsetDescription) {
-                    gridSetLabel.add(new AttributeModifier("title", true, new Model<String>(
-                            gridsetDescription)));
-                }
-
-                final Component removeLink;
-
-                final int maxZoomLevel = gridsetLevels - 1;
-                final ArrayList<Integer> zoomLevels = new ArrayList<Integer>(maxZoomLevel + 1);
-                for (int z = 0; z <= maxZoomLevel; z++) {
-                    zoomLevels.add(Integer.valueOf(z));
-                }
-
-                // zoomStart has all zoom levels as choices
-                // zoomStop choices start at zoomStart's selection
-                // minCachedLevel start at zoomStart's selection and ends at zoomStop's selection
-                // maxCachedLevel start at minCachedLevels' and ends at zoomStop's selection
-
-                final IModel<Integer> zoomStartModel;
-                final IModel<Integer> zoomStopModel;
-                final IModel<Integer> minCachedLevelModel;
-                final IModel<Integer> maxCachedLevelModel;
-
-                final ZoomLevelDropDownChoice zoomStart;
-                final ZoomLevelDropDownChoice zoomStop;
-                final ZoomLevelDropDownChoice minCachedLevel;
-                final ZoomLevelDropDownChoice maxCachedLevel;
-
-                zoomStartModel = new PropertyModel<Integer>(item.getModel(), "zoomStart");
-                zoomStopModel = new PropertyModel<Integer>(item.getModel(), "zoomStop");
-                minCachedLevelModel = new PropertyModel<Integer>(item.getModel(), "minCachedLevel");
-                maxCachedLevelModel = new PropertyModel<Integer>(item.getModel(), "maxCachedLevel");
-
-                @SuppressWarnings({ "rawtypes", "unchecked" })
-                final IModel<List<Integer>> allLevels = new Model(zoomLevels);
-
-                zoomStart = new ZoomLevelDropDownChoice("zoomStart", zoomStartModel, allLevels);
-                zoomStart.setEnabled(gridsetExists);
-                item.add(zoomStart);
-
-                zoomStop = new ZoomLevelDropDownChoice("zoomStop", zoomStopModel, allLevels);
-                zoomStop.setEnabled(gridsetExists);
-                item.add(zoomStop);
-
-                minCachedLevel = new ZoomLevelDropDownChoice("minCachedLevel", minCachedLevelModel,
-                        allLevels);
-                minCachedLevel.setEnabled(gridsetExists);
-                item.add(minCachedLevel);
-
-                maxCachedLevel = new ZoomLevelDropDownChoice("maxCachedLevel", maxCachedLevelModel,
-                        allLevels);
-                maxCachedLevel.setEnabled(gridsetExists);
-                item.add(maxCachedLevel);
-
-                for (ZoomLevelDropDownChoice dropDown : Arrays.asList(zoomStart, zoomStop,
-                        minCachedLevel, maxCachedLevel)) {
-                    dropDown.add(new OnChangeAjaxBehavior() {
-                        private static final long serialVersionUID = 1L;
-
-                        // cascades to zoomStop, min and max cached levels
-                        @Override
-                        protected void onUpdate(AjaxRequestTarget target) {
-                            updateValidZoomRanges(zoomStart, zoomStop, minCachedLevel,
-                                    maxCachedLevel, target);
-                        }
-                    });
-                }
-
-                updateValidZoomRanges(zoomStart, zoomStop, minCachedLevel, maxCachedLevel, null);
-
-                // gridSetBounds = new EnvelopePanel("bounds");
-                // gridSetBounds.setCRSFieldVisible(false);
-                // gridSetBounds.setCrsRequired(false);
-                // gridSetBounds.setLabelsVisibility(false);
-                // gridSetBounds.setModel(new Model<ReferencedEnvelope>(new ReferencedEnvelope()));
-                gridSetBounds = new Label("bounds", new ResourceModel(
-                        "GridSubsetsEditor.bounds.dynamic"));
-                item.add(gridSetBounds);
-
-                removeLink = new ImageAjaxLink("removeLink", GWCIconFactory.DELETE_ICON) {
                     private static final long serialVersionUID = 1L;
 
                     @Override
-                    protected void onClick(AjaxRequestTarget target) {
-                        List<XMLGridSubset> list;
-                        list = new ArrayList<XMLGridSubset>(grids.getModelObject());
-                        final XMLGridSubset subset = (XMLGridSubset) getDefaultModelObject();
+                    protected void onBeforeRender() {
+                        super.onBeforeRender();
+                    }
 
-                        list.remove(subset);
+                    @Override
+                    protected void populateItem(final ListItem<XMLGridSubset> item) {
+                        // odd/even style
+                        final int index = item.getIndex();
+                        item.add(
+                                AttributeModifier.replace(
+                                        "class", index % 2 == 0 ? "even" : "odd"));
 
-                        grids.setModelObject(list);
+                        final XMLGridSubset gridSubset = item.getModelObject();
+                        GridSetBroker gridSetBroker = GWC.get().getGridSetBroker();
 
-                        List<String> choices = new ArrayList<String>(availableGridSets.getChoices());
-                        choices.add(subset.getGridSetName());
-                        Collections.sort(choices);
-                        availableGridSets.setChoices(choices);
+                        String gridsetDescription = null;
+                        int gridsetLevels;
+                        boolean gridsetExists;
+                        {
+                            final GridSet gridSet = gridSetBroker.get(gridSubset.getGridSetName());
+                            gridsetExists = gridSet != null;
+                            if (gridsetExists) {
+                                gridsetLevels = gridSet.getNumLevels();
+                                gridsetDescription = gridSet.getDescription();
+                            } else {
+                                gridsetLevels =
+                                        gridSubset.getZoomStop() == null
+                                                ? 1
+                                                : gridSubset.getZoomStop().intValue();
+                            }
+                        }
+                        final Label gridSetLabel;
+                        final Component gridSetBounds;
 
-                        target.addComponent(container);
-                        target.addComponent(availableGridSets);
+                        gridSetLabel =
+                                new Label(
+                                        "gridSet",
+                                        new PropertyModel<String>(item.getModel(), "gridSetName"));
+                        if (!gridsetExists) {
+                            gridSetLabel.add(
+                                    new AttributeModifier(
+                                            "style",
+                                            new Model<>(
+                                                    "color:red;text-decoration:line-through;")));
+                            getPage()
+                                    .warn(
+                                            "GridSet "
+                                                    + gridSubset.getGridSetName()
+                                                    + " does not exist");
+                        }
+                        item.add(gridSetLabel);
+                        if (null != gridsetDescription) {
+                            gridSetLabel.add(
+                                    new AttributeModifier(
+                                            "title", new Model<>(gridsetDescription)));
+                        }
+
+                        final Component removeLink;
+
+                        final int maxZoomLevel = gridsetLevels - 1;
+                        final ArrayList<Integer> zoomLevels = new ArrayList<>(maxZoomLevel + 1);
+                        for (int z = 0; z <= maxZoomLevel; z++) {
+                            zoomLevels.add(Integer.valueOf(z));
+                        }
+
+                        // zoomStart has all zoom levels as choices
+                        // zoomStop choices start at zoomStart's selection
+                        // minCachedLevel start at zoomStart's selection and ends at zoomStop's
+                        // selection
+                        // maxCachedLevel start at minCachedLevels' and ends at zoomStop's selection
+
+                        final IModel<Integer> zoomStartModel;
+                        final IModel<Integer> zoomStopModel;
+                        final IModel<Integer> minCachedLevelModel;
+                        final IModel<Integer> maxCachedLevelModel;
+
+                        final ZoomLevelDropDownChoice zoomStart;
+                        final ZoomLevelDropDownChoice zoomStop;
+                        final ZoomLevelDropDownChoice minCachedLevel;
+                        final ZoomLevelDropDownChoice maxCachedLevel;
+
+                        zoomStartModel = new PropertyModel<>(item.getModel(), "zoomStart");
+                        zoomStopModel = new PropertyModel<>(item.getModel(), "zoomStop");
+                        minCachedLevelModel =
+                                new PropertyModel<>(item.getModel(), "minCachedLevel");
+                        maxCachedLevelModel =
+                                new PropertyModel<>(item.getModel(), "maxCachedLevel");
+
+                        @SuppressWarnings({"rawtypes", "unchecked"})
+                        final IModel<List<Integer>> allLevels = new Model(zoomLevels);
+
+                        zoomStart =
+                                new ZoomLevelDropDownChoice("zoomStart", zoomStartModel, allLevels);
+                        zoomStart.setEnabled(gridsetExists);
+                        item.add(zoomStart);
+
+                        zoomStop =
+                                new ZoomLevelDropDownChoice("zoomStop", zoomStopModel, allLevels);
+                        zoomStop.setEnabled(gridsetExists);
+                        item.add(zoomStop);
+
+                        minCachedLevel =
+                                new ZoomLevelDropDownChoice(
+                                        "minCachedLevel", minCachedLevelModel, allLevels);
+                        minCachedLevel.setEnabled(gridsetExists);
+                        item.add(minCachedLevel);
+
+                        maxCachedLevel =
+                                new ZoomLevelDropDownChoice(
+                                        "maxCachedLevel", maxCachedLevelModel, allLevels);
+                        maxCachedLevel.setEnabled(gridsetExists);
+                        item.add(maxCachedLevel);
+
+                        for (ZoomLevelDropDownChoice dropDown :
+                                Arrays.asList(
+                                        zoomStart, zoomStop, minCachedLevel, maxCachedLevel)) {
+                            dropDown.add(
+                                    new OnChangeAjaxBehavior() {
+                                        private static final long serialVersionUID = 1L;
+
+                                        // cascades to zoomStop, min and max cached levels
+                                        @Override
+                                        protected void onUpdate(AjaxRequestTarget target) {
+                                            updateValidZoomRanges(
+                                                    zoomStart,
+                                                    zoomStop,
+                                                    minCachedLevel,
+                                                    maxCachedLevel,
+                                                    target);
+                                        }
+                                    });
+                        }
+
+                        updateValidZoomRanges(
+                                zoomStart, zoomStop, minCachedLevel, maxCachedLevel, null);
+
+                        // TODO Should probably use a convertor instead of an if but this should
+                        // work until we decide to make this editable.
+                        if (Objects.nonNull(item.getModelObject().getExtent())) {
+                            gridSetBounds =
+                                    new Label(
+                                            "bounds",
+                                            new PropertyModel<Integer>(item.getModel(), "extent"));
+                        } else {
+                            gridSetBounds =
+                                    new Label(
+                                            "bounds",
+                                            new ResourceModel("GridSubsetsEditor.bounds.dynamic"));
+                        }
+                        item.add(gridSetBounds);
+
+                        removeLink =
+                                new ImageAjaxLink<Object>(
+                                        "removeLink", GWCIconFactory.DELETE_ICON) {
+
+                                    private static final long serialVersionUID =
+                                            -5072597940769821889L;
+
+                                    @Override
+                                    protected void onClick(AjaxRequestTarget target) {
+                                        List<XMLGridSubset> list;
+                                        list = new ArrayList<>(grids.getModelObject());
+                                        final XMLGridSubset subset =
+                                                (XMLGridSubset) getDefaultModelObject();
+
+                                        list.remove(subset);
+
+                                        grids.setModelObject(list);
+
+                                        List<String> choices =
+                                                new ArrayList<>(availableGridSets.getChoices());
+                                        choices.add(subset.getGridSetName());
+                                        Collections.sort(choices);
+                                        availableGridSets.setChoices(choices);
+
+                                        target.add(container);
+                                        target.add(availableGridSets);
+                                    }
+                                };
+                        removeLink.setDefaultModel(item.getModel());
+                        removeLink.add(
+                                new AttributeModifier(
+                                        "title",
+                                        new ResourceModel("GridSubsetsEditor.removeLink")));
+                        item.add(removeLink);
                     }
                 };
-                removeLink.setDefaultModel(item.getModel());
-                removeLink.add(new AttributeModifier("title", true, new ResourceModel(
-                        "GridSubsetsEditor.removeLink")));
-                item.add(removeLink);
-            }
-        };
 
         grids.setOutputMarkupId(true);
         // this is necessary to avoid loosing item contents on edit/validation checks
         grids.setReuseItems(true);
         table.add(grids);
 
-        List<String> gridSetNames = new ArrayList<String>(GWC.get().getGridSetBroker().getNames());
+        List<String> gridSetNames = new ArrayList<>(GWC.get().getGridSetBroker().getNames());
         for (XMLGridSubset gs : model.getObject()) {
             gridSetNames.remove(gs.getGridSetName());
         }
         Collections.sort(gridSetNames);
 
-        GeoServerAjaxFormLink addGridsubsetLink = new GeoServerAjaxFormLink("addGridSubset") {
-            private static final long serialVersionUID = 1L;
+        GeoServerAjaxFormLink addGridsubsetLink =
+                new GeoServerAjaxFormLink("addGridSubset") {
+                    private static final long serialVersionUID = 1L;
 
-            @Override
-            protected void onClick(AjaxRequestTarget target, Form form) {
-                availableGridSets.processInput();
+                    @Override
+                    protected void onClick(AjaxRequestTarget target, Form<?> form) {
+                        availableGridSets.processInput();
 
-                final String selectedGridset = availableGridSets.getModelObject();
-                if (null == selectedGridset) {
-                    return;
-                }
+                        final String selectedGridset = availableGridSets.getModelObject();
+                        if (null == selectedGridset) {
+                            return;
+                        }
 
-                List<String> choices = new ArrayList<String>(availableGridSets.getChoices());
-                choices.remove(selectedGridset);
-                availableGridSets.setChoices(choices);
-                availableGridSets.setEnabled(!choices.isEmpty());
+                        List<String> choices = new ArrayList<>(availableGridSets.getChoices());
+                        choices.remove(selectedGridset);
+                        availableGridSets.setChoices(choices);
+                        availableGridSets.setEnabled(!choices.isEmpty());
 
-                XMLGridSubset newSubset = new XMLGridSubset();
-                newSubset.setGridSetName(selectedGridset);
-                grids.getModelObject().add(newSubset);
+                        XMLGridSubset newSubset = new XMLGridSubset();
+                        newSubset.setGridSetName(selectedGridset);
+                        grids.getModelObject().add(newSubset);
 
-                target.addComponent(table);
-                target.addComponent(availableGridSets);
-            }
-        };
+                        target.add(table);
+                        target.add(availableGridSets);
+                    }
+                };
         addGridsubsetLink.add(new Icon("addIcon", GWCIconFactory.ADD_ICON));
         add(addGridsubsetLink);
 
-        availableGridSets = new DropDownChoice<String>("availableGridsets", new Model<String>(),
-                gridSetNames);
+        availableGridSets = new DropDownChoice<>("availableGridsets", new Model<>(), gridSetNames);
         availableGridSets.setOutputMarkupId(true);
         add(availableGridSets);
-
     }
 
     @Override
-    protected void convertInput() {
-        grids.visitChildren(new Component.IVisitor<Component>() {
-
-            @Override
-            public Object component(Component component) {
-                if (component instanceof FormComponent) {
-                    FormComponent<?> formComponent = (FormComponent<?>) component;
-                    formComponent.processInput();
-                }
-                return Component.IVisitor.CONTINUE_TRAVERSAL;
-            }
-        });
+    public void convertInput() {
+        grids.visitChildren(
+                (component, visit) -> {
+                    if (component instanceof FormComponent) {
+                        FormComponent<?> formComponent = (FormComponent<?>) component;
+                        formComponent.processInput();
+                    }
+                });
         List<XMLGridSubset> info = grids.getModelObject();
-        HashSet<XMLGridSubset> convertedInput = new HashSet<XMLGridSubset>(info);
+        HashSet<XMLGridSubset> convertedInput = new HashSet<>(info);
         setConvertedInput(convertedInput);
     }
 
-    /**
-     */
+    /** */
     @Override
     protected void onBeforeRender() {
         super.onBeforeRender();
@@ -379,10 +419,10 @@ class GridSubsetsEditor extends FormComponentPanel<Set<XMLGridSubset>> {
     private static class ZoomLevelDropDownChoice extends DropDownChoice<Integer> {
         private static final long serialVersionUID = -1312406093015271637L;
 
-        public ZoomLevelDropDownChoice(final String id, IModel<Integer> model,
-                IModel<List<Integer>> allChoices) {
+        public ZoomLevelDropDownChoice(
+                final String id, IModel<Integer> model, IModel<List<Integer>> allChoices) {
             super(id, model, allChoices);
-            setNullValid(true);// show null option even if model value isn't null
+            setNullValid(true); // show null option even if model value isn't null
             setOutputMarkupId(true);
         }
 
@@ -405,7 +445,7 @@ class GridSubsetsEditor extends FormComponentPanel<Set<XMLGridSubset>> {
         }
 
         private void setChoices(int min, int max) {
-            List<Integer> choices = new ArrayList<Integer>();
+            List<Integer> choices = new ArrayList<>();
             for (int i = min; i <= max; i++) {
                 choices.add(Integer.valueOf(i));
             }
@@ -419,9 +459,12 @@ class GridSubsetsEditor extends FormComponentPanel<Set<XMLGridSubset>> {
         }
     }
 
-    private void updateValidZoomRanges(final ZoomLevelDropDownChoice zoomStart,
-            final ZoomLevelDropDownChoice zoomStop, final ZoomLevelDropDownChoice minCachedLevel,
-            final ZoomLevelDropDownChoice maxCachedLevel, AjaxRequestTarget target) {
+    private void updateValidZoomRanges(
+            final ZoomLevelDropDownChoice zoomStart,
+            final ZoomLevelDropDownChoice zoomStop,
+            final ZoomLevelDropDownChoice minCachedLevel,
+            final ZoomLevelDropDownChoice maxCachedLevel,
+            AjaxRequestTarget target) {
 
         // zoomStart.processInput();
         Integer min = zoomStart.getModelObject();
@@ -443,9 +486,9 @@ class GridSubsetsEditor extends FormComponentPanel<Set<XMLGridSubset>> {
         }
 
         if (null != target) {
-            target.addComponent(zoomStop);
-            target.addComponent(minCachedLevel);
-            target.addComponent(maxCachedLevel);
+            target.add(zoomStop);
+            target.add(minCachedLevel);
+            target.add(maxCachedLevel);
         }
     }
 }

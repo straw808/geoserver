@@ -16,15 +16,14 @@
  */
 package org.geoserver.jdbcconfig.internal;
 
-import java.util.Arrays;
-
-import junit.framework.TestCase;
+import static org.junit.Assert.*;
 
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.catalog.Predicates;
 import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.jdbcconfig.JDBCConfigTestSupport;
-import org.junit.Ignore;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.opengis.filter.Filter;
 
@@ -32,7 +31,7 @@ import org.opengis.filter.Filter;
  * @author groldan
  * @author Kevin Smith, OpenGeo
  */
-public class QueryBuilderTest extends TestCase {
+public class QueryBuilderTest {
 
     private JDBCConfigTestSupport testSupport;
 
@@ -40,56 +39,76 @@ public class QueryBuilderTest extends TestCase {
 
     Dialect dialect;
 
+    @Before
     public void setUp() throws Exception {
         dialect = new Dialect();
         dbMappings = new DbMappings(dialect);
-        testSupport = new JDBCConfigTestSupport((JDBCConfigTestSupport.DBConfig) JDBCConfigTestSupport.parameterizedDBConfigs().get(0)[0]);
+        testSupport =
+                new JDBCConfigTestSupport(
+                        (JDBCConfigTestSupport.DBConfig)
+                                JDBCConfigTestSupport.parameterizedDBConfigs().get(0)[0]);
         testSupport.setUp();
         dbMappings = testSupport.getDbMappings();
     }
 
+    @After
     public void tearDown() throws Exception {
         testSupport.tearDown();
     }
 
+    @Test
     public void testQueryAll() {
         Filter filter = Predicates.equal("name", "ws1");
-        StringBuilder build = QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings).filter(filter)
-                .build();
-
+        StringBuilder build =
+                QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
+                        .filter(filter)
+                        .build();
     }
-    
+
+    @Test
     public void testSort1() {
         Filter filter = Predicates.acceptAll();
-        StringBuilder build = QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
-                .filter(filter)
-                .sortOrder(Predicates.asc("foo"))
-                .build();
-        
+        StringBuilder build =
+                QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
+                        .filter(filter)
+                        .sortOrder(Predicates.asc("foo"))
+                        .build();
     }
+
+    @Test
     public void testSort2() {
         Filter filter = Predicates.acceptAll();
-        StringBuilder build = QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
-                .filter(filter)
-                .sortOrder(Predicates.asc("foo"),Predicates.desc("bar"))
-                .build();
-        
+        StringBuilder build =
+                QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
+                        .filter(filter)
+                        .sortOrder(Predicates.asc("foo"), Predicates.desc("bar"))
+                        .build();
     }
+
+    @Test
     public void testSort3() {
         Filter filter = Predicates.acceptAll();
-        StringBuilder build = QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
-                .filter(filter)
-                .sortOrder(Predicates.asc("foo"),Predicates.desc("bar"),Predicates.asc("baz"))
-                .build();
-        
+        StringBuilder build =
+                QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
+                        .filter(filter)
+                        .sortOrder(
+                                Predicates.asc("foo"),
+                                Predicates.desc("bar"),
+                                Predicates.asc("baz"))
+                        .build();
     }
+
+    @Test
     public void testSort3WithFilter() {
         Filter filter = Predicates.equal("name", "quux");
-        StringBuilder build = QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
-                .filter(filter)
-                .sortOrder(Predicates.asc("foo"),Predicates.desc("bar"),Predicates.asc("baz"))
-                .build();
-        
+        StringBuilder build =
+                QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
+                        .filter(filter)
+                        .sortOrder(
+                                Predicates.asc("foo"),
+                                Predicates.desc("bar"),
+                                Predicates.asc("baz"))
+                        .build();
     }
 
     @Test
@@ -97,12 +116,15 @@ public class QueryBuilderTest extends TestCase {
         // Create the filter
         Filter filter = Predicates.notEqual("name", "quux");
         // Build it
-        StringBuilder build = QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
-                .filter(filter).build();
+        StringBuilder build =
+                QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
+                        .filter(filter)
+                        .build();
         String sql = build.toString();
         // Ensure the following sql is present
-        assertTrue(sql
-                .contains("NOT oid IN (SELECT oid FROM object_property WHERE property_type IN (:ptype0) AND UPPER(value) = :value0)"));
+        assertTrue(
+                sql.contains(
+                        "NOT oid IN (SELECT oid FROM object_property WHERE property_type IN (:ptype0) AND UPPER(value) = :value0)"));
     }
 
     @Test
@@ -110,8 +132,10 @@ public class QueryBuilderTest extends TestCase {
         // Create the filter
         Filter filter = Predicates.isInstanceOf(LayerInfo.class);
         // Build it
-        StringBuilder build = QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
-                .filter(filter).build();
+        StringBuilder build =
+                QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
+                        .filter(filter)
+                        .build();
         String sql = build.toString();
         // Ensure the following sql is present
         assertTrue(sql.contains("type_id = " + dbMappings.getTypeId(LayerInfo.class)));
@@ -122,13 +146,16 @@ public class QueryBuilderTest extends TestCase {
         // Create the filter
         Filter filter = Predicates.isNull("name");
         // Build it
-        StringBuilder build = QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
-                .filter(filter).build();
+        StringBuilder build =
+                QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
+                        .filter(filter)
+                        .build();
         String sql = build.toString();
 
-        String sqlNull = "oid IN (select oid from object_property where property_type in (:"
-                + "ptype0) and value IS NULL) OR oid NOT  in (select oid from object_property where property_type in (:"
-                + "ptype0))";
+        String sqlNull =
+                "oid IN (select oid from object_property where property_type in (:"
+                        + "ptype0) and value IS NULL) OR oid NOT  in (select oid from object_property where property_type in (:"
+                        + "ptype0))";
         // Ensure the following sql is present
         assertTrue(sql.contains(sqlNull));
     }
@@ -138,12 +165,15 @@ public class QueryBuilderTest extends TestCase {
         // Create the filter
         Filter filter = Predicates.isNull("name");
         // Build it
-        StringBuilder build = QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
-                .filter(filter).build();
+        StringBuilder build =
+                QueryBuilder.forIds(dialect, WorkspaceInfo.class, dbMappings)
+                        .filter(filter)
+                        .build();
         String sql = build.toString();
 
-        String sqlNil = "oid IN (select oid from object_property where property_type in (:" + 
-                "ptype0) and value IS NULL)";
+        String sqlNil =
+                "oid IN (select oid from object_property where property_type in (:"
+                        + "ptype0) and value IS NULL)";
         // Ensure the following sql is present
         assertTrue(sql.contains(sqlNil));
     }

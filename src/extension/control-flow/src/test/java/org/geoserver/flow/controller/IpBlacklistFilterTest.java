@@ -1,28 +1,26 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
  */
 package org.geoserver.flow.controller;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Properties;
-
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
-
-import org.geoserver.test.GeoServerSystemTestSupport;
 import org.junit.Test;
+import org.springframework.mock.web.MockFilterChain;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 
-import com.mockrunner.mock.web.MockFilterChain;
-import com.mockrunner.mock.web.MockHttpServletRequest;
-import com.mockrunner.mock.web.MockHttpServletResponse;
-
-public class IpBlacklistFilterTest extends GeoServerSystemTestSupport {
+public class IpBlacklistFilterTest {
 
     @Test
     public void testFilterIp() throws IOException, ServletException {
@@ -30,24 +28,29 @@ public class IpBlacklistFilterTest extends GeoServerSystemTestSupport {
         props.put("ip.blacklist", "192.168.1.8,192.168.1.10");
         IpBlacklistFilter filter = new IpBlacklistFilter(props);
         assertNotNull(filter);
-        MockFilterChain filterChain = new MockFilterChain();
-        filterChain.addFilter(filter);
         TestServlet testServlet = new TestServlet();
-        filterChain.setServlet(testServlet);
+        MockFilterChain filterChain = new MockFilterChain(testServlet, filter);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("192.168.1.8");
         MockHttpServletResponse response = new MockHttpServletResponse();
         filterChain.doFilter(request, response);
         assertFalse(testServlet.wasServiceCalled());
         testServlet.reset();
+        filterChain.reset();
+        request = new MockHttpServletRequest();
         request.setRemoteAddr("192.168.1.9");
+        response = new MockHttpServletResponse();
         filterChain.doFilter(request, response);
         assertTrue(testServlet.wasServiceCalled());
         testServlet.reset();
+        filterChain.reset();
+        request = new MockHttpServletRequest();
         request.setRemoteAddr("192.168.1.10");
+        response = new MockHttpServletResponse();
         filterChain.doFilter(request, response);
         assertFalse(testServlet.wasServiceCalled());
         testServlet.reset();
+        filterChain.reset();
     }
 
     static class TestServlet extends HttpServlet {
@@ -69,5 +72,4 @@ public class IpBlacklistFilterTest extends GeoServerSystemTestSupport {
             return serviceCalled;
         }
     }
-
 }

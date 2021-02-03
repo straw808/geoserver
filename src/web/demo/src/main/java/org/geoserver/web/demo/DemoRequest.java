@@ -1,25 +1,24 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
  */
 package org.geoserver.web.demo;
 
-import java.io.File;
 import java.io.Serializable;
 
 /**
  * Holds on the properties used as arguments for the TestWfsPost servlet
- * 
+ *
  * @author Gabriel Roldan (TOPP)
  * @version $Id$
  * @since 2.0.x
  */
 public class DemoRequest implements Serializable {
-    /**
-     * The directory containing the demo files
-     */
-    private final File demoDir;
+    private static final long serialVersionUID = -6605104556907827822L;
+
+    /** The directory containing the demo files */
+    private final String demoDir;
 
     private String requestFileName;
 
@@ -31,7 +30,7 @@ public class DemoRequest implements Serializable {
 
     private String password;
 
-    public DemoRequest(final File demoDir) {
+    public DemoRequest(final String demoDir) {
         this.demoDir = demoDir;
     }
 
@@ -75,7 +74,7 @@ public class DemoRequest implements Serializable {
         this.requestBody = requestBody;
     }
 
-    public File getDemoDir() {
+    public String getDemoDir() {
         return demoDir;
     }
 }

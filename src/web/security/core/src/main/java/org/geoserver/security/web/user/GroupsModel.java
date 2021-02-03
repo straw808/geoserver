@@ -7,9 +7,7 @@ package org.geoserver.security.web.user;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.model.LoadableDetachableModel;
 import org.geoserver.security.GeoServerSecurityManager;
@@ -28,11 +26,10 @@ public class GroupsModel extends LoadableDetachableModel<List<GeoServerUserGroup
     protected List<GeoServerUserGroup> load() {
         GeoServerSecurityManager secMgr = GeoServerApplication.get().getSecurityManager();
         try {
-            return new ArrayList(secMgr.loadUserGroupService(userGroupServiceName).getUserGroups());
-        }
-        catch(IOException e) {
+            return new ArrayList<>(
+                    secMgr.loadUserGroupService(userGroupServiceName).getUserGroups());
+        } catch (IOException e) {
             throw new WicketRuntimeException(e);
         }
     }
-
 }

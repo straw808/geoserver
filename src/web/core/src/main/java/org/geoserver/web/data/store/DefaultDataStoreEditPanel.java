@@ -1,4 +1,4 @@
-/* (c) 2014 - 2015 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -13,9 +13,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
-import org.apache.wicket.behavior.SimpleAttributeModifier;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.markup.html.list.ListItem;
@@ -26,34 +25,38 @@ import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.DataStoreInfo;
+import org.geoserver.catalog.NamespaceInfo;
 import org.geoserver.catalog.ResourcePool;
+import org.geoserver.platform.GeoServerEnvironment;
+import org.geoserver.platform.GeoServerExtensions;
 import org.geoserver.web.data.resource.DataStorePanelInfo;
 import org.geoserver.web.data.store.panel.CheckBoxParamPanel;
 import org.geoserver.web.data.store.panel.DropDownChoiceParamPanel;
+import org.geoserver.web.data.store.panel.FileParamPanel;
 import org.geoserver.web.data.store.panel.LabelParamPanel;
 import org.geoserver.web.data.store.panel.NamespacePanel;
 import org.geoserver.web.data.store.panel.ParamPanel;
 import org.geoserver.web.data.store.panel.PasswordParamPanel;
 import org.geoserver.web.data.store.panel.TextAreaParamPanel;
 import org.geoserver.web.data.store.panel.TextParamPanel;
+import org.geoserver.web.util.EnumAdapterModel;
 import org.geoserver.web.util.MapModel;
 import org.geoserver.web.wicket.FileExistsValidator;
 import org.geotools.data.DataAccessFactory;
 import org.geotools.data.DataAccessFactory.Param;
 import org.geotools.data.Repository;
+import org.xml.sax.EntityResolver;
 
 /**
  * A default {@link StoreEditPanel} contribution for the {@link DataStorePanelInfo} extension point
  * to work on any {@link DataStoreInfo}s.
- * <p>
- * This default store parameters panel contributes to the store edit form
- * {@link DataStorePanelInfo#getComponentClass() extension point} by providing a dynamically and
+ *
+ * <p>This default store parameters panel contributes to the store edit form {@link
+ * DataStorePanelInfo#getComponentClass() extension point} by providing a dynamically and
  * introspectively generated list of form input fields based on the {@link DataAccessFactory}
  * parameters for the given {@code DataStoreInfo}.
- * </p>
- * 
+ *
  * @author Gabriel Roldan
- * 
  * @see Param
  * @see ResourcePool#getDataStoreFactory(DataStoreInfo)
  * @see DataStorePanelInfo
@@ -72,12 +75,10 @@ public class DefaultDataStoreEditPanel extends StoreEditPanel {
      * Creates a new parameters panel with a list of input fields matching the {@link Param}s for
      * the factory related to the {@code DataStoreInfo} that's the model of the provided {@code
      * Form}.
-     * 
-     * @param componentId
-     *            the id for this component instance
-     * @param storeEditForm
-     *            the form being build by the calling class, whose model is the
-     *            {@link DataStoreInfo} being edited
+     *
+     * @param componentId the id for this component instance
+     * @param storeEditForm the form being build by the calling class, whose model is the {@link
+     *     DataStoreInfo} being edited
      */
     public DefaultDataStoreEditPanel(final String componentId, final Form storeEditForm) {
         super(componentId, storeEditForm);
@@ -93,15 +94,17 @@ public class DefaultDataStoreEditPanel extends StoreEditPanel {
             throw new RuntimeException(e);
         }
 
-        final Map<String, ParamInfo> paramsMetadata = new LinkedHashMap<String, ParamInfo>();
+        final Map<String, ParamInfo> paramsMetadata = new LinkedHashMap<>();
 
         {
             final boolean isNew = null == info.getId();
             final Param[] dsParams = dsFactory.getParametersInfo();
             for (Param p : dsParams) {
                 ParamInfo paramInfo = new ParamInfo(p);
-                // hide the repository params, the resource pool will inject it transparently
-                if (!Repository.class.equals(paramInfo.getBinding())) {
+                // hide the repository and entity resolver params, the resource pool will inject it
+                // transparently
+                if (!Repository.class.equals(paramInfo.getBinding())
+                        && !EntityResolver.class.equals(paramInfo.getBinding())) {
                     paramsMetadata.put(p.key, paramInfo);
                     if (isNew && !p.isDeprecated()) {
                         applyParamDefault(paramInfo, info);
@@ -110,43 +113,47 @@ public class DefaultDataStoreEditPanel extends StoreEditPanel {
             }
         }
 
-        final List<String> keys = new ArrayList<String>(paramsMetadata.keySet());
-        final IModel paramsModel = new PropertyModel(model, "connectionParameters");
+        final List<String> keys = new ArrayList<>(paramsMetadata.keySet());
+        final IModel<Map<String, Serializable>> paramsModel =
+                new PropertyModel<>(model, "connectionParameters");
 
-        ListView paramsList = new ListView("parameters", keys) {
-            private static final long serialVersionUID = 1L;
+        ListView<String> paramsList =
+                new ListView<String>("parameters", keys) {
+                    private static final long serialVersionUID = 1L;
 
-            @Override
-            protected void populateItem(ListItem item) {
-                String paramName = item.getDefaultModelObjectAsString();
-                ParamInfo paramMetadata = paramsMetadata.get(paramName);
+                    @Override
+                    protected void populateItem(ListItem<String> item) {
+                        String paramName = item.getDefaultModelObjectAsString();
+                        ParamInfo paramMetadata = paramsMetadata.get(paramName);
 
-                Component inputComponent;
-                inputComponent = getInputComponent("parameterPanel", paramsModel, paramMetadata);
+                        Component inputComponent;
+                        inputComponent =
+                                getInputComponent("parameterPanel", paramsModel, paramMetadata);
 
-                String description = paramMetadata.getTitle();
-                if (description != null) {
-                    inputComponent.add(new SimpleAttributeModifier("title", description));
-                }
-                item.add(inputComponent);
-            }
-        };
+                        String description = paramMetadata.getTitle();
+                        if (description != null) {
+                            inputComponent.add(AttributeModifier.replace("title", description));
+                        }
+                        item.add(inputComponent);
+                    }
+                };
         // needed for form components not to loose state
         paramsList.setReuseItems(true);
 
         add(paramsList);
-
     }
 
     /**
      * Creates a form input component for the given datastore param based on its type and metadata
      * properties.
-     * 
-     * @param paramMetadata
-     * @return
      */
-    private Panel getInputComponent(final String componentId, final IModel paramsModel,
+    protected Panel getInputComponent(
+            final String componentId,
+            final IModel<Map<String, Serializable>> paramsModel,
             final ParamInfo paramMetadata) {
+
+        final GeoServerEnvironment gsEnvironment =
+                GeoServerExtensions.bean(GeoServerEnvironment.class);
 
         final String paramName = paramMetadata.getName();
         final String paramLabel = paramMetadata.getName();
@@ -156,75 +163,113 @@ public class DefaultDataStoreEditPanel extends StoreEditPanel {
         final List<Serializable> options = paramMetadata.getOptions();
 
         Panel parameterPanel;
-        if("dbtype".equals(paramName) || "filetype".equals(paramName)) {
-            // skip the two well known discriminators
-            IModel model = new MapModel(paramsModel, paramName);
-            TextParamPanel tp = new TextParamPanel(componentId,
-                    model, new ResourceModel(paramLabel, paramLabel), required);
-            tp.setVisible(false);
-            parameterPanel = tp;
-        } else  if ("namespace".equals(paramName)) {
-            IModel namespaceModel = new NamespaceParamModel(paramsModel, paramName);
-            IModel paramLabelModel = new ResourceModel(paramLabel, paramLabel);
+        if ("namespace".equals(paramName)) {
+            IModel<NamespaceInfo> namespaceModel = new NamespaceParamModel(paramsModel, paramName);
+            IModel<String> paramLabelModel = new ResourceModel(paramLabel, paramLabel);
             parameterPanel = new NamespacePanel(componentId, namespaceModel, paramLabelModel, true);
-        } else if (options != null && options.size() > 0){
-            
-            IModel<Serializable> valueModel = new MapModel(paramsModel, paramName);
+        } else if (options != null && !options.isEmpty()) {
+
+            IModel<Serializable> valueModel = new MapModel<>(paramsModel, paramName);
+            if (binding.isEnum()) {
+                valueModel = adaptEnumeration(binding, valueModel);
+            }
             IModel<String> labelModel = new ResourceModel(paramLabel, paramLabel);
-            parameterPanel = new DropDownChoiceParamPanel(componentId, valueModel, labelModel, options,
-                    required);
-            
+            parameterPanel =
+                    new DropDownChoiceParamPanel(
+                            componentId, valueModel, labelModel, options, required);
+
         } else if (Boolean.class == binding) {
             // TODO Add prefix for better i18n?
-            parameterPanel = new CheckBoxParamPanel(componentId, new MapModel(paramsModel,
-                    paramName), new ResourceModel(paramLabel, paramLabel));
+            parameterPanel =
+                    new CheckBoxParamPanel(
+                            componentId,
+                            new MapModel<>(paramsModel, paramName),
+                            new ResourceModel(paramLabel, paramLabel));
+
+        } else if (File.class == binding) {
+            parameterPanel =
+                    new FileParamPanel(
+                            componentId,
+                            new MapModel<>(paramsModel, paramName),
+                            new ResourceModel(paramLabel, paramLabel),
+                            required);
 
         } else if (String.class == binding && paramMetadata.isPassword()) {
-            parameterPanel = new PasswordParamPanel(componentId, new MapModel(paramsModel,
-                    paramName), new ResourceModel(paramLabel, paramLabel), required);
+            parameterPanel =
+                    new PasswordParamPanel(
+                            componentId,
+                            new MapModel<>(paramsModel, paramName),
+                            new ResourceModel(paramLabel, paramLabel),
+                            required);
         } else {
-            IModel model;
-            if("url".equalsIgnoreCase(paramName)) {
+            IModel<String> model;
+            if ("url".equalsIgnoreCase(paramName)) {
                 model = new URLModel(paramsModel, paramName);
             } else {
-                model = new MapModel(paramsModel, paramName);
+                model = new MapModel<>(paramsModel, paramName);
             }
-            
+
             Panel tp;
-            if(paramMetadata.isLargeText()) {
-                tp = new TextAreaParamPanel(componentId,
-                        model, new ResourceModel(paramLabel, paramLabel), required);
+            if (paramMetadata.isLargeText()) {
+                tp =
+                        new TextAreaParamPanel(
+                                componentId,
+                                model,
+                                new ResourceModel(paramLabel, paramLabel),
+                                required);
             } else {
-                tp = new TextParamPanel(componentId,
-                        model, new ResourceModel(paramLabel, paramLabel), required);
+                tp =
+                        new TextParamPanel<>(
+                                componentId,
+                                model,
+                                new ResourceModel(paramLabel, paramLabel),
+                                required);
             }
-            
+
             // if it can be a reference to the local filesystem make sure it's valid
+            @SuppressWarnings("unchecked")
             FormComponent<String> fc = ((ParamPanel) tp).getFormComponent();
+
+            // AF: Disable Validator if GeoServer Env Parametrization is enabled!
             if (paramName.equalsIgnoreCase("url")) {
-                fc.add(new FileExistsValidator());
+                if (gsEnvironment == null || !GeoServerEnvironment.ALLOW_ENV_PARAMETRIZATION) {
+                    fc.add(new FileExistsValidator());
+                }
             }
             // make sure the proper value is returned, but don't set it for strings otherwise
             // we incur in a wicket bug (the empty string is not converter back to a null)
             // GR: it doesn't work for File neither.
             // AA: better not mess with files, the converters turn data dir relative to
             // absolute and bye bye data dir portability
-            if (binding != null && !String.class.equals(binding) && !File.class.equals(binding)
-                    && !URL.class.equals(binding) && !binding.isArray()) {
-                fc.setType(binding);
+
+            // AF: Disable Binding if GeoServer Env Parametrization is enabled!
+            if (gsEnvironment == null || !GeoServerEnvironment.ALLOW_ENV_PARAMETRIZATION) {
+                if (binding != null
+                        && !String.class.equals(binding)
+                        && !File.class.equals(binding)
+                        && !URL.class.equals(binding)
+                        && !binding.isArray()) {
+                    fc.setType(binding);
+                }
             }
             parameterPanel = tp;
         }
-        
+
         Object parameterValue = parameterPanel.getDefaultModelObject();
-        boolean visible = !(deprecated && isEmpty(parameterValue));
+        boolean visible =
+                !(deprecated && isEmpty(parameterValue))
+                        && !paramMetadata.getLevel().equals("program");
         parameterPanel.setVisible(visible);
         parameterPanel.setVisibilityAllowed(visible);
-        
-        return parameterPanel;
-    }   
 
-    
+        return parameterPanel;
+    }
+
+    @SuppressWarnings("unchecked")
+    private IModel<Serializable> adaptEnumeration(
+            Class<?> binding, IModel<Serializable> valueModel) {
+        return new EnumAdapterModel(valueModel, binding);
+    }
 
     private boolean isEmpty(Object value) {
         if (value == null) {
@@ -237,24 +282,25 @@ public class DefaultDataStoreEditPanel extends StoreEditPanel {
     }
 
     /**
-     * Makes sure the file path for shapefiles do start with file:// otherwise
-     * stuff like /home/user/file.shp won't be recognized as valid...
-     * @author aaime
+     * Makes sure the file path for shapefiles do start with file:// otherwise stuff like
+     * /home/user/file.shp won't be recognized as valid... <br>
+     * Added support for http:// and https:// protocols.
      *
+     * @author aaime
      */
-    private final class URLModel extends MapModel {
-        private URLModel(IModel model, String expression) {
+    static final class URLModel extends MapModel<String> {
+
+        URLModel(IModel<Map<String, Serializable>> model, String expression) {
             super(model, expression);
         }
 
         @Override
-        public void setObject(Object object) {
-            String file = (String) object;
-            if(!file.startsWith("file://") && !file.startsWith("file:") &&
-                    !file.startsWith("http://"))
-                file = "file://" + file;
+        public void setObject(String file) {
+            if (!file.startsWith("file://")
+                    && !file.startsWith("file:")
+                    && !file.startsWith("http://")
+                    && !file.startsWith("https://")) file = "file://" + file;
             super.setObject(file);
         }
     }
-
 }

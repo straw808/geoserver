@@ -10,106 +10,95 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.geotools.data.Query;
 import org.geotools.factory.CommonFactoryFinder;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory2;
 import org.opengis.filter.expression.PropertyName;
 
 /**
  * Describes the access limits on a vector layer
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
 public class VectorAccessLimits extends DataAccessLimits {
     private static final long serialVersionUID = 1646981660625898503L;
-    private static FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2(null); 
+    private static FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2(null);
 
-    /**
-     * The list of attributes the user is allowed to read (will be band names for raster data)
-     */
+    /** The list of attributes the user is allowed to read (will be band names for raster data) */
     transient List<PropertyName> readAttributes;
-    
-    /**
-     * The set of attributes the user is allowed to write on
-     */
+
+    /** The set of attributes the user is allowed to write on */
     transient List<PropertyName> writeAttributes;
 
-    /**
-     * Limits the features that can actually be written
-     */
+    /** Limits the features that can actually be written */
     transient Filter writeFilter;
+
+    Geometry clipVectorFilter;
+
+    Geometry intersectVectorFilter;
 
     /**
      * Builds a new vector access limits
-     * 
-     * @param readAttributes
-     *            The list of attributes that can be read
-     * @param readFilter
-     *            Only matching features will be returned to the user
-     * @param writeAttributes
-     *            The list of attributes that can be modified
-     * @param writeFilter
-     *            Only matching features will be allowed to be created/modified/deleted
+     *
+     * @param readAttributes The list of attributes that can be read
+     * @param readFilter Only matching features will be returned to the user
+     * @param writeAttributes The list of attributes that can be modified
+     * @param writeFilter Only matching features will be allowed to be created/modified/deleted
      */
-    public VectorAccessLimits(CatalogMode mode, List<PropertyName> readAttributes, Filter readFilter,
-            List<PropertyName> writeAttributes, Filter writeFilter) {
+    public VectorAccessLimits(
+            CatalogMode mode,
+            List<PropertyName> readAttributes,
+            Filter readFilter,
+            List<PropertyName> writeAttributes,
+            Filter writeFilter,
+            MultiPolygon clipVectorFilter) {
         super(mode, readFilter);
         this.readAttributes = readAttributes;
         this.writeAttributes = writeAttributes;
         this.writeFilter = writeFilter;
+        this.clipVectorFilter = clipVectorFilter;
     }
 
-    /**
-     * The list of attributes the user is allowed to read
-     * 
-     * @return
-     */
+    public VectorAccessLimits(
+            CatalogMode mode,
+            List<PropertyName> readAttributes,
+            Filter readFilter,
+            List<PropertyName> writeAttributes,
+            Filter writeFilter) {
+        this(mode, readAttributes, readFilter, writeAttributes, writeFilter, null);
+    }
+
+    /** The list of attributes the user is allowed to read */
     public List<PropertyName> getReadAttributes() {
         return readAttributes;
     }
 
-    /**
-     * The list of attributes the user is allowed to write
-     * 
-     * @return
-     */
+    /** The list of attributes the user is allowed to write */
     public List<PropertyName> getWriteAttributes() {
         return writeAttributes;
     }
 
-    /**
-     * Identifies the features the user can write onto
-     * 
-     * @return
-     */
+    /** Identifies the features the user can write onto */
     public Filter getWriteFilter() {
         return writeFilter;
     }
-    
-    /**
-     * Returns a GeoTools query wrapping the read attributes and the read filter
-     * @return
-     */
+
+    /** Returns a GeoTools query wrapping the read attributes and the read filter */
     public Query getReadQuery() {
         return buildQuery(readAttributes, readFilter);
     }
-    
-    /**
-     * Returns a GeoTools query wrapping the write attributes and the write filter
-     * @return
-     */
+
+    /** Returns a GeoTools query wrapping the write attributes and the write filter */
     public Query getWriteQuery() {
         return buildQuery(writeAttributes, writeFilter);
     }
 
-    /**
-     * Returns a GeoTools query build with the provided attributes and filters
-     * @return
-     */
+    /** Returns a GeoTools query build with the provided attributes and filters */
     private Query buildQuery(List<PropertyName> attributes, Filter filter) {
-        if(attributes == null && (filter == null || filter == Filter.INCLUDE)) {
+        if (attributes == null && (filter == null || filter == Filter.INCLUDE)) {
             return Query.ALL;
         } else {
             Query q = new Query();
@@ -119,33 +108,36 @@ public class VectorAccessLimits extends DataAccessLimits {
             return q;
         }
     }
-    
-    /**
-     * Turns a list of {@link PropertyName} into a list of {@link String}
-     * @param names
-     * @return
-     */
+
+    /** Turns a list of {@link PropertyName} into a list of {@link String} */
     List<String> flattenNames(List<PropertyName> names) {
-        if(names == null) {
+        if (names == null) {
             return null;
         }
-        
-        List<String> result = new ArrayList<String>(names.size());
+
+        List<String> result = new ArrayList<>(names.size());
         for (PropertyName name : names) {
             result.add(name.getPropertyName());
         }
-        
+
         return result;
     }
 
     @Override
     public String toString() {
-        return "VectorAccessLimits [readAttributes=" + readAttributes + ", writeAttributes="
-                + writeAttributes + ", writeFilter=" + writeFilter + ", readFilter=" + readFilter
-                + ", mode=" + mode + "]";
+        return "VectorAccessLimits [readAttributes="
+                + readAttributes
+                + ", writeAttributes="
+                + writeAttributes
+                + ", writeFilter="
+                + writeFilter
+                + ", readFilter="
+                + readFilter
+                + ", mode="
+                + mode
+                + "]";
     }
-    
-    
+
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         readAttributes = readProperties(in);
@@ -181,7 +173,7 @@ public class VectorAccessLimits extends DataAccessLimits {
         if (size == -1) {
             return null;
         } else {
-            List<PropertyName> properties = new ArrayList<PropertyName>();
+            List<PropertyName> properties = new ArrayList<>();
             for (int i = 0; i < size; i++) {
                 String name = (String) ois.readObject();
                 properties.add(FF.property(name));
@@ -189,6 +181,22 @@ public class VectorAccessLimits extends DataAccessLimits {
             }
             return properties;
         }
+    }
+
+    public Geometry getClipVectorFilter() {
+        return clipVectorFilter;
+    }
+
+    public void setClipVectorFilter(Geometry clipVectorFilter) {
+        this.clipVectorFilter = clipVectorFilter;
+    }
+
+    public Geometry getIntersectVectorFilter() {
+        return intersectVectorFilter;
+    }
+
+    public void setIntersectVectorFilter(Geometry intersectVectorFilter) {
+        this.intersectVectorFilter = intersectVectorFilter;
     }
 
     @Override
@@ -203,31 +211,19 @@ public class VectorAccessLimits extends DataAccessLimits {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
+        if (this == obj) return true;
+        if (!super.equals(obj)) return false;
+        if (getClass() != obj.getClass()) return false;
         VectorAccessLimits other = (VectorAccessLimits) obj;
         if (readAttributes == null) {
-            if (other.readAttributes != null)
-                return false;
-        } else if (!readAttributes.equals(other.readAttributes))
-            return false;
+            if (other.readAttributes != null) return false;
+        } else if (!readAttributes.equals(other.readAttributes)) return false;
         if (writeAttributes == null) {
-            if (other.writeAttributes != null)
-                return false;
-        } else if (!writeAttributes.equals(other.writeAttributes))
-            return false;
+            if (other.writeAttributes != null) return false;
+        } else if (!writeAttributes.equals(other.writeAttributes)) return false;
         if (writeFilter == null) {
-            if (other.writeFilter != null)
-                return false;
-        } else if (!writeFilter.equals(other.writeFilter))
-            return false;
+            if (other.writeFilter != null) return false;
+        } else if (!writeFilter.equals(other.writeFilter)) return false;
         return true;
     }
-    
-    
-
 }

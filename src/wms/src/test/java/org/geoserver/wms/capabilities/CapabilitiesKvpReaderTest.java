@@ -5,10 +5,13 @@
  */
 package org.geoserver.wms.capabilities;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
-
 import org.geoserver.wms.GetCapabilitiesRequest;
 import org.geoserver.wms.WMS;
 import org.junit.Before;
@@ -45,8 +48,6 @@ public class CapabilitiesKvpReaderTest {
     /**
      * 1.0 "WMTVER" parameter supplied instead of "VERSION"? Version negotiation should agree on
      * 1.1.1
-     * 
-     * @throws Exception
      */
     @SuppressWarnings("unchecked")
     @Test
@@ -83,5 +84,33 @@ public class CapabilitiesKvpReaderTest {
         GetCapabilitiesRequest read = reader.read(reader.createRequest(), kvp, rawKvp);
         assertNotNull(read);
         assertEquals("1000", read.getUpdateSequence());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testRootLayerDefault() throws Exception {
+        GetCapabilitiesRequest read = reader.read(reader.createRequest(), kvp, rawKvp);
+        assertNotNull(read);
+        assertNull(read.isRootLayerEnabled());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testRootLayerEnabled() throws Exception {
+        kvp.put("rootLayer", "true");
+        rawKvp.put("ROOTLAYER", "true");
+        GetCapabilitiesRequest read = reader.read(reader.createRequest(), kvp, rawKvp);
+        assertNotNull(read);
+        assertTrue(read.isRootLayerEnabled());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testRootLayerRemoved() throws Exception {
+        kvp.put("rootLayer", "false");
+        rawKvp.put("ROOTLAYER", "false");
+        GetCapabilitiesRequest read = reader.read(reader.createRequest(), kvp, rawKvp);
+        assertNotNull(read);
+        assertFalse(read.isRootLayerEnabled());
     }
 }

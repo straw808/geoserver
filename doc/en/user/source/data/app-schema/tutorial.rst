@@ -9,7 +9,7 @@ This tutorial demonstrates how to configure two complex feature types using the 
 GeoSciML
 ---------
 
-This example uses `Geoscience Markup Language (GeoSciML) 2.0 <http://www.geosciml.org/geosciml/2.0/documentation/html/>`_, a GML 3.1 application schema:
+This example uses `Geoscience Markup Language (GeoSciML) 2.0 <http://geosciml.org/doc/geosciml/2.0/documentation/html/>`_, a GML 3.1 application schema:
 
     *"GeoSciML is an application schema that specifies a set of feature-types and supporting structures for information used in the solid-earth geosciences."*
 
@@ -80,7 +80,7 @@ For ``gsml:MappedFeature`` the file is ``workspaces/gsml/gsml_MappedFeature/data
         </connectionParameters>
     </dataStore>
 
-.. note:: Ensure that there is no whitespace inside an ``entry`` element.
+.. note:: Ensure that there is no blank-space inside an ``entry`` element.
 
 
 Mapping files

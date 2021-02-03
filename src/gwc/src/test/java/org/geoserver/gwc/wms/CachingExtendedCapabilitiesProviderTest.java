@@ -5,15 +5,14 @@
  */
 package org.geoserver.gwc.wms;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathEvaluatesTo;
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathExists;
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathNotExists;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
-
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.config.GeoServerInfo;
 import org.geoserver.data.test.MockData;
@@ -32,7 +31,7 @@ public class CachingExtendedCapabilitiesProviderTest extends GeoServerSystemTest
         super.onSetUp(testData);
 
         GeoServerInfo global = getGeoServer().getGlobal();
-        global.setProxyBaseUrl("../wms/src/test/resources/geoserver");
+        global.getSettings().setProxyBaseUrl("../wms/src/test/resources/geoserver");
         getGeoServer().save(global);
     }
 
@@ -69,13 +68,14 @@ public class CachingExtendedCapabilitiesProviderTest extends GeoServerSystemTest
         internalSubset = doctype.getInternalSubset();
 
         assertNotNull(internalSubset);
-        assertTrue(internalSubset,
+        assertTrue(
+                internalSubset,
                 internalSubset.trim().startsWith("<!ELEMENT VendorSpecificCapabilities"));
         assertTrue(internalSubset, internalSubset.contains("(TileSet*)"));
         assertTrue(
                 internalSubset,
-                internalSubset
-                        .contains("<!ELEMENT TileSet (SRS,BoundingBox?,Resolutions,Width,Height,Format,Layers*,Styles*)>"));
+                internalSubset.contains(
+                        "<!ELEMENT TileSet (SRS,BoundingBox?,Resolutions,Width,Height,Format,Layers*,Styles*)>"));
         assertTrue(internalSubset, internalSubset.contains("<!ELEMENT Resolutions (#PCDATA)>"));
         assertTrue(internalSubset, internalSubset.contains("<!ELEMENT Width (#PCDATA)>"));
         assertTrue(internalSubset, internalSubset.contains("<!ELEMENT Height (#PCDATA)>"));
@@ -122,12 +122,30 @@ public class CachingExtendedCapabilitiesProviderTest extends GeoServerSystemTest
         assertXpathExists(tileSetPath + "[1]/Format", dom);
         assertXpathExists(tileSetPath + "[1]/Layers", dom);
         assertXpathExists(tileSetPath + "[1]/Styles", dom);
+
+        // Test RequireTiledParameter==false
+        GWC.get().getConfig().setDirectWMSIntegrationEnabled(true);
+        GWC.get().getConfig().setRequireTiledParameter(false);
+        dom = dom(get("wms?request=getCapabilities&version=1.1.1"), false);
+        assertXpathExists(tileSetPath, dom);
+
+        assertXpathEvaluatesTo(String.valueOf(numTileSets), "count(" + tileSetPath + ")", dom);
+
+        assertXpathExists(tileSetPath + "[1]/SRS", dom);
+        assertXpathExists(tileSetPath + "[1]/BoundingBox", dom);
+        assertXpathExists(tileSetPath + "[1]/Resolutions", dom);
+        assertXpathExists(tileSetPath + "[1]/Width", dom);
+        assertXpathExists(tileSetPath + "[1]/Height", dom);
+        assertXpathExists(tileSetPath + "[1]/Format", dom);
+        assertXpathExists(tileSetPath + "[1]/Layers", dom);
+        assertXpathExists(tileSetPath + "[1]/Styles", dom);
     }
 
     @Test
     public void testLocalWorkspaceIntegration() throws Exception {
 
-        final String tileSetPath = "//WMT_MS_Capabilities/Capability/VendorSpecificCapabilities/TileSet";
+        final String tileSetPath =
+                "//WMT_MS_Capabilities/Capability/VendorSpecificCapabilities/TileSet";
         final String localName = MockData.BASIC_POLYGONS.getLocalPart();
         final String qualifiedName = super.getLayerId(MockData.BASIC_POLYGONS);
 

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <StyledLayerDescriptor version="1.0.0" 
  xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" 
  xmlns="http://www.opengis.net/sld" 
@@ -10,7 +10,7 @@
     <Name>default_raster</Name>
     <UserStyle>
     <!-- Styles can have names, titles and abstracts -->
-      <Title>Default Raster</Title>
+      <Title>Opaque Raster</Title>
       <Abstract>A sample style that draws a raster, good for displaying imagery</Abstract>
       <!-- FeatureTypeStyles describe how to render different features -->
       <!-- A FeatureTypeStyle for rendering rasters -->

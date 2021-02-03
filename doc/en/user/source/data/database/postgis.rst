@@ -8,23 +8,25 @@ PostGIS
 Adding a PostGIS database
 -------------------------
 
-As with all formats, adding a shapefile to GeoServer involves adding a new store to the existing :ref:`webadmin_stores`  through the :ref:`web_admin`.
+As with all formats, adding a shapefile to GeoServer involves adding a new store to the existing :ref:`data_webadmin_stores`  through the :ref:`web_admin`.
 
 Using default connection
 ````````````````````````
 
 To begin, navigate to :menuselection:`Stores --> Add a new store --> PostGIS NG`.
 
-.. figure:: images/postgis.png
-   :align: center
+Fill in the *Basic Store Info* used to identify the database when managing layers.
 
+.. figure:: images/postgis-basic-info.png
+   
    *Adding a PostGIS database*
 
 .. list-table::
    :widths: 20 80
-
-   * - **Option**
-     - **Description**
+   :header-rows: 1
+   
+   * - Basic Store Info
+     - Description
    * - :guilabel:`Workspace`
      - Name of the workspace to contain the database.  This will also be the prefix of any layer names created from tables in the database.
    * - :guilabel:`Data Source Name`
@@ -33,8 +35,35 @@ To begin, navigate to :menuselection:`Stores --> Add a new store --> PostGIS NG`
      - Description of the database/store. 
    * - :guilabel:`Enabled`
      - Enables the store.  If disabled, no data in the database will be served.
+
+Move on to the connection parameters used to connect and interact with the database.
+
+.. figure:: images/postgis.png
+   :align: center
+
+   *PostGIS connection parameters*
+
+The ``dbtype`` and ``namespace`` connection parameters are not directly editable. The :guilabel:`dbtype` parameter is for internal use only (and only accessable via the REST API).
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Connection Parameter
+     - Description
    * - :guilabel:`dbtype`
-     - Type of database.  Leave this value as the default.
+     - Type of database.  Internal value, leave this value as the default.
+   * - :guilabel:`namespace`
+     - Namespace to be associated with the database.  This field is altered by changing the workspace name.
+
+Connection parameters establishing a database connection (see :doc:`connection-pooling`):
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Connection Parameter
+     - Description
    * - :guilabel:`host`
      - Host name where the database exists.
    * - :guilabel:`port`
@@ -47,8 +76,6 @@ To begin, navigate to :menuselection:`Stores --> Add a new store --> PostGIS NG`
      - User name to connect to the database.
    * - :guilabel:`passwd`
      - Password associated with the above user.
-   * - :guilabel:`namespace`
-     - Namespace to be associated with the database.  This field is altered by changing the workspace name.
    * - :guilabel:`max connections`
      - Maximum amount of open connections to the database. 
    * - :guilabel:`min connections`
@@ -59,10 +86,63 @@ To begin, navigate to :menuselection:`Stores --> Add a new store --> PostGIS NG`
      - Time (in seconds) the connection pool will wait before timing out.
    * - :guilabel:`validate connections`
      - Checks the connection is alive before using it.
+   * - :guilabel:`Evictor run periodicity`
+     - Number of seconds between idle object evictor runs.
+   * - :guilabel:`Max connection idle time`
+     - Number of seconds a connection needs to stay idle before the evictor starts to consider closing it.
+   * - :guilabel:`Evictor tests per run`
+     - Number of connections checked by the idle connection evictor for each of its runs.
+
+Connection parameters managing SQL generation:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Connection Parameter
+     - Description
+   * - :guilabel:`Expose primary keys`
+     - Expose primary key columns as values suitable for filtering.
+   * - :guilabel:`Primary key metadata table`
+     - Provide table defining how primary keys values are generated (see :doc:`primarykey`)     
+   * - :guilabel:`Session startup SQL`
+     - SQL applied to connection before use (see :doc:`sqlsession`)
+   * - :guilabel:`Session close-up SQL`
+     - SQL applied to connection after use (see :doc:`sqlsession`)
+   * - :guilabel:`preparedStatements`
+     - Enables prepared statements for SQL generation, rather than text substitution.
+   * - :guilabel:`Max open prepared statements`
+     - Number of prepared statements available.
+
+Connection parameters managing database interaction:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Connection Parameter
+     - Description
    * - :guilabel:`Loose bbox`
      - Performs only the primary filter on the bounding box.  See the section on :ref:`postgis_loose_bbox` for details.
-   * - :guilabel:`preparedStatements`
-     - Enables prepared statements.
+   * - :guilabel:`Estimated extends`
+     - Use spatial index to quickly estimate bounds, rather than check every row.
+   * - :guilabel:`Encode functions`
+     - Generate supported filter functions into their SQL equivalent.
+   * - :guilabel:`Support on the fly geometry simplification`
+     - Enables use of PostGIS geometry simplification
+
+Connection parameters supporting initial database creation:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Connection Parameter
+     - Description
+   * - :guilabel:`create database`
+     - Enable to define a new database on connection
+   * - :guilabel:`create database params`
+     - Additional CREATE DATABASE definition, example :kbd:`WITH TEMPLATE=postgis`
 
 When finished, click :guilabel:`Save`.
 
@@ -80,9 +160,10 @@ To begin, navigate to :menuselection:`Stores --> Add a new store --> PostGIS NG 
 
 .. list-table::
    :widths: 20 80
-
-   * - **Option**
-     - **Description**
+   :header-rows: 1
+   
+   * - Option
+     - Description
    * - :guilabel:`Workspace`
      - Name of the workspace to contain the store.  This will also be the prefix of all of the layer names created from the store.
    * - :guilabel:`Data Source Name`
@@ -105,7 +186,7 @@ When finished, click :guilabel:`Save`.
 Configuring PostGIS layers
 --------------------------
 
-When properly loaded, all tables in the database will be visible to GeoServer, but they will need to be individually configured before being served by GeoServer.  See the section on :ref:`webadmin_layers` for how to add and edit new layers.
+When properly loaded, all tables in the database will be visible to GeoServer, but they will need to be individually configured before being served by GeoServer.  See the section on :ref:`data_webadmin_layers` for how to add and edit new layers.
 
 .. _postgis_loose_bbox:
 
@@ -163,5 +244,107 @@ To insert multi-line text (for use with labeling) remember to use escaped text::
    
    INSERT INTO place VALUES (ST_GeomFromText('POINT(-71.060316 48.432044)', 4326), E'Westfield\nTower');
 
-   
-   
+
+JsonPointer Function support
+----------------------------
+
+GeoServer is able to translate the ``jsonPointer`` function to a query using PostgreSQL support for JSON types. 
+The following are the main characteristics of the implementation:
+
+* The jsonPointer function syntax is like the following: ``jsonPointer(attributeName,'/path/to/json/attribute')``.
+
+* The function is able to select attributes inside json arrays by specifying the index of the target element in the json path eg. ``'/path/to/array/element/0'``.
+
+* When accessing a JSON property it is implicitly assumed that the same property will have the same type on all features, otherwise a cast exception will be thrown by the database.
+
+* GeoServer will perform a cast automatically to the expect type from the evaluation; the cast is completely delegated to the database.
+
+* If the property doesn't exists no errors will be issued, but the features that have that property will be excluded; hence the property we whish to query is not mandatory in all features.
+
+Examples
+````````
+
+Having a json column storing jsonvalues like the following,
+
+.. code-block :: json
+
+  { "name": "city name", 
+    "description": "the city description",
+    "districts": [
+      {
+       "name":"district1",
+       "population": 2000
+      },
+      {
+       "name":"district2",
+       "population": 5000
+      }
+    ]
+    "population":{
+      "average_age": 35,
+      "toal": 50000 
+    }
+  }
+
+and assuming an attribute name as ``city``, valid jsonPointer functions would be: 
+
+* ``jsonPointer(city, '/name')``.
+
+* ``jsonPointer(city, '/population/average_age')``.
+
+* ``jsonPointer(city, '/districts/0/name')``.
+
+An example cql_filter would then be ``jsonPointer(city, '/population/average_age') > 30``.
+
+While an example rule in a sld style sheet could be:
+
+.. code-block:: xml 
+
+   <Rule>
+     <Name>Cities</Name>
+        <ogc:Filter>
+          <ogc:PropertyIsEqualTo>
+            <ogc:Function name="jsonPointer">
+              <ogc:PropertyName>city</ogc:PropertyName>
+              <ogc:Literal>/population/average_age</ogc:Literal>
+            </ogc:Function>
+            <ogc:Literal>35</ogc:Literal>
+          </ogc:PropertyIsEqualTo>
+          </ogc:Filter>          
+        <PointSymbolizer>
+          <Graphic>
+            <Mark>
+              <WellKnownName>square</WellKnownName>
+                <Fill>
+                  <CssParameter name="fill">#FF0000</CssParameter>
+                </Fill>
+            </Mark>
+            <Size>16</Size>
+          </Graphic>
+       </PointSymbolizer>
+    </Rule>
+
+
+DataTypes
+`````````
+
+PostgreSQL defines two JSON datatypes: 
+
+ * ``json`` that stores an exact copy of the input text.
+
+ * ``jsonb`` which store the value in a decomposed binary format.
+
+The jsonPointer function supports both, as well as the text format if it contains a valid json representation. 
+Anyways, the PostgreSQL documentation recommends usage of jsonb, as it is faster to process. 
+
+PostgreSQL supports also indexing on json types. And index on a specific json attribute can be created as follow:
+
+``CREATE INDEX description_index ON table_name 
+((column_name -> path -> to ->> json_attribute ))``.
+
+Index can also be specified in partial way:
+
+``CREATE INDEX description_index ON table_name
+((column_name -> path -> to ->> json_attribute )) 
+WHERE (column_name -> path -> to ->> json_attribute) IS NOT NULL``.
+

@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Copyright (c) 2001 - 2013 OpenPlans - www.openplans.org. All rights 
-  reserved. This code is licensed under the GPL 2.0 license, available at the 
+<!-- Copyright (c)
+    2014 - 2016 Open Source Geospatial Foundation. All rights reserved.
+    2001 - 2013 OpenPlans - www.openplans.org.
+    This code is licensed under the GPL 2.0 license, available at the 
   root application directory. -->
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 
 <beans>
-
+  <bean class="org.geoserver.platform.ModuleStatusImpl">
+    <constructor-arg index="0" value="gs-wcs2_0"/>
+    <constructor-arg index="1" value="GeoServer Web Coverage Service 2.0"/>
+  </bean>
   <!-- wcs service setup, with loggin as an interceptor -->
   <bean id="wcs20ServiceTarget" class="org.geoserver.wcs2_0.DefaultWebCoverageService20">
     <constructor-arg ref="geoServer" />
@@ -60,7 +65,7 @@
 
   <bean id="wcs20GetCapabilitiesResponse"
     class="org.geoserver.wcs2_0.response.WCS20GetCapabilitiesResponse"
-    singleton="false" />
+    scope="prototype" />
 
   <!-- DescribeCoverage -->
   <bean id="wcs20describeCoverageIdKvpParser" class="org.geoserver.ows.FlatKvpParser">
@@ -81,7 +86,7 @@
 
   <bean id="wcs20DescribeCoverageResponse"
     class="org.geoserver.wcs2_0.response.WCS20DescribeCoverageResponse"
-    singleton="false" />
+    scope="prototype" />
 
   <!-- GetCoverage -->
   <bean id="wcs20subsetKvpParser" class="org.geoserver.wcs2_0.kvp.SubsetKvpParser" />
@@ -108,6 +113,12 @@
     <property name="service" value="WCS" />
     <property name="version" value="2.0.1" />
   </bean>
+  <bean id="wcs201SortByKvpParser" class="org.geoserver.ows.kvp.SortByKvpParser">
+    <constructor-arg ref="filterFactory"/>
+    <property name="service" value="WCS"/>
+    <property name="version" value="2.0.1" />
+  </bean>
+  
 
 
   <bean id="wcs20getCoverageKvpParser" class="org.geoserver.wcs2_0.kvp.WCS20GetCoverageRequestReader" />
@@ -136,7 +147,7 @@
     class="org.geoserver.wcs2_0.exception.OWS20ServiceExceptionHandler"> <!-- to be moved into ows package -->
     <constructor-arg index="0">
       <list>
-        <ref local="wcsService-2.0" />
+        <ref bean="wcsService-2.0" />
       </list>
     </constructor-arg>
   </bean>
@@ -157,16 +168,10 @@
     <constructor-arg ref="catalog" index="1" />
   </bean>
 
-  <bean id="arcGridWcsMimeMapper" class="org.geoserver.wcs2_0.response.ReaderClassMimeMapper">
-    <constructor-arg index="0" value="org.geotools.gce.arcgrid.ArcGridReader"/>
-    <constructor-arg index="1" value="text/plain" />
-  </bean>
-  
-  <bean id="gtopo30WcsMimeMapper" class="org.geoserver.wcs2_0.response.ReaderClassMimeMapper">
-    <constructor-arg index="0" value="org.geotools.gce.gtopo30.GTopo30Reader"/>
+  <bean id="arcGridWcsMimeMapper" class="org.geoserver.wcs2_0.response.FormatNameMimeMapper">
+    <constructor-arg index="0" value="ArcGrid"/>
     <constructor-arg index="1" value="text/plain" />
   </bean>
   
   <bean id="imgWcsMimeMapper" class="org.geoserver.wcs2_0.response.ImgMimeTypeMapper"/>
-
 </beans>

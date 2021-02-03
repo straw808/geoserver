@@ -5,23 +5,24 @@
  */
 package org.geoserver.config.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import junit.framework.TestCase;
-
 import org.geoserver.catalog.AuthorityURLInfo;
 import org.geoserver.catalog.impl.AuthorityURL;
 import org.junit.Test;
 
 public class AuthorityURLInfoInfoListConverterTest {
 
-    @Test 
+    @Test
     public void testFromString() {
-        final String serialized = "[{\"name\":\"auth1\",\"href\":\"http://geoserver.org/auth1?\"},{\"name\":\"auth2\",\"href\":\"http://geoserver.org/auth2;someparam=somevalue&\"}]";
-        List<AuthorityURLInfo> expected = new ArrayList<AuthorityURLInfo>();
+        final String serialized =
+                "[{\"name\":\"auth1\",\"href\":\"http://geoserver.org/auth1?\"},{\"name\":\"auth2\",\"href\":\"http://geoserver.org/auth2;someparam=somevalue&\"}]";
+        List<AuthorityURLInfo> expected = new ArrayList<>();
 
         AuthorityURLInfo auth1 = new AuthorityURL();
         auth1.setName("auth1");
@@ -53,7 +54,7 @@ public class AuthorityURLInfoInfoListConverterTest {
 
     @Test
     public void testToString() {
-        List<AuthorityURLInfo> list = new ArrayList<AuthorityURLInfo>();
+        List<AuthorityURLInfo> list = new ArrayList<>();
 
         AuthorityURLInfo auth1 = new AuthorityURL();
         auth1.setName("auth1");
@@ -66,13 +67,14 @@ public class AuthorityURLInfoInfoListConverterTest {
         list.add(auth2);
 
         String actual = AuthorityURLInfoInfoListConverter.toString(list);
-        String expected = "[{\"name\":\"auth1\",\"href\":\"http://geoserver.org/auth1?\"},{\"name\":\"auth2\",\"href\":\"http://geoserver.org/auth2;someparam=somevalue&\"}]";
+        String expected =
+                "[{\"name\":\"auth1\",\"href\":\"http://geoserver.org/auth1?\"},{\"name\":\"auth2\",\"href\":\"http://geoserver.org/auth2;someparam=somevalue&\"}]";
         assertEquals(expected, actual);
     }
 
     @Test
     public void testToStringListWithNullElement() {
-        List<AuthorityURLInfo> list = new ArrayList<AuthorityURLInfo>();
+        List<AuthorityURLInfo> list = new ArrayList<>();
 
         AuthorityURLInfo auth1 = new AuthorityURL();
         auth1.setName("auth1");
@@ -88,18 +90,17 @@ public class AuthorityURLInfoInfoListConverterTest {
 
     @Test
     public void testToStringListWithOnlyNullElements() {
-        List<AuthorityURLInfo> list = new ArrayList<AuthorityURLInfo>();
+        List<AuthorityURLInfo> list = new ArrayList<>();
         list.add(null);
         list.add(null);
         list.add(null);
 
         assertNull(AuthorityURLInfoInfoListConverter.toString(list));
-
     }
 
     @Test
     public void testToStringEmptyList() {
-        List<AuthorityURLInfo> list = new ArrayList<AuthorityURLInfo>();
+        List<AuthorityURLInfo> list = new ArrayList<>();
 
         String actual = AuthorityURLInfoInfoListConverter.toString(list);
         assertNull(actual);

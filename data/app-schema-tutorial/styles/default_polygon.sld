@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <StyledLayerDescriptor version="1.0.0" 
     xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" 
     xmlns="http://www.opengis.net/sld" 
@@ -12,7 +12,7 @@
     <UserStyle>
         <!-- they have names, titles and abstracts -->
       
-      <Title>A boring default style</Title>
+      <Title>Grey Polygon</Title>
       <Abstract>A sample style that just prints out a transparent red interior with a red outline</Abstract>
       <!-- FeatureTypeStyles describe how to render different features -->
       <!-- a feature type for polygons -->
@@ -21,8 +21,8 @@
         <!--FeatureTypeName>Feature</FeatureTypeName-->
         <Rule>
           <Name>Rule 1</Name>
-          <Title>RedFill RedOutline</Title>
-          <Abstract>50% transparent red fill with a red outline 1 pixel in width</Abstract>
+          <Title>Grey Polygon</Title>
+          <Abstract>opaque grey fill with a black outline 1 pixel in width</Abstract>
 
           <!-- like a linesymbolizer but with a fill too -->
           <PolygonSymbolizer>

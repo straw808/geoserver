@@ -6,54 +6,50 @@
 package org.geoserver.cluster.configuration;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
-
 import javax.annotation.PostConstruct;
-
+import org.geoserver.platform.resource.Files;
+import org.geoserver.platform.resource.Resource;
 import org.geotools.util.logging.Logging;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.util.WebUtils;
 
 /**
- * 
  * Abstract class to store and load configuration from global var or temp webapp directory
- * 
+ *
  * @author carlo cancellieri - GeoSolutions SAS
- * 
  */
-final public class JMSConfiguration {
+public final class JMSConfiguration {
     public static final String DEFAULT_GROUP = "geoserver-cluster";
 
-	protected static final java.util.logging.Logger LOGGER = Logging.getLogger(JMSConfiguration.class);
+    protected static final java.util.logging.Logger LOGGER =
+            Logging.getLogger(JMSConfiguration.class);
 
-    @Autowired
-    public List<JMSConfigurationExt> exts;
+    @Autowired public List<JMSConfigurationExt> exts;
 
     public static final String INSTANCE_NAME_KEY = "instanceName";
-    
+
     public static final String GROUP_KEY = "group";
 
-    /**
-     * This file contains the configuration
-     */
+    /** This file contains the configuration */
     public static final String CONFIG_FILE_NAME = "cluster.properties";
 
     /**
-     * This variable stores the configuration path dir. the default initialization will set this to the webapp temp dir. If you need to store it to a
-     * new path use the setter to change it.
+     * This variable stores the configuration path dir. the default initialization will set this to
+     * the webapp temp dir. If you need to store it to a new path use the setter to change it.
      */
-    private static File configPathDir = getTempDir();
+    private static Resource configPathDir = Files.asResource(getTempDir());
 
-    public static void setConfigPathDir(File dir) {
+    public static void setConfigPathDir(Resource dir) {
         configPathDir = dir;
     }
 
-    public static final File getConfigPathDir() {
+    public static final Resource getConfigPathDir() {
         return configPathDir;
     }
 
@@ -72,17 +68,21 @@ final public class JMSConfiguration {
         configuration.put(key, o);
     }
 
-    /**
-     * Initialize configuration
-     * 
-     * @throws IOException
-     */
+    /** Initialize configuration */
     @PostConstruct
     private void init() throws IOException {
         try {
             loadConfig();
             if (configuration.isEmpty()) {
                 initDefaults();
+            }
+            // avoid ActiveMQ matching all pattern has virtual topic name
+            String topicName = configuration.getProperty(TopicConfiguration.TOPIC_NAME_KEY);
+            if (topicName.equalsIgnoreCase("VirtualTopic.>")) {
+                // override topic name with the default topic name
+                configuration.put(
+                        TopicConfiguration.TOPIC_NAME_KEY, TopicConfiguration.DEFAULT_TOPIC_NAME);
+                storeConfig();
             }
             // if configuration is changed (since last boot) store changes
             // on disk
@@ -106,18 +106,13 @@ final public class JMSConfiguration {
         } catch (IOException e) {
             LOGGER.severe("Unable to store properties");
         }
-
     }
 
-    /**
-     * Initialize configuration with default parameters
-     * 
-     * @throws IOException
-     */
+    /** Initialize configuration with default parameters */
     public void initDefaults() throws IOException {
-    	// set the group
-    	configuration.put(GROUP_KEY, DEFAULT_GROUP);
-    	
+        // set the group
+        configuration.put(GROUP_KEY, DEFAULT_GROUP);
+
         // set the name
         configuration.put(INSTANCE_NAME_KEY, UUID.randomUUID().toString());
         if (exts != null) {
@@ -128,8 +123,9 @@ final public class JMSConfiguration {
     }
 
     /**
-     * check if instance name is changed since last application boot, if so set the overridden value into configuration and returns true
-     * 
+     * check if instance name is changed since last application boot, if so set the overridden value
+     * into configuration and returns true
+     *
      * @return true if some parameter is overridden by an Extension property
      */
     public boolean override() {
@@ -137,7 +133,8 @@ final public class JMSConfiguration {
     }
 
     /**
-     * check if instance name is changed since last application boot, if so set the overridden value into configuration and returns true
+     * check if instance name is changed since last application boot, if so set the overridden value
+     * into configuration and returns true
      */
     public final boolean override(String nameKey, Object defaultVal) {
         boolean override = false;
@@ -168,41 +165,31 @@ final public class JMSConfiguration {
     }
 
     public void loadConfig() throws IOException {
-        final File config = new File(configPathDir, CONFIG_FILE_NAME);
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(config);
+        Resource config = configPathDir.get(CONFIG_FILE_NAME);
+        try (InputStream fis = config.in()) {
             this.configuration.load(fis);
-        } finally {
-            if (fis != null)
-                fis.close();
         }
     }
 
     public void storeConfig() throws IOException {
-        final File config = new File(configPathDir, CONFIG_FILE_NAME);
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(config);
+        Resource config = configPathDir.get(CONFIG_FILE_NAME);
+        try (OutputStream fos = config.out()) {
             this.configuration.store(fos, "");
-        } finally {
-            if (fos != null)
-                fos.close();
         }
     }
 
-    public final static File getTempDir() {
-        String tempPath = ApplicationProperties.getProperty(WebUtils.TEMP_DIR_CONTEXT_ATTRIBUTE);
+    public static final File getTempDir() {
+        String tempPath =
+                (ApplicationProperties.getProperty(WebUtils.TEMP_DIR_CONTEXT_ATTRIBUTE) != null
+                        ? ApplicationProperties.getProperty(WebUtils.TEMP_DIR_CONTEXT_ATTRIBUTE)
+                        : System.getProperty("java.io.tmpdir"));
         if (tempPath == null) {
             return null;
         }
         File tempDir = new File(tempPath);
-        if (tempDir.exists() == false)
-            return null;
-        if (tempDir.isDirectory() == false)
-            return null;
-        if (tempDir.canWrite() == false)
-            return null;
+        if (tempDir.exists() == false) return null;
+        if (tempDir.isDirectory() == false) return null;
+        if (tempDir.canWrite() == false) return null;
         return tempDir;
     }
 }

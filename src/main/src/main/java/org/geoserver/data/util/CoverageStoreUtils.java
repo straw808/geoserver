@@ -12,8 +12,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
-
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.geotools.geometry.GeneralEnvelope;
@@ -27,35 +25,25 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 
-
 /**
  * A collection of utilties for dealing with GeotTools Format.
  *
  * @author Richard Gould, Refractions Research, Inc.
  * @author cholmesny
- * @author $Author: Alessio Fabiani (alessio.fabiani@gmail.com) $ (last
- *         modification)
- * @author $Author: Simone Giannecchini (simboss1@gmail.com) $ (last
- *         modification)
- * @version $Id: CoverageStoreUtils.java,v 1.12 2004/09/21 21:14:48 cholmesny
- *          Exp $
+ * @author $Author: Alessio Fabiani (alessio.fabiani@gmail.com) $ (last modification)
+ * @author $Author: Simone Giannecchini (simboss1@gmail.com) $ (last modification)
+ * @version $Id: CoverageStoreUtils.java,v 1.12 2004/09/21 21:14:48 cholmesny Exp $
  */
 public final class CoverageStoreUtils {
-    private final static Logger LOGGER = org.geotools.util.logging.Logging.getLogger(CoverageStoreUtils.class.toString());
-    public final static Format[] formats = GridFormatFinder.getFormatArray();
+    public static final Format[] formats = GridFormatFinder.getFormatArray();
 
-    private CoverageStoreUtils() {
-    }
+    private CoverageStoreUtils() {}
 
-    public static Format acquireFormat(String type)
-        throws IOException {
-        Format[] formats = GridFormatFinder.getFormatArray();
+    public static Format acquireFormat(String type) throws IOException {
         Format format = null;
-        final int length = formats.length;
-
-        for (int i = 0; i < length; i++) {
-            if (formats[i].getName().equals(type)) {
-                format = formats[i];
+        for (Format value : GridFormatFinder.getFormatArray()) {
+            if (value.getName().equals(type)) {
+                format = value;
 
                 break;
             }
@@ -68,31 +56,12 @@ public final class CoverageStoreUtils {
         }
     }
 
-
-    /**
-     * Utility method for finding Params
-     *
-     * @param factory
-     *            DOCUMENT ME!
-     * @param key
-     *            DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
+    /** Utility method for finding Params */
     public static ParameterValue find(Format format, String key) {
         return find(format.getReadParameters(), key);
     }
 
-    /**
-     * Utility methods for find param by key
-     *
-     * @param params
-     *            DOCUMENT ME!
-     * @param key
-     *            DOCUMENT ME!
-     *
-     * @return DOCUMENT ME!
-     */
+    /** Utility methods for find param by key */
     public static ParameterValue find(ParameterValueGroup params, String key) {
         List list = params.values();
         Iterator it = list.iterator();
@@ -101,7 +70,7 @@ public final class CoverageStoreUtils {
 
         while (it.hasNext()) {
             val = (ParameterValue) it.next();
-            descr = (ParameterDescriptor) val.getDescriptor();
+            descr = val.getDescriptor();
 
             if (key.equalsIgnoreCase(descr.getName().toString())) {
                 return val;
@@ -114,19 +83,14 @@ public final class CoverageStoreUtils {
     /**
      * When loading from DTO use the params to locate factory.
      *
-     * <p>
-     * bleck
-     * </p>
-     *
-     * @return
+     * <p>bleck
      */
     public static Format aquireFactoryByType(String type) {
         final Format[] formats = GridFormatFinder.getFormatArray();
         Format format = null;
-        final int length = formats.length;
 
-        for (int i = 0; i < length; i++) {
-            format = formats[i];
+        for (Format value : formats) {
+            format = value;
 
             if (format.getName().equals(type)) {
                 return format;
@@ -136,21 +100,13 @@ public final class CoverageStoreUtils {
         return null;
     }
 
-    /**
-     * After user has selected Description can aquire Format based on
-     * description.
-     *
-     * @param description
-     *
-     * @return
-     */
+    /** After user has selected Description can aquire Format based on description. */
     public static Format aquireFactory(String description) {
         Format[] formats = GridFormatFinder.getFormatArray();
         Format format = null;
-        final int length = formats.length;
 
-        for (int i = 0; i < length; i++) {
-            format = formats[i];
+        for (Format value : formats) {
+            format = value;
 
             if (format.getDescription().equals(description)) {
                 return format;
@@ -163,34 +119,28 @@ public final class CoverageStoreUtils {
     /**
      * Returns the descriptions for the available DataFormats.
      *
-     * <p>
-     * Arrrg! Put these in the select box.
-     * </p>
+     * <p>Arrrg! Put these in the select box.
      *
      * @return Descriptions for user to choose from
      */
-    public static List listDataFormatsDescriptions() {
-        List list = new ArrayList();
+    public static List<String> listDataFormatsDescriptions() {
+        List<String> list = new ArrayList<>();
         Format[] formats = GridFormatFinder.getFormatArray();
-        final int length = formats.length;
-
-        for (int i = 0; i < length; i++) {
-            if (!list.contains(formats[i].getDescription())) {
-                list.add(formats[i].getDescription());
+        for (Format format : formats) {
+            if (!list.contains(format.getDescription())) {
+                list.add(format.getDescription());
             }
         }
 
         return Collections.synchronizedList(list);
     }
 
-    public static List listDataFormats() {
-        List list = new ArrayList();
+    public static List<Format> listDataFormats() {
+        List<Format> list = new ArrayList<>();
         Format[] formats = GridFormatFinder.getFormatArray();
-        final int length = formats.length;
-
-        for (int i = 0; i < length; i++) {
-            if (!list.contains(formats[i])) {
-                list.add(formats[i]);
+        for (Format format : formats) {
+            if (!list.contains(format)) {
+                list.add(format);
             }
         }
 
@@ -201,8 +151,8 @@ public final class CoverageStoreUtils {
         return Collections.synchronizedMap(defaultParams(aquireFactory(description)));
     }
 
-    public static Map defaultParams(Format factory) {
-        Map defaults = new HashMap();
+    public static Map<String, Object> defaultParams(Format factory) {
+        Map<String, Object> defaults = new HashMap<>();
         ParameterValueGroup params = factory.getReadParameters();
 
         if (params != null) {
@@ -215,7 +165,7 @@ public final class CoverageStoreUtils {
 
             while (it.hasNext()) {
                 val = (ParameterValue) it.next();
-                descr = (ParameterDescriptor) val.getDescriptor();
+                descr = val.getDescriptor();
 
                 key = descr.getName().toString();
                 value = null;
@@ -247,22 +197,15 @@ public final class CoverageStoreUtils {
     /**
      * Convert map to real values based on factory Params.
      *
-     * @param factory
-     * @param params
-     *
      * @return Map with real values that may be acceptable to GDSFactory
-     *
-     * @throws IOException
-     *             DOCUMENT ME!
      */
-    public static Map toParams(GridFormatFactorySpi factory, Map params)
-        throws IOException {
-        final Map map = new HashMap(params.size());
+    public static Map<String, Object> toParams(GridFormatFactorySpi factory, Map<String, ?> params)
+            throws IOException {
+        final Map<String, Object> map = new HashMap<>(params.size());
 
         final ParameterValueGroup info = factory.createFormat().getReadParameters();
         // Convert Params into the kind of Map we actually need
-        for (Iterator i = params.keySet().iterator(); i.hasNext();) {
-            String key = (String) i.next();
+        for (String key : params.keySet()) {
             Object value = find(info, key).getValue();
             if (value != null) {
                 map.put(key, value);
@@ -272,18 +215,9 @@ public final class CoverageStoreUtils {
         return Collections.synchronizedMap(map);
     }
 
-    /**
-     * Retrieve a WGS84 lon,lat envelope from the provided one.
-     *
-     * @param sourceCRS
-     * @param targetEnvelope
-     * @return
-     * @throws IndexOutOfBoundsException
-     * @throws FactoryException
-     * @throws TransformException
-     */
+    /** Retrieve a WGS84 lon,lat envelope from the provided one. */
     public static GeneralEnvelope getWGS84LonLatEnvelope(final GeneralEnvelope envelope)
-        throws IndexOutOfBoundsException, FactoryException, TransformException {
+            throws IndexOutOfBoundsException, FactoryException, TransformException {
         final CoordinateReferenceSystem sourceCRS = envelope.getCoordinateReferenceSystem();
 
         ////
@@ -297,7 +231,7 @@ public final class CoverageStoreUtils {
 
         ////
         //
-        //transform
+        // transform
         //
         ////
         final CoordinateReferenceSystem targetCRS = DefaultGeographicCRS.WGS84;
@@ -312,5 +246,4 @@ public final class CoverageStoreUtils {
 
         return targetEnvelope;
     }
-
 }

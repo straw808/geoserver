@@ -5,33 +5,29 @@
  */
 package org.geoserver.wms;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-
 import org.geoserver.platform.ServiceException;
 import org.geoserver.wms.WMSMockData.DummyRasterMapProducer;
-import org.geotools.data.wms.response.GetMapResponse;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.function.EnvFunction;
 import org.junit.Before;
 import org.junit.Test;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Point;
 import org.opengis.filter.FilterFactory;
-
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Point;
 
 /**
  * Unit test for {@link GetMap}
- * 
+ *
  * @author Gabriel Roldan (TOPP)
  * @version $Id$
  * @since 2.5.x
- * @source $URL:
- *         https://svn.codehaus.org/geoserver/branches/1.7.x/geoserver/wms/src/test/java/org/vfny
- *         /geoserver/wms/responses/GetMapResponseTest.java $
  */
 public class GetMapTest {
 
@@ -54,10 +50,6 @@ public class GetMapTest {
         getMapOp = new GetMap(mockData.getWMS());
     }
 
-
-    /**
-     * Test method for {@link GetMapResponse#execute(org.vfny.geoserver.Request)}.
-     */
     @Test
     public void testExecuteNoExtent() {
         request.setBbox(null);
@@ -78,15 +70,16 @@ public class GetMapTest {
         request.setLayers(Arrays.asList(layer));
 
         final DummyRasterMapProducer producer = new DummyRasterMapProducer();
-        final WMS wms = new WMS(mockData.getGeoServer()) {
-            @Override
-            public GetMapOutputFormat getMapOutputFormat(final String mimeType) {
-                if (DummyRasterMapProducer.MIME_TYPE.equals(mimeType)) {
-                    return producer;
-                }
-                return null;
-            }
-        };
+        final WMS wms =
+                new WMS(mockData.getGeoServer()) {
+                    @Override
+                    public GetMapOutputFormat getMapOutputFormat(final String mimeType) {
+                        if (DummyRasterMapProducer.MIME_TYPE.equals(mimeType)) {
+                            return producer;
+                        }
+                        return null;
+                    }
+                };
         getMapOp = new GetMap(wms);
         getMapOp.run(request);
         assertTrue(producer.produceMapCalled);
@@ -137,32 +130,37 @@ public class GetMapTest {
     @Test
     public void testEnviroment() {
         final FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
-        EnvFunction.setLocalValues(Collections.singletonMap("myParam", (Object) 23));
+        EnvFunction.setLocalValues(Collections.singletonMap("myParam", 23));
 
-        final DummyRasterMapProducer producer = new DummyRasterMapProducer() {
-            @Override
-            public WebMap produceMap(WMSMapContent ctx) throws ServiceException, IOException {
-                assertEquals(23, ff.function("env", ff.literal("myParam")).evaluate(null));
-                assertEquals(10, ff.function("env", ff.literal("otherParam"), ff.literal(10))
-                        .evaluate(null));
-                super.produceMapCalled = true;
-                return null;
-            }
-        };
-        final WMS wms = new WMS(mockData.getGeoServer()) {
-            @Override
-            public GetMapOutputFormat getMapOutputFormat(final String mimeType) {
-                if (DummyRasterMapProducer.MIME_TYPE.equals(mimeType)) {
-                    return producer;
-                }
-                return null;
-            }
-        };
-        
+        final DummyRasterMapProducer producer =
+                new DummyRasterMapProducer() {
+                    @Override
+                    public WebMap produceMap(WMSMapContent ctx)
+                            throws ServiceException, IOException {
+                        assertEquals(23, ff.function("env", ff.literal("myParam")).evaluate(null));
+                        assertEquals(
+                                10,
+                                ff.function("env", ff.literal("otherParam"), ff.literal(10))
+                                        .evaluate(null));
+                        super.produceMapCalled = true;
+                        return null;
+                    }
+                };
+        final WMS wms =
+                new WMS(mockData.getGeoServer()) {
+                    @Override
+                    public GetMapOutputFormat getMapOutputFormat(final String mimeType) {
+                        if (DummyRasterMapProducer.MIME_TYPE.equals(mimeType)) {
+                            return producer;
+                        }
+                        return null;
+                    }
+                };
+
         getMapOp = new GetMap(wms);
         WebMap map = getMapOp.run(request);
         assertTrue(producer.produceMapCalled);
-        // there used to be a test that the values are reset right after 
+        // there used to be a test that the values are reset right after
         // GetMap, but this is wrong, the producer can be streaming and thus
         // the env variable must stay until the full request lifecycle is done,
         // we now use a DispatcherCallback to clean up the env variables:
@@ -177,5 +175,4 @@ public class GetMapTest {
             assertEquals(expectedExceptionCode, e.getCode());
         }
     }
-
 }

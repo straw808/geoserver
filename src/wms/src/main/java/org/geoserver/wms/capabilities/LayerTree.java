@@ -7,13 +7,11 @@ package org.geoserver.wms.capabilities;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-
 import org.geoserver.catalog.LayerInfo;
 
 /**
  * A Class to manage the WMS Layer structure
- * 
+ *
  * @author fabiania
  */
 class LayerTree {
@@ -25,31 +23,24 @@ class LayerTree {
 
     public LayerTree() {
         this.name = "";
-        this.childrens = new ArrayList<LayerTree>();
-        this.data = new ArrayList<LayerInfo>();
+        this.childrens = new ArrayList<>();
+        this.data = new ArrayList<>();
     }
-    
-    /**
-     * @param name
-     *            String
-     */
+
+    /** @param name String */
     public LayerTree(String name) {
         this.name = name;
-        this.childrens = new ArrayList<LayerTree>();
-        this.data = new ArrayList<LayerInfo>();
+        this.childrens = new ArrayList<>();
+        this.data = new ArrayList<>();
     }
 
-    /**
-     * @param c
-     *            Collection
-     */
+    /** @param c Collection */
     public LayerTree(Collection<LayerInfo> c) {
         this.name = "";
-        this.childrens = new ArrayList<LayerTree>();
-        this.data = new ArrayList<LayerInfo>();
+        this.childrens = new ArrayList<>();
+        this.data = new ArrayList<>();
 
-        for (Iterator<LayerInfo> it = c.iterator(); it.hasNext();) {
-            LayerInfo layer = it.next();
+        for (LayerInfo layer : c) {
             add(layer);
         }
     }
@@ -68,11 +59,7 @@ class LayerTree {
         }
     }
 
-    /**
-     * @param tree
-     * @param treeStructure
-     * @param layer
-     */
+    /** */
     private void addToNode(LayerTree tree, String[] treeStructure, LayerInfo layer) {
         final int length = treeStructure.length;
 
@@ -92,10 +79,6 @@ class LayerTree {
         }
     }
 
-    /**
-     * @param string
-     * @return
-     */
     public LayerTree getNode(String name) {
         for (LayerTree tmpNode : this.childrens) {
             if (tmpNode.name.equals(name)) {

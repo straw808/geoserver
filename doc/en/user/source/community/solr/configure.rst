@@ -22,7 +22,7 @@ set of selected attributes, and a different filter to select the documents conta
 Installing the SOLR extension
 -----------------------------------
 
-#. Download the SOLR extension from the `nightly GeoServer community module builds <http://ares.boundlessgeo.com/geoserver/master/community-latest/>`_.
+#. Download the SOLR extension from the `nightly GeoServer community module builds <https://build.geoserver.org/geoserver/master/community-latest/>`_.
 
    .. warning:: Make sure to match the version of the extension to the version of the GeoServer instance.
 
@@ -30,7 +30,7 @@ Installing the SOLR extension
 
 #. Extract the contents of the archive into the ``WEB-INF/lib`` directory of the GeoServer installation.
 
-#. Restart GeoServer, the SORL data store should show up as an option when going through the new store
+#. Restart GeoServer, the SOLR data store should show up as an option when going through the new store
    creation workflow.
 
 Connecting to a SOLR server
@@ -43,7 +43,7 @@ Once the extension is properly installed ``SOLR`` will show up as an option when
 
    *SOLR in the list of vector data sources*
 
-.. _config_solr:
+.. _community_solr_configure_store:
 
 Configuring a SOLR data store
 -----------------------------
@@ -57,9 +57,9 @@ Configuring a SOLR data store
    :widths: 20 80
 
    * - ``solr_url``
-     - Provide a link to the SORL server that provides the documents
+     - Provide a link to the SOLR server that provides the documents
      
-Once the parameters are entered and confirmed, GeoServer will contact the SORL server and 
+Once the parameters are entered and confirmed, GeoServer will contact the SOLR server and 
 fetch a list of layer names and fill the layer chooser page accordingly:
 
 .. figure:: images/solr_layerlist.png
@@ -88,7 +88,7 @@ in a table the fields available:
    * - ``Name``
      - Name of the field
    * - ``Type``
-     - Type of the field, as derived from the SORL schema. For geometry types, you have the option to provide a more specific data type
+     - Type of the field, as derived from the SOLR schema. For geometry types, you have the option to provide a more specific data type
    * - ``SRID``
      - Native spatial reference ID of the geometries
    * - ``Default geometry``
@@ -126,10 +126,10 @@ save and use the layer in WMS and WFS.
 Custom ``q`` and ``fq`` parameters
 ----------------------------------
 
-The SORL store will translate most OGC filters, as specified in SLD, CQL Filter or OGC filter,
+The SOLR store will translate most OGC filters, as specified in SLD, CQL Filter or OGC filter,
 down into the SOLR engine for native filtering, using the ``fq`` parameter.
 However, in some occasions you might need to specify manually either ``q`` or ``fq``, to leverage
-some native SORL filtering ability that cannot be expressed via OGC filters.
+some native SOLR filtering ability that cannot be expressed via OGC filters.
 
 This can be done by specifying those as ``viewparams``, pretty much like in parametric sql views
 atop relational databases.

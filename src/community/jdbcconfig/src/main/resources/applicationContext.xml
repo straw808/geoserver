@@ -12,20 +12,21 @@
   <!-- main configuration, loaded via factory bean -->
   <bean id="jdbcConfigProperties" 
     class="org.geoserver.jdbcconfig.internal.JDBCConfigPropertiesFactoryBean">
-      <constructor-arg ref="resourceLoader"/>
+      <constructor-arg ref="resourceStore"/>
   </bean>
 
   <!-- data source, also loaded and configured via factory bean -->
-  <bean id="jdbcConfigDataSource" class="org.geoserver.jdbcconfig.internal.DataSourceFactoryBean">
+  <bean id="jdbcConfigDataSource" class="org.geoserver.jdbcloader.DataSourceFactoryBean">
     <constructor-arg ref="jdbcConfigProperties" />
   </bean>
 
   <!-- transaction manager -->
-  <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <bean id="jdbcConfigTransactionManager"
+  	class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
     <property name="dataSource" ref="jdbcConfigDataSource" />
   </bean>
 
-  <tx:annotation-driven transaction-manager="txManager" />
+  <tx:annotation-driven />
 
   <bean id="jdbcPersistenceBinding" class="org.geoserver.jdbcconfig.internal.XStreamInfoSerialBinding">
     <constructor-arg ref="xstreamPersisterFactory" />
@@ -43,6 +44,7 @@
   <bean id="JDBCGeoServerFacade" class="org.geoserver.jdbcconfig.config.JDBCGeoServerFacade">
     <constructor-arg ref="JDBCConfigDB" />
     <property name="resourceLoader" ref="resourceLoader" />
+    <property name="ddResourceStore" ref="dataDirectoryResourceStore" />
   </bean>
 
   <bean id="JDBCGeoServerLoader" class="org.geoserver.jdbcconfig.JDBCGeoServerLoader">
@@ -59,6 +61,10 @@
     <constructor-arg ref="jdbcConfigProperties" />
   </bean>
   
-    <bean id="JDBCCacheProvider" class="org.geoserver.jdbcconfig.internal.JDBCCacheProvider"/>
+  <bean id="JDBCCacheProvider" class="org.geoserver.jdbcconfig.internal.JDBCCacheProvider"/>
+    <bean id="JDBCConfigXStreamPersisterInitializer" class="org.geoserver.jdbcconfig.internal.JDBCConfigXStreamPersisterInitializer"/>
 
+  <bean id="JDBCLifecycleHandler" class="org.geoserver.jdbcconfig.internal.JDBCLifecycleHandler">
+    <constructor-arg ref="JDBCConfigDB"/>
+  </bean>
 </beans>

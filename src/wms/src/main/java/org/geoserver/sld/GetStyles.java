@@ -8,7 +8,6 @@ package org.geoserver.sld;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.geoserver.catalog.LayerGroupInfo;
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.catalog.StyleInfo;
@@ -24,7 +23,7 @@ import org.geotools.styling.visitor.DuplicatingStyleVisitor;
 
 /**
  * DescribeLayer WMs operation.
- * 
+ *
  * @author Gabriel Roldan
  * @version $Id$
  */
@@ -38,42 +37,44 @@ public class GetStyles {
 
     public StyledLayerDescriptor run(final GetStylesRequest request) throws ServiceException {
 
-        if (request.getSldVer() != null && "".equals(request.getSldVer())
+        if (request.getSldVer() != null
+                && "".equals(request.getSldVer())
                 && !"1.0.0".equals(request.getSldVer()))
             throw new ServiceException("SLD version " + request.getSldVer() + " not supported");
 
         try {
             StyleFactory factory = CommonFactoryFinder.getStyleFactory(null);
-            List<StyledLayer> layers = new ArrayList<StyledLayer>();
+            List<StyledLayer> layers = new ArrayList<>();
             for (String layerName : request.getLayers()) {
                 NamedLayer namedLayer = factory.createNamedLayer();
                 layers.add(namedLayer);
                 namedLayer.setName(layerName);
                 LayerGroupInfo group = wms.getLayerGroupByName(layerName);
                 LayerInfo layer = wms.getLayerByName(layerName);
-                if (group != null) {
-                    // nothing to do, groups have no style
-                } else if (layer != null) {
-                    Style style = layer.getDefaultStyle().getStyle();
-                    // add the default style first
-                    style = cloneStyle(style);
-                    style.setDefault(true);
-                    style.setName(layer.getDefaultStyle().getName());
-                    namedLayer.styles().add(style);
-                    // add alternate styles
-                    for (StyleInfo si : layer.getStyles()) {
-                        style = cloneStyle(si.getStyle());
-                        style.setName(si.getName());
+                if (group == null) {
+                    // groups have no style, check other cases
+                    if (layer != null) {
+                        Style style = layer.getDefaultStyle().getStyle();
+                        // add the default style first
+                        style = cloneStyle(style);
+                        style.setDefault(true);
+                        style.setName(layer.getDefaultStyle().getName());
                         namedLayer.styles().add(style);
+                        // add alternate styles
+                        for (StyleInfo si : layer.getStyles()) {
+                            style = cloneStyle(si.getStyle());
+                            style.setName(si.getName());
+                            namedLayer.styles().add(style);
+                        }
+                    } else {
+                        // we should really add a code and a locator...
+                        throw new ServiceException("Unknown layer " + layerName);
                     }
-                } else {
-                    // we should really add a code and a locator...
-                    throw new ServiceException("Unknown layer " + layerName);
                 }
             }
 
             StyledLayerDescriptor sld = factory.createStyledLayerDescriptor();
-            sld.setStyledLayers((StyledLayer[]) layers.toArray(new StyledLayer[layers.size()]));
+            sld.setStyledLayers(layers.toArray(new StyledLayer[layers.size()]));
 
             return sld;
         } catch (IOException e) {
@@ -87,5 +88,4 @@ public class GetStyles {
         style = (Style) cloner.getCopy();
         return style;
     }
-
 }

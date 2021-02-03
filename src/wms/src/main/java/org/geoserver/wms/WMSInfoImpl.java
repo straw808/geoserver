@@ -9,46 +9,50 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.geoserver.catalog.AuthorityURLInfo;
+import org.geoserver.catalog.DimensionInfo;
 import org.geoserver.catalog.LayerIdentifierInfo;
 import org.geoserver.config.impl.ServiceInfoImpl;
 
 public class WMSInfoImpl extends ServiceInfoImpl implements WMSInfo {
 
-    List<String> srs = new ArrayList<String>();
+    public static final int DEFAULT_REMOTE_STYLE_MAX_REQUEST_TIME = 60000;
+    public static final int DEFAULT_REMOTE_STYLE_TIMEOUT = 30000;
+
+    List<String> srs = new ArrayList<>();
 
     Boolean bboxForEachCRS;
 
     WatermarkInfo watermark = new WatermarkInfoImpl();
 
     WMSInterpolation interpolation = WMSInterpolation.Nearest;
-    
-    
+
     boolean getFeatureInfoMimeTypeCheckingEnabled;
-    Set<String> getFeatureInfoMimeTypes = new HashSet<String>();
-    
+    Set<String> getFeatureInfoMimeTypes = new HashSet<>();
+
     boolean getMapMimeTypeCheckingEnabled;
-    Set<String> getMapMimeTypes = new HashSet<String>();
-    
-    
+    Set<String> getMapMimeTypes = new HashSet<>();
+
+    boolean dynamicStylingDisabled;
+
+    // GetFeatureInfo result are reprojected by default
+    private boolean featuresReprojectionDisabled = false;
 
     /**
      * This property is transient in 2.1.x series and stored under the metadata map with key
      * "authorityURLs", and a not transient in the 2.2.x series.
-     * 
+     *
      * @since 2.1.3
      */
-    protected List<AuthorityURLInfo> authorityURLs = new ArrayList<AuthorityURLInfo>(2);
-    
+    protected List<AuthorityURLInfo> authorityURLs = new ArrayList<>(2);
 
     /**
      * This property is transient in 2.1.x series and stored under the metadata map with key
      * "identifiers", and a not transient in the 2.2.x series.
-     * 
+     *
      * @since 2.1.3
      */
-    protected List<LayerIdentifierInfo> identifiers = new ArrayList<LayerIdentifierInfo>(2);
+    protected List<LayerIdentifierInfo> identifiers = new ArrayList<>(2);
 
     int maxBuffer;
 
@@ -58,11 +62,20 @@ public class WMSInfoImpl extends ServiceInfoImpl implements WMSInfo {
 
     int maxRenderingErrors;
 
-    private String capabilitiesErrorHandling;
+    private String rootLayerTitle;
+
+    private String rootLayerAbstract;
+
+    private Integer maxRequestedDimensionValues;
+
+    private CacheConfiguration cacheConfiguration = new CacheConfiguration();
+
+    private Integer remoteStyleMaxRequestTime;
+    private Integer remoteStyleTimeout;
 
     public WMSInfoImpl() {
-        authorityURLs = new ArrayList<AuthorityURLInfo>(2);
-        identifiers = new ArrayList<LayerIdentifierInfo>(2);
+        authorityURLs = new ArrayList<>(2);
+        identifiers = new ArrayList<>(2);
     }
 
     public int getMaxRequestMemory() {
@@ -101,8 +114,8 @@ public class WMSInfoImpl extends ServiceInfoImpl implements WMSInfo {
         if (bboxForEachCRS != null) {
             return bboxForEachCRS;
         }
-        
-        //check the metadata map if upgrading from 2.1.x
+
+        // check the metadata map if upgrading from 2.1.x
         Boolean bool = getMetadata().get("bboxForEachCRS", Boolean.class);
         return bool != null && bool;
     }
@@ -173,7 +186,8 @@ public class WMSInfoImpl extends ServiceInfoImpl implements WMSInfo {
         return getFeatureInfoMimeTypeCheckingEnabled;
     }
 
-    public void setGetFeatureInfoMimeTypeCheckingEnabled(boolean getFeatureInfoMimeTypeCheckingEnabled) {
+    public void setGetFeatureInfoMimeTypeCheckingEnabled(
+            boolean getFeatureInfoMimeTypeCheckingEnabled) {
         this.getFeatureInfoMimeTypeCheckingEnabled = getFeatureInfoMimeTypeCheckingEnabled;
     }
 
@@ -183,5 +197,88 @@ public class WMSInfoImpl extends ServiceInfoImpl implements WMSInfo {
 
     public void setGetMapMimeTypeCheckingEnabled(boolean getMapMimeTypeCheckingEnabled) {
         this.getMapMimeTypeCheckingEnabled = getMapMimeTypeCheckingEnabled;
+    }
+
+    public String getRootLayerTitle() {
+        return rootLayerTitle;
+    }
+
+    public void setRootLayerTitle(String rootLayerTitle) {
+        this.rootLayerTitle = rootLayerTitle;
+    }
+
+    public String getRootLayerAbstract() {
+        return rootLayerAbstract;
+    }
+
+    public void setRootLayerAbstract(String rootLayerAbstract) {
+        this.rootLayerAbstract = rootLayerAbstract;
+    }
+
+    /** Sets the status of dynamic styling (SLD and SLD_BODY params) allowance */
+    @Override
+    public void setDynamicStylingDisabled(Boolean dynamicStylingDisabled) {
+        this.dynamicStylingDisabled = dynamicStylingDisabled;
+    }
+
+    /** @return the status of dynamic styling (SLD and SLD_BODY params) allowance */
+    @Override
+    public Boolean isDynamicStylingDisabled() {
+        return dynamicStylingDisabled;
+    }
+
+    @Override
+    public boolean isFeaturesReprojectionDisabled() {
+        return featuresReprojectionDisabled;
+    }
+
+    @Override
+    public void setFeaturesReprojectionDisabled(boolean featuresReprojectionDisabled) {
+        this.featuresReprojectionDisabled = featuresReprojectionDisabled;
+    }
+
+    public int getMaxRequestedDimensionValues() {
+        return maxRequestedDimensionValues == null
+                ? DimensionInfo.DEFAULT_MAX_REQUESTED_DIMENSION_VALUES
+                : maxRequestedDimensionValues;
+    }
+
+    public void setMaxRequestedDimensionValues(int maxRequestedDimensionValues) {
+        this.maxRequestedDimensionValues = maxRequestedDimensionValues;
+    }
+
+    @Override
+    public CacheConfiguration getCacheConfiguration() {
+        if (cacheConfiguration == null) {
+            cacheConfiguration = new CacheConfiguration();
+        }
+        return cacheConfiguration;
+    }
+
+    @Override
+    public void setCacheConfiguration(CacheConfiguration cacheCfg) {
+        this.cacheConfiguration = cacheCfg;
+    }
+
+    @Override
+    public int getRemoteStyleMaxRequestTime() {
+        return remoteStyleMaxRequestTime != null
+                ? remoteStyleMaxRequestTime
+                : DEFAULT_REMOTE_STYLE_MAX_REQUEST_TIME;
+    }
+
+    @Override
+    public void setRemoteStyleMaxRequestTime(int remoteStyleMaxRequestTime) {
+        this.remoteStyleMaxRequestTime = remoteStyleMaxRequestTime;
+    }
+
+    @Override
+    public int getRemoteStyleTimeout() {
+        return remoteStyleTimeout != null ? remoteStyleTimeout : DEFAULT_REMOTE_STYLE_TIMEOUT;
+    }
+
+    @Override
+    public void setRemoteStyleTimeout(int remoteStyleTimeout) {
+        this.remoteStyleTimeout = remoteStyleTimeout;
     }
 }

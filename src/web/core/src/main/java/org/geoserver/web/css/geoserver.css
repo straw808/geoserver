@@ -6,6 +6,7 @@ background: #fff;
 color: #0076a1;
 font-family: Tahoma, "Lucida Sans Unicode", "Lucida Grande", Verdana, sans-serif;
 text-align:left !important; /* override blueprint's ie.css */
+overflow-y: scroll;
 }
 
 body.help {
@@ -90,6 +91,39 @@ input[readonly] {
 
 .palette th, .palette td {
   padding: 0;
+}
+
+
+.palette-header {
+  margin-right: -2px;
+}
+
+.palette-theme-default .palette-choices > div {
+  width: 100%;
+  overflow-x: scroll;
+  border: 1px solid rgb(187, 187, 187);
+  margin: 0.5em 0;
+}
+
+.palette-theme-default .palette-selected > div {
+  width: 100%;
+  overflow-x: scroll;
+  border: 1px solid rgb(187, 187, 187);
+  margin: 0.5em 0;
+}
+
+.palette-theme-default .palette-choices select {
+  min-width: 100%;
+  width: auto;
+  margin: 0;
+  border: none;
+}
+
+.palette-theme-default .palette-selected select {
+  min-width: 100%;
+  width: auto;
+  margin: 0;
+  border: none;
 }
 
 /*-----------------------
@@ -285,6 +319,17 @@ tr.even th {
 background: #e2efcd; /* override blueprint's settings */
 }
 
+tr.dnd-drop-center td {
+  background-color: #cccccc !important;
+}
+
+div.dnd-theme-web tr {
+  cursor: move; /* fallback if grab cursor is unsupported */
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+}
+
 tr.even:hover td,
 tr.even:hover th {
 background: #f4f9eb;
@@ -299,6 +344,9 @@ th.selection {
 	width: 1%; /* use as few space as possible */
 }
 
+.alternating-rows tr:nth-child(even) {
+	background: #e2efcd;
+}
 /*-----------------------
 Forms
 -----------------------*/
@@ -343,8 +391,8 @@ height: 18px;
 font-weight: bold;
 }
 fieldset { /* override blueprint's settings */
-padding: 0;
-margin: 0 0 2em;
+padding: 0 0 1em 0;
+margin: 0 0 0.5em;
 border: 1px solid #c6e09b;
 border-width: 1px 0 0;
 position: relative;
@@ -375,26 +423,58 @@ label, span.fieldname {
 border: medium none;
 color: #222;
 display: block;
+font-weight: normal;
 font-size: 0.95em;
-font-weight: bold;
 line-height: 1.5em;
 padding: 0 0 1px;
 }
 
 label.choice {
-color: #222;
 display: block;
-font-weight: normal;
-font-size: 100%;
-line-height: 1.5em;
 margin: -1.65em 0 0 25px;
 padding: 0.44em 0 0.5em;
 width: 90%;
+line-height: 1.5em;
 }
 
-ul.choiceList>li>label, ul.choiceList>li>input[type=checkbox] {
-display:inline;
+label.choice,ul.choiceList>li label, *.choiceItem label {
+color: #222; 
+font-weight: normal;
+font-size: 100%;
 }
+
+ul.choiceList>li span.fieldname, *.choiceItem span.fieldname {
+margin-left: -2em;
+}
+ul.choiceList>li span.fieldname:dir(rtl), *.choiceItem span.fieldname:dir(rtl) {
+margin-left: 0;
+margin-right: -2em;
+}
+
+
+/* For a "choiceList" create padding down leading side to act as a "hanging indent" then move the checkbox/radio into that padding. This allows the label to remain inline so it doesn't produce clickable whitespace. */
+ul.choiceList>li,*.choiceItem {
+position: relative;
+padding-left: 2em; 
+}
+ul.choiceList>li:dir(rtl),*.choiceItem:dir(rtl){
+padding-left: 0;
+padding-right: 2em;
+}
+ul.choiceList>li label,*.choiceItem label{
+display: inline;
+}
+ul.choiceList>li input[type=checkbox],ul.choiceList>li input[type=radio],*.choiceItem input[type=checkbox],*.choiceItem input[type=radio] {
+display: block;
+position: absolute;
+left: 0;
+}
+ul.choiceList>li:dir(rtl) input[type=checkbox],ul.choiceList>li:dir(rtl) input[type=radio],*.choiceItem:dir(rtl) input[type=checkbox],*.choiceItem:dir(rtl) input[type=radio] {
+left: auto;
+right: 0;
+}
+
+
 
 textarea.small {
 height: 3em;
@@ -427,6 +507,10 @@ border: 1px solid #7c7c7c;
 border-color: #7c7c7c #c3c3c3 #ddd;
 padding: 0.2em;
 width: 25em;
+}
+
+input.longtext {
+  width: 50em;
 }
 
 /* standard ul inside form */
@@ -512,6 +596,8 @@ padding: 5px 10px 5px 7px;
 -moz-border-radius: 5px;
 -webkit-border-radius: 5px;
 border-radius: 5px;
+line-height:1.5;
+font-family:Tahoma, Arial, sans-serif;
 }
 
 /* Alpha transparency for IE6 
@@ -572,12 +658,12 @@ margin-right: 5px;
 }
 
 .button-group .button-login div {
-background-image: url(../img/icons/silk/door_in.png);
+background-image: url(../img/icons/silk/door-in.png);
 padding-left: 25px;
 }
 
 .button-group .button-logout span {
-background: url(../img/icons/silk/door_out.png) no-repeat;
+background: url(../img/icons/silk/door-out.png) no-repeat;
 display: block;
 margin: 5px;
 padding-left: 25px;
@@ -614,6 +700,32 @@ display: block;
 background: url(../img/icons/silk/text_align_right.png) no-repeat;
 display: block;
 }
+
+.button-group .button-find span {
+background: url(../img/icons/silk/find.png) no-repeat;
+display: block;
+}
+
+.button-group .button-find-next span {
+background: url(../img/icons/silk/find_next.png) no-repeat;
+display: block;
+}
+
+.button-group .button-replace span {
+background: url(../img/icons/silk/text_replace.png) no-repeat;
+display: block;
+}
+
+.button-group .button-picture span {
+background: url(../img/icons/silk/photo.png) no-repeat;
+display: block;
+}
+
+.button-group .button-color span {
+background: url(../img/icons/silk/palette.png) no-repeat;
+display: block;
+}
+
 
 
 .button-group a img,
@@ -810,6 +922,36 @@ margin-bottom: 1em;
 padding-top: 18px;
 }
 
+.page-footer {
+padding-top: 1em;
+}
+
+/* button bar in forms */
+.toolbar-sticky {
+  position: sticky;
+  bottom: 0px;
+  padding: 10px 0px;
+  background-color: #fff;
+  z-index: 100;
+}
+.toolbar-sticky .form-button-save, .toolbar-sticky .form-button-apply, .toolbar-sticky .form-button-validate, .toolbar-sticky .form-button-ok,
+.toolbar-sticky .form-button-import, .toolbar-sticky .form-button-close, .toolbar-sticky .form-button-start, .toolbar-sticky .form-button-back {
+  padding: 6px 12px;
+}
+.toolbar-sticky .form-button-cancel {
+  background: none;
+  border-color: transparent;
+  padding: 6px 12px;
+}
+.toolbar-sticky .form-button-cancel:hover {
+  background-color: #f7f7f7;
+  border-color: #f7f7f7;
+}
+.toolbar-sticky .form-progress {
+  display: block;
+  margin-top: 5px;
+}
+
 * html .page-header { /* IE6 */
 background-position: 0 -2px;
 }
@@ -925,11 +1067,28 @@ display: inline;
 padding-right: 10px;
 }
 
+/* modal */
+
+div.wicket-modal h3.w_captionText {
+  color: #666;
+  font-size: 12px;
+  font-weight: bold;
+  height: 1.4em;
+}
+
+/* Controls underneath native bounding box eg. calculate from data, from CRS */
+.bounding-box-controls {
+margin-bottom: 1em;
+}
+
+.bounding-box-controls a {
+display: block;
+}
 
 /* Page */
 
 .page-header {
-padding: 20px 0 20px 0;
+padding: 20px 0 0 0;
 }
 
 .page-header h2 {
@@ -1021,6 +1180,11 @@ height: 2.1em;
 margin: 1.5em 0 2.5em;
 }
 
+.tab-row-compact {
+margin: 1em 0 1em;
+}
+
+
 .tab-row ul {
 list-style-type: none;
 margin: 0;
@@ -1029,8 +1193,8 @@ float: left;
 
 .tab-row li {
 float: left;
-margin: 0 0.2em 0 0;
-padding: 0;
+margin: 0 0.2em 0 0 !important;
+padding: 0 !important;
 }
 
 .tab-row a {
@@ -1136,6 +1300,11 @@ display: block;
 margin-bottom: 1em;
 }
 
+.gwc-clear {
+background: transparent url(../img/clear_cache.png) scroll no-repeat left center;
+padding: 2px 0px 2px 20px;
+}
+
 /*----------------
   Page header
 -----------------*/
@@ -1149,10 +1318,19 @@ margin: 0.2em; /* override blueprint's settings for unordered lists */
 list-style-type: none;
 }
 
+.page-footer ul {
+margin: 0.2em; /* override blueprint's settings for unordered lists */
+list-style-type: none;
+}
+
+
 /*-------------
   Customize Wicket's autocomplete
   -------------*/
 
+div.wicket-aa-container {
+    z-index: 110;
+}
 div.wicket-aa {
     background-color:white;
     border:1px solid #CCCCCC;
@@ -1167,4 +1345,159 @@ div.wicket-aa ul {
 }
 div.wicket-aa ul li.selected {
     background-color:#CCCCCC;
+}
+
+/*----------------------------
+  Customize Select2 appearance
+------------------------------*/
+.select2-container .select2-selection--single {
+  height: 19px;
+  margin-top: -2px;
+} 
+.select2-container--default .select2-selection--single {
+   border: 1px solid #aaa;
+   border-radius: 0px;
+}
+.select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+   border-color: #000 transparent;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+   top: -2px;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+   border-color: #000 transparent transparent transparent;
+}
+.select2-results__option {
+   color: black;
+   padding: 1px;
+}
+.select2-container--default .select2-results > .select2-results__options {
+   max-height: 300px;
+}
+.select2-container .select2-selection--single .select2-selection__rendered {
+   padding-left: 4px;   
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  color: black;
+  line-height: 19px;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 18px;
+}
+
+li.select2-results__option {
+    max-width: 100%;
+    overflow: hidden;
+    /*Altered two below to make word wrap work */
+    word-wrap: break-word !important;
+    white-space: normal;
+    /* show empty option properly */
+    min-height:18px; 
+}
+
+.fullscreen {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  padding: 0px;
+  border-right: 10px;
+  margin: 0px !important;
+  overflow-y: hidden;
+  width: auto;
+  z-index: 9;
+}
+
+#fullscreen-div {
+ float: right;
+ display: block;
+ margin-top: 0px;
+ margin-right: 0px;
+ width: 16px;
+ height: 16px;
+ padding: 4px 0px;
+}
+
+#fullscreen-div img {
+  display: block;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px; /* Height of new image */
+  padding-left: 16px; /* Equal to width of new image */
+  background: url(../img/icons/silk/arrow_out.png) no-repeat;
+}
+
+.fullscreen-image-in {
+  background: url(../img/icons/silk/arrow_inwards.png) no-repeat !important;
+}
+
+.fullscreen #header-title {
+   font-size: 12px;
+   font-weight: bold;
+}
+
+.fullscreen #header-description {
+   display: none;
+}
+
+.document-hidden {
+  overflow: hidden;
+}
+
+.page-pane-fullscreen {
+  padding-right: 10px;
+  height: 100%;
+}
+
+.horizontal-form {
+  padding-bottom: 5px;
+}
+
+.horizontal-form input, .horizontal-form label {
+   display: inline;
+}
+
+.horizontal-form li {
+   display: inline;
+   padding-right: 30px;
+   height: 100%;
+}
+
+.fullscreen #styleForm {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -moz-box-orient: vertical;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    
+  }
+
+.fullscreen #styleForm #style-context {
+    -webkit-box-ordinal-group: 2;
+    -moz-box-ordinal-group: 2;
+    -ms-flex-order: 2;
+    -webkit-order: 2;
+    order: 2;
+    width: 50%;
+    height: 100%;
+    padding: 10px;
+  }
+
+.fullscreen #styleForm #style-editor {
+    -webkit-box-ordinal-group: 1;
+    -moz-box-ordinal-group: 1;
+    -ms-flex-order: 1;
+    -webkit-order: 1;
+    order: 1;
+    width: 50%;
+    padding: 10px;
+    height: 100%;
+  }
+
+.fullscreen #cm_editor_heigth {
+   enabled: false;
 }

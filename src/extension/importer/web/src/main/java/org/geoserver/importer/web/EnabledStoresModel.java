@@ -7,13 +7,12 @@ package org.geoserver.importer.web;
 
 import java.util.Iterator;
 import java.util.List;
-
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LoadableDetachableModel;
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.web.data.store.StoresModel;
 
-public class EnabledStoresModel extends LoadableDetachableModel {
+public class EnabledStoresModel extends LoadableDetachableModel<List<StoreInfo>> {
 
     IModel<List<StoreInfo>> model;
 
@@ -22,9 +21,9 @@ public class EnabledStoresModel extends LoadableDetachableModel {
     }
 
     @Override
-    protected Object load() {
+    protected List<StoreInfo> load() {
         List<StoreInfo> stores = model.getObject();
-        for (Iterator<StoreInfo> it = stores.iterator(); it.hasNext();) {
+        for (Iterator<StoreInfo> it = stores.iterator(); it.hasNext(); ) {
             if (!it.next().isEnabled()) {
                 it.remove();
             }
@@ -39,5 +38,4 @@ public class EnabledStoresModel extends LoadableDetachableModel {
             model.detach();
         }
     }
-    
 }

@@ -7,27 +7,25 @@ package org.geoserver.wcs.kvp;
 
 import java.util.Collection;
 import java.util.Map;
-
 import net.opengis.ows10.Ows10Factory;
 import net.opengis.wcs10.GetCapabilitiesType;
 import net.opengis.wcs10.Wcs10Factory;
-
 import org.eclipse.emf.ecore.EObject;
 import org.geoserver.ows.kvp.EMFKvpRequestReader;
 import org.geoserver.ows.util.KvpUtils;
-import org.geotools.xml.EMFUtils;
+import org.geotools.xsd.EMFUtils;
 
 /**
  * Parses a GetCapabilities request for WCS into the correspondent model object
- * 
+ *
  * @author Andrea Aime - TOPP
- * 
  */
 public class Wcs10GetCapabilitiesRequestReader extends EMFKvpRequestReader {
     public Wcs10GetCapabilitiesRequestReader() {
         super(GetCapabilitiesType.class, Wcs10Factory.eINSTANCE);
     }
 
+    @SuppressWarnings("unchecked") // putting data back into kvp... should be generified
     public Object read(Object request, Map kvp, Map rawKvp) throws Exception {
         request = super.read(request, kvp, rawKvp);
 
@@ -37,22 +35,26 @@ public class Wcs10GetCapabilitiesRequestReader extends EMFKvpRequestReader {
             if (ver != null && "".equals(ver)) {
                 ver = null;
             }
-            
+
             GetCapabilitiesType getCapabilities = (GetCapabilitiesType) request;
             getCapabilities.setVersion(ver);
         }
-        if(rawKvp.containsKey("acceptVersions")) {
+        if (rawKvp.containsKey("acceptVersions")) {
             String value = (String) rawKvp.get("acceptVersions");
             EObject acceptVersions = Ows10Factory.eINSTANCE.createAcceptVersionsType();
-            ((Collection)EMFUtils.get(acceptVersions, "version")).addAll(KvpUtils.readFlat(value, KvpUtils.INNER_DELIMETER));
+            @SuppressWarnings("unchecked")
+            Collection<String> versions = (Collection) EMFUtils.get(acceptVersions, "version");
+            versions.addAll(KvpUtils.readFlat(value, KvpUtils.INNER_DELIMETER));
             kvp.put("acceptVersions", acceptVersions);
         }
         // make sure we get the right Sections-Type param -> workaround for GEOS-6807
-        if(rawKvp.containsKey("sections")){
+        if (rawKvp.containsKey("sections")) {
             String value = (String) rawKvp.get("sections");
             LOGGER.info("Sections: " + value);
             EObject sections = Ows10Factory.eINSTANCE.createSectionsType();
-            ((Collection)EMFUtils.get(sections, "section")).addAll(KvpUtils.readFlat(value, KvpUtils.INNER_DELIMETER));
+            @SuppressWarnings("unchecked")
+            Collection<String> sectionCollection = (Collection) EMFUtils.get(sections, "section");
+            sectionCollection.addAll(KvpUtils.readFlat(value, KvpUtils.INNER_DELIMETER));
             kvp.put("sections", sections);
         }
 

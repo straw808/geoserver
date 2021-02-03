@@ -29,7 +29,8 @@ if not exist "%GEOSERVER_HOME%\bin\startup.bat" goto badHome
 goto checkDataDir
 
 :trySystemJava
-for /f %%i in ('where java') do set RUN_JAVA=%%i
+  echo The JAVA_HOME environment variable is not defined, trying to use System Java
+for /f "tokens=*" %%i in ('where java') do set RUN_JAVA=%%i
 rem --- we might be on amd64 having only x86 jre installed ---
 if "%RUN_JAVA%"=="" if DEFINED ProgramFiles(x86) if NOT "%PROCESSOR_ARCHITECTURE%"=="x86" (
     rem --- restart the batch in x86 mode---
@@ -38,7 +39,10 @@ if "%RUN_JAVA%"=="" if DEFINED ProgramFiles(x86) if NOT "%PROCESSOR_ARCHITECTURE
     %SystemRoot%\SysWOW64\cmd.exe /c %0 %*
     exit /b %ERRORLEVEL%
   )
-if "RUN_JAVA%"=="" goto noJava
+if "%RUN_JAVA%"=="" goto noJava
+  echo Using System Java at:
+  echo    %RUN_JAVA%
+  echo.
 goto checkGeoServerHome
 
 :noJava
@@ -53,7 +57,7 @@ goto JavaFail
   echo Please install Java or, if present but not in the path, set this environment variable via the following command:
   echo    set JAVA_HOME=[path to Java]
   echo Example:
-  echo    set JAVA_HOME=C:\Program Files\Java\jdk6
+  echo    set JAVA_HOME=C:\Program Files\Java\jdk8
   echo.
   set error=1
 goto end
@@ -100,7 +104,7 @@ goto checkDataDir
 :checkDataDir
   rem GEOSERVER_DATA_DIR not defined
   if "%GEOSERVER_DATA_DIR%" == "" goto noDataDir
-  goto run
+  goto setMarlinRenderer
 
 :noDataDir
   rem if GEOSERVER_DATA_DIR is not defined then use GEOSERVER_HOME/data_dir/
@@ -122,15 +126,24 @@ goto end
   echo Temporarily setting GEOSERVER_DATA_DIR to the following directory:
   echo %GEOSERVER_DATA_DIR%
   echo.
+goto setMarlinRenderer
+
+:setMarlinRenderer
+  cd "%GEOSERVER_HOME%"
+  for /f "delims=" %%i in ('dir /b/s "%GEOSERVER_HOME%\webapps\geoserver\WEB-INF\lib\marlin*.jar"') do set MARLIN_JAR=%%i
+  if "%MARLIN_JAR%" == "" (
+    echo Marlin renderer jar not found
+    goto run
+  )
+  set MARLIN_ENABLER=-Xbootclasspath/a:"%MARLIN_JAR%" -Dsun.java2d.renderer=org.marlin.pisces.MarlinRenderingEngine
+  set JAVA_OPTS=%JAVA_OPTS% %MARLIN_ENABLER%
 goto run
 
-
 :run
-  if "%JAVA_OPTS%" == "" (set JAVA_OPTS=-XX:MaxPermSize=128m)
-  cd %GEOSERVER_HOME%
+  cd "%GEOSERVER_HOME%"
   echo Please wait while loading GeoServer...
   echo.
-  "%RUN_JAVA%" "%JAVA_OPTS%" -DGEOSERVER_DATA_DIR="%GEOSERVER_DATA_DIR%" -Djava.awt.headless=true -DSTOP.PORT=8079 -DSTOP.KEY=geoserver -jar start.jar
+  "%RUN_JAVA%" %JAVA_OPTS% -DGEOSERVER_DATA_DIR="%GEOSERVER_DATA_DIR%" -Djava.awt.headless=true -DSTOP.PORT=8079 -DSTOP.KEY=geoserver -jar start.jar
   cd bin
 goto end
 

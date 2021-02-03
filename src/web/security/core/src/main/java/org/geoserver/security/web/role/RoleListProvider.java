@@ -11,7 +11,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.geoserver.security.GeoServerRoleService;
@@ -22,24 +21,25 @@ import org.geoserver.web.wicket.GeoServerDataProvider;
 
 /**
  * Page listing for {@link GeoServerUserGroup} objects
- * 
- * @author christian
  *
+ * @author christian
  */
 @SuppressWarnings("serial")
 public class RoleListProvider extends GeoServerDataProvider<GeoServerRole> {
 
-    protected String  roleServiceName;
+    protected String roleServiceName;
+
     public RoleListProvider(final String roleServiceName) {
-        this.roleServiceName=roleServiceName;
+        this.roleServiceName = roleServiceName;
     }
 
-    
-    public static final Property<GeoServerRole> ROLENAME = new BeanProperty<GeoServerRole>("rolename", "authority");
-    
-    public final static String ParentPropertyName="parentrolename";
-    public  class ParentProperty implements Property<GeoServerRole>  {
-                
+    public static final Property<GeoServerRole> ROLENAME =
+            new BeanProperty<>("rolename", "authority");
+
+    public static final String ParentPropertyName = "parentrolename";
+
+    public class ParentProperty implements Property<GeoServerRole> {
+
         @Override
         public String getName() {
             return ParentPropertyName;
@@ -47,28 +47,29 @@ public class RoleListProvider extends GeoServerDataProvider<GeoServerRole> {
 
         @Override
         public Object getPropertyValue(GeoServerRole item) {
-            GeoServerRole parent=null;
+            GeoServerRole parent = null;
             try {
-                parent = GeoServerApplication.get().getSecurityManager()
-                    .loadRoleService(roleServiceName).getParentRole(item);
+                parent =
+                        GeoServerApplication.get()
+                                .getSecurityManager()
+                                .loadRoleService(roleServiceName)
+                                .getParentRole(item);
             } catch (IOException e) {
-                //TODO is this correct
+                // TODO is this correct
                 throw new RuntimeException(e);
-            }            
-            if (parent==null)
-                return "";
-            else
-                return parent.getAuthority();
+            }
+            if (parent == null) return "";
+            else return parent.getAuthority();
         }
 
         @Override
-        public IModel getModel(IModel itemModel) {
-            return new Model((String) getPropertyValue((GeoServerRole) itemModel.getObject()));
+        public IModel getModel(IModel<GeoServerRole> itemModel) {
+            return new Model<>((String) getPropertyValue(itemModel.getObject()));
         }
 
         @Override
         public Comparator<GeoServerRole> getComparator() {
-            return new PropertyComparator<GeoServerRole>(this);
+            return new PropertyComparator<>(this);
         }
 
         @Override
@@ -80,73 +81,70 @@ public class RoleListProvider extends GeoServerDataProvider<GeoServerRole> {
         public boolean isSearchable() {
             return true;
         }
-        
     };
-            
-    public static final Property<GeoServerRole> HASROLEPARAMS = new Property<GeoServerRole>() {
 
-        @Override
-        public String getName() {
-            return "hasroleparams";
-        }
+    public static final Property<GeoServerRole> HASROLEPARAMS =
+            new Property<GeoServerRole>() {
 
-        @Override
-        public Object getPropertyValue(GeoServerRole item) {
-            if (item.getProperties().size()==0)
-                return Boolean.FALSE;
-            else
-                return Boolean.TRUE;                    
-        }
+                @Override
+                public String getName() {
+                    return "hasroleparams";
+                }
 
-        @Override
-        public IModel getModel(IModel itemModel) {
-            return new Model((Boolean) getPropertyValue((GeoServerRole) itemModel.getObject()));
-        }
+                @Override
+                public Object getPropertyValue(GeoServerRole item) {
+                    if (item.getProperties().size() == 0) return Boolean.FALSE;
+                    else return Boolean.TRUE;
+                }
 
-        @Override
-        public Comparator<GeoServerRole> getComparator() {
-            return new PropertyComparator<GeoServerRole>(this);
-        }
+                @Override
+                public IModel getModel(IModel<GeoServerRole> itemModel) {
+                    return new Model<>((Boolean) getPropertyValue(itemModel.getObject()));
+                }
 
-        @Override
-        public boolean isVisible() {
-            return true;
-        }
+                @Override
+                public Comparator<GeoServerRole> getComparator() {
+                    return new PropertyComparator<>(this);
+                }
 
-        @Override
-        public boolean isSearchable() {
-            return true;
-        }        
-    };
-    
+                @Override
+                public boolean isVisible() {
+                    return true;
+                }
+
+                @Override
+                public boolean isSearchable() {
+                    return true;
+                }
+            };
+
     @Override
     protected List<GeoServerRole> getItems() {
-        SortedSet<GeoServerRole> roles=null;
+        SortedSet<GeoServerRole> roles = null;
         try {
             GeoServerRoleService service = null;
-            if (roleServiceName!=null)
-                    service = GeoServerApplication.get().getSecurityManager().
-                    loadRoleService(roleServiceName);
-            
-            if (service==null)
-                roles=new TreeSet<GeoServerRole>();
-            else
-                roles=service.getRoles();
+            if (roleServiceName != null)
+                service =
+                        GeoServerApplication.get()
+                                .getSecurityManager()
+                                .loadRoleService(roleServiceName);
+
+            if (service == null) roles = new TreeSet<>();
+            else roles = service.getRoles();
         } catch (IOException e) {
-            throw new RuntimeException(e); 
+            throw new RuntimeException(e);
         }
-        List<GeoServerRole> roleList = new ArrayList<GeoServerRole>();
+        List<GeoServerRole> roleList = new ArrayList<>();
         roleList.addAll(roles);
         return roleList;
     }
 
     @Override
     protected List<Property<GeoServerRole>> getProperties() {
-        List<Property<GeoServerRole>> result = new ArrayList<GeoServerDataProvider.Property<GeoServerRole>>();
+        List<Property<GeoServerRole>> result = new ArrayList<>();
         result.add(ROLENAME);
         result.add(new ParentProperty());
         result.add(HASROLEPARAMS);
         return result;
     }
-
 }

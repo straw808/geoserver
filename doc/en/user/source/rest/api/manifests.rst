@@ -7,6 +7,7 @@ GeoServer provides a REST service to expose a listing of all loaded JARs and res
 
 * ``about/manifest``—Retrieves details on all loaded JARs
 * ``about/version``—Retrieves details for the high-level components: GeoSever, GeoTools, and GeoWebCache
+* ``about/status``-Retrieves details for the status of all loaded and configured modules
 
 
 ``/about/manifest[.<format>]``
@@ -56,10 +57,8 @@ Usage
 ~~~~~
 
 
-The model is very simple and is shared between the version and the resource requests to parse both requests.
+The model is very simple and is shared between the version and the resource requests to parse both requests.::
 
-.. code-block:: xml
- 
    <about>
      <resource name="{NAME}">
        <{KEY}>{VALUE}</{KEY}>
@@ -79,8 +78,8 @@ Below is the default implementation that is used when no custom properties file 
 where:
 
 * ``resourceNameRegex``—Group(1) will be used to match the attribute name of the resource.
-* ``resourceAttributeExclusions``—Comma-separated list of properties to exclude (blacklist), used to exclude parameters that are too verbose such that the resource properties list is left open. Users can add their JARs (with custom properties) having the complete list of properties.
-* ``versionAttributeInclusions``—Comma-separated list of properties to include (whitelist). Also supports renaming properties (using ``key:replace``) which is used to align the output of the ``versions`` request to the output of the web page. The model uses a map to store attributes, so the last attribute found in the manifest file will be used.
+* ``resourceAttributeExclusions``—Comma-separated list of properties to exclude (deny-list), used to exclude parameters that are too verbose such that the resource properties list is left open. Users can add their JARs (with custom properties) having the complete list of properties.
+* ``versionAttributeInclusions``—Comma-separated list of properties to include (allow-list). Also supports renaming properties (using ``key:replace``) which is used to align the output of the ``versions`` request to the output of the web page. The model uses a map to store attributes, so the last attribute found in the manifest file will be used.
 
 
 .. _rest_api_manifests_manifest:
@@ -126,7 +125,46 @@ This endpoint shows only the details for the high-level components: GeoServer, G
      - HTML
      - :ref:`manifest <rest_api_manifests_manifest>`, :ref:`key <rest_api_manifests_key>`, :ref:`value <rest_api_manifests_value>`
    * - POST
-     - 
+     -
+     - 405
+     -
+     -
+     -
+   * - PUT
+     -
+     - 405
+     -
+     -
+     -
+   * - DELETE
+     -
+     - 405
+     -
+     -
+     -
+
+``/about/status[.<format>]``
+-----------------------------
+
+This endpoint shows the status details of all installed and configured modules.Status details always include human readable name, and module name. Optional details include version, availability, status message, and links to documentation.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Method
+     - Action
+     - Status Code
+     - Formats
+     - Default Format
+     - Parameters
+   * - GET
+     - List module statuses
+     - 200
+     - HTML, XML, JSON
+     - HTML
+     -
+   * - POST
+     -
      - 405
      - 
      - 

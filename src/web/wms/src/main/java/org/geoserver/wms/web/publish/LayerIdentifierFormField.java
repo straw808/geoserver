@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -6,7 +6,6 @@
 package org.geoserver.wms.web.publish;
 
 import java.util.List;
-
 import org.apache.wicket.markup.html.form.FormComponentPanel;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.model.IModel;
@@ -26,36 +25,42 @@ public class LayerIdentifierFormField extends FormComponentPanel<LayerIdentifier
 
     private TextField<String> identifier;
 
-    public LayerIdentifierFormField(final String id,
-            final IModel<List<LayerIdentifierInfo>> identifierModel) {
+    public LayerIdentifierFormField(
+            final String id, final IModel<List<LayerIdentifierInfo>> identifierModel) {
         super(id);
 
-        add((authority = new TextField<String>("authority", new PropertyModel<String>(
-                identifierModel, "authority"))));
-        add((identifier = new TextField<String>("identifier", new PropertyModel<String>(
-                identifierModel, "identifier"))));
+        add(
+                (authority =
+                        new TextField<>(
+                                "authority", new PropertyModel<>(identifierModel, "authority"))));
+        add(
+                (identifier =
+                        new TextField<>(
+                                "identifier", new PropertyModel<>(identifierModel, "identifier"))));
 
-        add(new IValidator<LayerIdentifierInfo>() {
-            private static final long serialVersionUID = 1L;
+        add(
+                new IValidator<LayerIdentifierInfo>() {
+                    private static final long serialVersionUID = 1L;
 
-            @Override
-            public void validate(IValidatable<LayerIdentifierInfo> arg) {
-                LayerIdentifierInfo value = arg.getValue();
-                if (value == null) {
-                    return;
-                }
-                if (value.getAuthority() == null || value.getIdentifier() == null) {
-                    ValidationError error = new ValidationError();
-                    error.setMessage(new ResourceModel("LayerIdentifierFormField.validationError")
-                            .getObject());
-                    arg.error(error);
-                }
-            }
-        });
+                    @Override
+                    public void validate(IValidatable<LayerIdentifierInfo> arg) {
+                        LayerIdentifierInfo value = arg.getValue();
+                        if (value == null) {
+                            return;
+                        }
+                        if (value.getAuthority() == null || value.getIdentifier() == null) {
+                            ValidationError error = new ValidationError();
+                            error.setMessage(
+                                    new ResourceModel("LayerIdentifierFormField.validationError")
+                                            .getObject());
+                            arg.error(error);
+                        }
+                    }
+                });
     }
 
     @Override
-    protected void convertInput() {
+    public void convertInput() {
         LayerIdentifierInfo info = getModelObject();
         String auth = authority.getConvertedInput();
         String id = identifier.getConvertedInput();
@@ -89,5 +94,4 @@ public class LayerIdentifierFormField extends FormComponentPanel<LayerIdentifier
 
         super.onBeforeRender();
     }
-
 }

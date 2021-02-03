@@ -3,13 +3,12 @@
 GeoServer Improvement Proposals
 ===============================
 
-GeoServer Improvements Proposals (GSIP) are the formal mechanism used to manage
-any sort of major change to GeoServer. Examples of changes which are managed by
-the GSIP process include:
+GeoServer Improvements Proposals (GSIP) are the formal mechanism used to manage major changes to GeoServer in a responsible fashion. Examples of changes which are managed by the GSIP process include:
 
 * major features
 * code re-architecture
 * community process improvements
+* upgrading key dependencies
 * intellectual property
 
 How a GSIP works
@@ -17,57 +16,53 @@ How a GSIP works
 
 The typical life cycle of a GSIP is as follows:
 
-#. Developer has an intent to perform a major change
-#. Developer communicates with the community about the change
-#. Developer goes off and implements the change
-#. Developer writes a GSIP and presents it to the community for feedback
-#. The PSC votes on the GSIP
-#. Developer commits changes upon receiving a positive vote
+#. Developer has an intent to perform a major change.
+#. Developer communicates with the community about the change.
+#. Developer goes off and implements the change.
+#. Developer writes a GSIP and presents it to the community for feedback.
+#. The PSC votes on the GSIP.
+#. Developer commits changes upon receiving a positive vote.
 
-Voting on a GSIP
-----------------
-
-One of the duties of the GeoServer Project Steering Committee is to vote on 
-GSIPs. The voting process works as follows:
-
-* Each PSC member gets a single vote, which can be one of +1, -1, 0
-* Any PSC member that votes negatively against a proposal must provide a
-  reasonable explanation as to why
-* Any PSC member that votes negatively against a proposal has a limited time to
-  provide constructive feedback as to how the vote can be turned
-* The GSIP author must incorporate any reasonable feedback into the proposal
-* Any negative vote is reviewed to determine if criteria has been met to turn
-  it to a positive vote
-* The proposal is considered successful after a majority of positive votes is 
-  a achieved **and** all feedback from any negative votes has been addressed
-
-Implementing a GSIP
--------------------
+Writing a GSIP
+--------------
    
 GSIPs are written up on the 
-`Proposals <https://github.com/geoserver/geoserver.github.io/wiki/Proposals>`_ wiki page.
+`Proposals <https://github.com/geoserver/geoserver/wiki/Proposals>`_ wiki page.
 
 If you have write access login and follow the steps below. If you do not have write access GitHub will automatically create a fork for you as you edit individual pages.
 
 To make a GSIP:
 
-#. Navigate to the wiki: https://github.com/geoserver/geoserver.github.io/wiki
-#. Select and copy the proposal template to your clipboard.
-#. Navigate to the proposals page: https://github.com/geoserver/geoserver.github.io/wiki/Proposals
+#. Navigate to the wiki `proposals page <https://github.com/geoserver/geoserver/wiki/Proposals>`__
 #. Edit the page with a new link under *Proposals Under Discussion*:
    
-   ```
-   [GSIP 116 - Use Apache Style Contributor Agreement](GSIP 116)
-   ```
- 
-   #. The number should be the next "available" GSIP number.
-   #. The title should be short and descriptive
+   .. code-block:: text
+      
+      [GSIP 200 - Title](GSIP-200)
+   
+   * The number should be the next "available" GSIP number on the proposal page.
+   * The title should be short and descriptive.
 
-#. Save your change to the *Proposal* page, and click on your new link to create a new page.
-#. Click on your new link to create the page, fill in the page contents by pasting the proposal page template from your clipboard.
+#. Save your change to the *Proposal* page.
+
+#. Click on your new link to create the page, fill in the page contents by copy and pasting the following proposal page template.
+   
+   GSIP :download:`template <gsip_template.txt>`:
+
+   .. literalinclude:: gsip_template.txt
+      :language: text
+      :emphasize-lines: 1
+
 #. Fill in the information in the page template, and click ``Save`` when
    complete.
+   
+Voting on a GSIP
+----------------
 
+One of the duties of the :doc:`GeoServer Project Steering Committee <psc>` is to vote on 
+GSIPs. The voting process works as follows:
+
+.. include:: gsip_voting.txt
 
 GSIP FAQ
 --------

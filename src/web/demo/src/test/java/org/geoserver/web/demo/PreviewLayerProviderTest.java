@@ -5,16 +5,22 @@
  */
 package org.geoserver.web.demo;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
+import com.google.common.collect.Lists;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.geoserver.catalog.LayerGroupInfo;
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.data.test.MockData;
 import org.geoserver.web.GeoServerWicketTestSupport;
+import org.junit.Assert;
 import org.junit.Test;
-
-import com.google.common.collect.Lists;
 
 public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
 
@@ -27,7 +33,7 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
             PreviewLayerProvider provider = new PreviewLayerProvider();
             PreviewLayer pl = getPreviewLayer(provider, layerId);
             assertNotNull(pl);
-            
+
             // now you don't!
             layer.setAdvertised(false);
             getCatalog().save(layer);
@@ -40,10 +46,44 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
     }
 
     @Test
+    public void testWmsLinkParametersOfLayer() throws Exception {
+        String layerId = getLayerId(MockData.BUILDINGS);
+
+        PreviewLayerProvider provider = new PreviewLayerProvider();
+        PreviewLayer pl = getPreviewLayer(provider, layerId);
+        assertNotNull(pl);
+
+        String wmsLink = pl.getWmsLink();
+        String[] wmsParams = wmsLink.substring(wmsLink.indexOf("?") + 1).split("&");
+        Set<String> wmsKeys = new HashSet<>();
+
+        for (String param : wmsParams) {
+            String[] wmsParam = param.split("=");
+
+            if (wmsParam.length > 0) {
+                wmsKeys.add(wmsParam[0]);
+            }
+        }
+
+        List<String> keysToCheck =
+                Arrays.asList(
+                        "service", "version", "request", "layers", "bbox", "width", "height", "srs",
+                        "styles");
+
+        for (String key : keysToCheck) {
+            if (!wmsKeys.contains(key)) {
+                Assert.fail(
+                        String.format(
+                                "Parameter '%s' not specified in WmsLink URL of Layer.", key));
+            }
+        }
+    }
+
+    @Test
     public void testSingleLayerGroup() throws Exception {
         String layerId = getLayerId(MockData.BUILDINGS);
         LayerInfo layer = getCatalog().getLayerByName(layerId);
-        
+
         LayerGroupInfo group = getCatalog().getFactory().createLayerGroup();
         group.setName("testSingleLayerGroup");
         group.setMode(LayerGroupInfo.Mode.SINGLE);
@@ -61,13 +101,80 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
             getCatalog().remove(group);
         }
     }
-    
+
+    @Test
+    public void testDisabledLayerGroup() throws Exception {
+        String layerId = getLayerId(MockData.BUILDINGS);
+        LayerInfo layer = getCatalog().getLayerByName(layerId);
+
+        LayerGroupInfo group = getCatalog().getFactory().createLayerGroup();
+        group.setName("testSingleLayerGroup");
+        group.setMode(LayerGroupInfo.Mode.SINGLE);
+        group.getLayers().add(layer);
+        group.setTitle("This is the title");
+        group.setAbstract("This is the abstract");
+        group.setEnabled(false);
+        getCatalog().add(group);
+        try {
+            PreviewLayerProvider provider = new PreviewLayerProvider();
+            PreviewLayer pl = getPreviewLayer(provider, group.prefixedName());
+            assertNull(pl);
+        } finally {
+            getCatalog().remove(group);
+        }
+    }
+
+    @Test
+    public void testNotAdvertisedLayerGroup() throws Exception {
+        String layerId = getLayerId(MockData.BUILDINGS);
+        LayerInfo layer = getCatalog().getLayerByName(layerId);
+
+        LayerGroupInfo group = getCatalog().getFactory().createLayerGroup();
+        group.setName("testSingleLayerGroup");
+        group.setMode(LayerGroupInfo.Mode.SINGLE);
+        group.getLayers().add(layer);
+        group.setTitle("This is the title");
+        group.setAbstract("This is the abstract");
+        group.setAdvertised(false);
+        getCatalog().add(group);
+        try {
+            PreviewLayerProvider provider = new PreviewLayerProvider();
+            PreviewLayer pl = getPreviewLayer(provider, group.prefixedName());
+            assertNull(pl);
+        } finally {
+            getCatalog().remove(group);
+        }
+    }
+
+    @Test
+    public void testOpaqueContainerLayerGroup() throws Exception {
+        String layerId = getLayerId(MockData.BUILDINGS);
+        LayerInfo layer = getCatalog().getLayerByName(layerId);
+
+        LayerGroupInfo group = getCatalog().getFactory().createLayerGroup();
+        group.setName("testOpaqueContainerLayerGroup");
+        group.setMode(LayerGroupInfo.Mode.OPAQUE_CONTAINER);
+        group.getLayers().add(layer);
+        group.setTitle("This is the title");
+        group.setAbstract("This is the abstract");
+        getCatalog().add(group);
+        try {
+            PreviewLayerProvider provider = new PreviewLayerProvider();
+            PreviewLayer pl = getPreviewLayer(provider, group.prefixedName());
+            assertNotNull(pl);
+            assertEquals("This is the title", pl.getTitle());
+            assertEquals("This is the abstract", pl.getAbstract());
+        } finally {
+            getCatalog().remove(group);
+        }
+    }
+
     @Test
     public void testWorkspacedLayerGroup() throws Exception {
         String layerId = getLayerId(MockData.BUILDINGS);
         LayerInfo layer = getCatalog().getLayerByName(layerId);
         WorkspaceInfo ws = getCatalog().getWorkspaceByName("cite");
-        
+
         LayerGroupInfo group = getCatalog().getFactory().createLayerGroup();
         group.setName("testWorkspacedLayerGroup");
         group.setMode(LayerGroupInfo.Mode.SINGLE);
@@ -83,12 +190,12 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
             getCatalog().remove(group);
         }
     }
-    
+
     @Test
     public void testContainerLayerGroup() throws Exception {
         String layerId = getLayerId(MockData.BUILDINGS);
         LayerInfo layer = getCatalog().getLayerByName(layerId);
-        
+
         LayerGroupInfo group = getCatalog().getFactory().createLayerGroup();
         group.setName("testContainerLayerGroup");
         group.setMode(LayerGroupInfo.Mode.CONTAINER);
@@ -100,7 +207,7 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
             assertNull(pl);
         } finally {
             getCatalog().remove(group);
-        }        
+        }
     }
 
     @Test
@@ -110,16 +217,16 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
 
         LayerGroupInfo containerGroup = getCatalog().getFactory().createLayerGroup();
         containerGroup.setName("testContainerLayerGroup");
-        containerGroup.setMode(LayerGroupInfo.Mode.SINGLE);        
+        containerGroup.setMode(LayerGroupInfo.Mode.SINGLE);
         containerGroup.getLayers().add(layer);
-        getCatalog().add(containerGroup);           
-        
+        getCatalog().add(containerGroup);
+
         LayerGroupInfo singleGroup = getCatalog().getFactory().createLayerGroup();
         singleGroup.setName("testSingleLayerGroup");
-        singleGroup.setMode(LayerGroupInfo.Mode.SINGLE);        
+        singleGroup.setMode(LayerGroupInfo.Mode.SINGLE);
         singleGroup.getLayers().add(containerGroup);
         getCatalog().add(singleGroup);
-           
+
         try {
             PreviewLayerProvider provider = new PreviewLayerProvider();
             assertNotNull(getPreviewLayer(provider, singleGroup.prefixedName()));
@@ -127,10 +234,19 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
         } finally {
             getCatalog().remove(singleGroup);
             getCatalog().remove(containerGroup);
-        }        
-    }    
+        }
+    }
 
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
+    public void testKewordsFilterSizeCache() {
+        PreviewLayerProvider provider = new PreviewLayerProvider();
+        assertEquals(29, provider.size());
+
+        provider.setKeywords(new String[] {"cite"});
+        assertEquals(12, provider.size());
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
     public void testGetItems() throws Exception {
         // Ensure that the method getItems is no more called
         PreviewLayerProvider provider = new PreviewLayerProvider();
@@ -139,8 +255,8 @@ public class PreviewLayerProviderTest extends GeoServerWicketTestSupport {
 
     private PreviewLayer getPreviewLayer(PreviewLayerProvider provider, String prefixedName) {
         for (PreviewLayer pl : Lists.newArrayList(provider.iterator(0, Integer.MAX_VALUE))) {
-            if(pl.getName().equals(prefixedName)) {
-                return pl; 
+            if (pl.getName().equals(prefixedName)) {
+                return pl;
             }
         }
         return null;

@@ -7,7 +7,6 @@ package org.geoserver.wms;
 
 import org.geoserver.config.ServiceFactoryExtension;
 
-
 public class WMSFactoryExtension extends ServiceFactoryExtension<WMSInfo> {
 
     public WMSFactoryExtension() {
@@ -15,8 +14,8 @@ public class WMSFactoryExtension extends ServiceFactoryExtension<WMSInfo> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> T create(Class<T> clazz) {
         return (T) new WMSInfoImpl();
     }
-
 }

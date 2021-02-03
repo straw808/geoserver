@@ -9,12 +9,11 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 
-
 /**
  * NameSpaceTranslatorFactory purpose.
- * <p>
- * Follows the factory pattern. Creates and stores a list of name space translators.
- * </p>
+ *
+ * <p>Follows the factory pattern. Creates and stores a list of name space translators.
+ *
  * @see NameSpaceTranslator
  * @author dzwiers, Refractions Research, Inc.
  * @author $Author: dmzwiers $ (last modification)
@@ -22,26 +21,24 @@ import java.util.Map;
  */
 public class NameSpaceTranslatorFactory {
     /** map of namespace names as Strings -> Class representations of NameSpaceTranslators */
-    private Map namespaceTranslators;
+    private Map<String, Class> namespaceTranslators;
 
     /** map of prefixs as String -> Instances of NameSpaceTranslators */
-    private Map namespaceTranslatorInstances;
+    private Map<String, NameSpaceTranslator> namespaceTranslatorInstances;
 
     /** the only instance */
-    private final static NameSpaceTranslatorFactory instance = new NameSpaceTranslatorFactory();
+    private static final NameSpaceTranslatorFactory instance = new NameSpaceTranslatorFactory();
 
     /**
      * NameSpaceTranslatorFactory constructor.
-     * <p>
-     * Loads some default prefixes into memory when the class is first loaded.
-     * </p>
      *
+     * <p>Loads some default prefixes into memory when the class is first loaded.
      */
     private NameSpaceTranslatorFactory() {
-        namespaceTranslators = new HashMap();
-        namespaceTranslatorInstances = new HashMap();
+        namespaceTranslators = new HashMap<>();
+        namespaceTranslatorInstances = new HashMap<>();
 
-        //TODO replace null for these default namespaces.
+        // TODO replace null for these default namespaces.
         namespaceTranslators.put("http://www.w3.org/2001/XMLSchema", XMLSchemaTranslator.class);
         namespaceTranslators.put("http://www.opengis.net/gml", GMLSchemaTranslator.class);
 
@@ -52,9 +49,9 @@ public class NameSpaceTranslatorFactory {
 
     /**
      * getInstance purpose.
-     * <p>
-     * Completes the singleton pattern of this factory class.
-     * </p>
+     *
+     * <p>Completes the singleton pattern of this factory class.
+     *
      * @return NameSpaceTranslatorFactory The instance.
      */
     public static NameSpaceTranslatorFactory getInstance() {
@@ -63,14 +60,13 @@ public class NameSpaceTranslatorFactory {
 
     /**
      * addNameSpaceTranslator purpose.
-     * <p>
-     * Adds a new translator for the namespace specified if a
-     * NameSpaceTranslator was registered for that namespace.
-     * </p>
-     * <p>
-     * Some the magic for creating instances using the classloader occurs here
-     * (ie. the translators are not loaded lazily)
-     * </p>
+     *
+     * <p>Adds a new translator for the namespace specified if a NameSpaceTranslator was registered
+     * for that namespace.
+     *
+     * <p>Some the magic for creating instances using the classloader occurs here (ie. the
+     * translators are not loaded lazily)
+     *
      * @param prefix The desired namespace prefix
      * @param namespace The desired namespace.
      */
@@ -80,16 +76,23 @@ public class NameSpaceTranslatorFactory {
         }
 
         try {
-            Class nstClass = (Class) namespaceTranslators.get(namespace);
+            Class<?> nstClass = namespaceTranslators.get(namespace);
 
             if (nstClass == null) {
                 return;
             }
 
-            Constructor nstConstructor = nstClass.getConstructor(new Class[] { String.class, });
-            NameSpaceTranslator nst = (NameSpaceTranslator) nstConstructor.newInstance(new Object[] {
-                        prefix,
-                    });
+            Constructor nstConstructor =
+                    nstClass.getConstructor(
+                            new Class[] {
+                                String.class,
+                            });
+            NameSpaceTranslator nst =
+                    (NameSpaceTranslator)
+                            nstConstructor.newInstance(
+                                    new Object[] {
+                                        prefix,
+                                    });
             namespaceTranslatorInstances.put(prefix, nst);
         } catch (Exception e) {
             e.printStackTrace();
@@ -98,21 +101,22 @@ public class NameSpaceTranslatorFactory {
 
     /**
      * getNameSpaceTranslator purpose.
-     * <p>
-     * Description ...
-     * </p>
+     *
+     * <p>Description ...
+     *
      * @param prefix the prefix of the translator to get.
      * @return the translator, or null if it was not found
      */
     public NameSpaceTranslator getNameSpaceTranslator(String prefix) {
-        return (NameSpaceTranslator) namespaceTranslatorInstances.get(prefix);
+        return namespaceTranslatorInstances.get(prefix);
     }
 
     /**
      * registerNameSpaceTranslator purpose.
-     * <p>
-     * Registers a namespace and it's translator with the factory. good for adding additional namespaces :)
-     * </p>
+     *
+     * <p>Registers a namespace and it's translator with the factory. good for adding additional
+     * namespaces :)
+     *
      * @param namespace The namespace.
      * @param nameSpaceTranslator The translator class for this namespace.
      */

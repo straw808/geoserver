@@ -7,26 +7,29 @@ package org.geoserver.wps.resource;
 
 import java.io.File;
 import java.io.IOException;
-
-import org.apache.commons.io.FileUtils;
+import org.geoserver.platform.resource.Files;
+import org.geoserver.platform.resource.Resource;
 import org.geotools.data.shapefile.ShapefileDataStore;
 
 /**
  * Tracks and cleans up a shapefile store contained in its own private directory
- * 
+ *
  * @author Andrea Aime - OpenGeo
- * 
  */
 public class ShapefileResource implements WPSResource {
-    File directory;
+    Resource directory;
 
     ShapefileDataStore store;
 
     String name;
 
     public ShapefileResource(ShapefileDataStore store, File directory) throws IOException {
+        this(store, Files.asResource(directory));
+    }
+
+    public ShapefileResource(ShapefileDataStore store, Resource directory) throws IOException {
         this.directory = directory;
-        this.name = directory.getPath() + store.getTypeNames()[0] + ".shp";
+        this.name = directory.path() + store.getTypeNames()[0] + ".shp";
         this.store = store;
     }
 
@@ -34,12 +37,11 @@ public class ShapefileResource implements WPSResource {
         try {
             store.dispose();
         } finally {
-            FileUtils.deleteDirectory(directory);
+            directory.delete();
         }
     }
 
     public String getName() {
         return name;
     }
-
 }

@@ -5,25 +5,26 @@
  */
 package org.geoserver.data;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
-
 import org.apache.commons.dbcp.BasicDataSource;
 import org.geoserver.config.GeoServerDataDirectory;
+import org.geoserver.platform.resource.Resource;
+import org.geoserver.platform.resource.Resource.Type;
 
 /**
- * A datasource that is user configurable via properties file stored in the 
- * geoserver data directory.
- * <p>
- * Instances of this class are defined in a spring context as follows:
+ * A datasource that is user configurable via properties file stored in the geoserver data
+ * directory.
+ *
+ * <p>Instances of this class are defined in a spring context as follows:
+ *
  * <pre>
  *   &lt;bean id="myDataSource" class="org.geoserver.data.GeoServerDataSource">
  *     &lt;property name="dataDirectory" ref="dataDirectory"/>
-       &lt;property name="file" value="mydatasource.properties"/>
+ * &lt;property name="file" value="mydatasource.properties"/>
  *     &lt;property name="defaultParameters">
  *       &lt;props>
  *         &lt;prop key="driver">org.h2.Driver&lt;/prop>
@@ -34,20 +35,18 @@ import org.geoserver.config.GeoServerDataDirectory;
  *     &lt;/property>
  *   &lt;/bean>
  * </pre>
- * </p>
- * 
- * Note that any property values can contain "${GEOSERVER_DATA_DIR}" and it will be expanded out
- * to the absolute path of the geoserver data directory. 
- * 
- * @author Justin Deoliveira, OpenGeo
  *
+ * Note that any property values can contain "${GEOSERVER_DATA_DIR}" and it will be expanded out to
+ * the absolute path of the geoserver data directory.
+ *
+ * @author Justin Deoliveira, OpenGeo
  */
 public class GeoServerDataSource extends BasicDataSource {
     GeoServerDataDirectory dataDirectory;
-    
+
     String file;
     Properties defaultParameters;
-    
+
     public void setDataDirectory(GeoServerDataDirectory dataDir) {
         this.dataDirectory = dataDir;
     }
@@ -55,15 +54,15 @@ public class GeoServerDataSource extends BasicDataSource {
     public void setFile(String file) {
         this.file = file;
     }
-    
+
     public void setDefaultParameters(Properties defaultParameters) {
         this.defaultParameters = defaultParameters;
     }
-    
+
     @Override
     public Connection getConnection() throws SQLException {
-        if(getDriverClassName() == null) {
-            synchronized(this) {
+        if (getDriverClassName() == null) {
+            synchronized (this) {
                 if (getDriverClassName() == null) {
                     initializeDataSource();
                 }
@@ -74,50 +73,42 @@ public class GeoServerDataSource extends BasicDataSource {
 
     void initializeDataSource() {
         try {
-            File dbprops = new File(dataDirectory.root(), file);
-            
+            Resource dbprops = dataDirectory.get(file);
+
             Properties db = new Properties();
-            if (!dbprops.exists()) {
-                if (dbprops.getParentFile().exists()) {
-                    dbprops.getParentFile().mkdirs();
-                }
-                
-                //use the default parameters and save them out
-                FileOutputStream fout = new FileOutputStream(dbprops);
-                try {
+            if (dbprops.getType() != Type.RESOURCE) {
+                // use the default parameters and save them out
+                try (OutputStream fout = dbprops.out()) {
                     defaultParameters.store(fout, null);
-                } 
-                finally {
-                    fout.close();
                 }
                 db.putAll(defaultParameters);
+            } else {
+                try (InputStream in = dbprops.in()) {
+                    db.load(in);
+                }
             }
-            else {
-                FileInputStream in = new FileInputStream(dbprops);
-                db.load(in);
-                in.close();
-            }
-            
-            //TODO: check for nulls
+
+            // TODO: check for nulls
             setDriverClassName(db.getProperty("driver"));
             setUrl(getURL(db));
-            
+
             if (db.containsKey("username")) {
                 setUsername(db.getProperty("username"));
             }
             if (db.containsKey("password")) {
                 setPassword(db.getProperty("password"));
             }
-            
-            //TODO: make other parameters configurable
+
+            // TODO: make other parameters configurable
             setMinIdle(1);
             setMaxActive(4);
         } catch (Exception e) {
             throw new RuntimeException("Unexpected error setting up the datas source", e);
         }
     }
-    
+
     String getURL(Properties db) {
-        return db.getProperty("url").replace("%GEOSERVER_DATA_DIR%", dataDirectory.root().getAbsolutePath());
+        return db.getProperty("url")
+                .replace("%GEOSERVER_DATA_DIR%", dataDirectory.root().getAbsolutePath());
     }
 }

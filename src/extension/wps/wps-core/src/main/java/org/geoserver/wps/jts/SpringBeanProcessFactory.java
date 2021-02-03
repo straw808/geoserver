@@ -14,9 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.factory.FactoryIteratorProvider;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.FunctionFactory;
 import org.geotools.process.ProcessFactory;
@@ -27,6 +25,7 @@ import org.geotools.process.factory.DescribeResult;
 import org.geotools.process.factory.DescribeResults;
 import org.geotools.process.function.ProcessFunctionFactory;
 import org.geotools.util.SimpleInternationalString;
+import org.geotools.util.factory.FactoryIteratorProvider;
 import org.opengis.feature.type.Name;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -42,8 +41,9 @@ import org.springframework.context.event.ContextRefreshedEvent;
  * {@link DescribeProcess}, {@link DescribeParameter} and {@link DescribeResult}. Each bean will
  * have a "execute" method taking the process parameters as arguments and returning the results
  */
-public class SpringBeanProcessFactory extends org.geotools.process.factory.AnnotationDrivenProcessFactory implements
-        ApplicationContextAware, ApplicationListener {
+public class SpringBeanProcessFactory
+        extends org.geotools.process.factory.AnnotationDrivenProcessFactory
+        implements ApplicationContextAware, ApplicationListener {
 
     Map<String, Class> classMap;
 
@@ -60,27 +60,32 @@ public class SpringBeanProcessFactory extends org.geotools.process.factory.Annot
         this.markerInterface = markerInterface;
 
         // create an iterator that will register this factory into SPI
-        iterator = new FactoryIteratorProvider() {
+        iterator =
+                new FactoryIteratorProvider() {
 
-            public <T> Iterator<T> iterator(Class<T> category) {
-                if (ProcessFactory.class.isAssignableFrom(category)) {
-                    return (Iterator<T>) Collections.singletonList(SpringBeanProcessFactory.this)
-                            .iterator();
-                } else {
-                    return null;
-                }
-            }
-        };
-        
+                    public <T> Iterator<T> iterator(Class<T> category) {
+                        if (ProcessFactory.class.isAssignableFrom(category)) {
+                            return getFactoryIterator();
+                        } else {
+                            return null;
+                        }
+                    }
+
+                    @SuppressWarnings("unchecked")
+                    private <T> Iterator<T> getFactoryIterator() {
+                        return (Iterator<T>)
+                                Collections.singletonList(SpringBeanProcessFactory.this).iterator();
+                    }
+                };
+
         // register the new process and make the process function factory lookup again the processes
         Processors.addProcessFactory(this);
-        for(FunctionFactory ff : CommonFactoryFinder.getFunctionFactories(null)) {
-            if(ff instanceof ProcessFunctionFactory) {
+        for (FunctionFactory ff : CommonFactoryFinder.getFunctionFactories(null)) {
+            if (ff instanceof ProcessFunctionFactory) {
                 ProcessFunctionFactory pff = (ProcessFunctionFactory) ff;
                 pff.clear();
             }
         }
-
     }
 
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -89,27 +94,28 @@ public class SpringBeanProcessFactory extends org.geotools.process.factory.Annot
         // loads all of the beans implementing the marker interface
         String[] beanNames = applicationContext.getBeanNamesForType(markerInterface, true, true);
         // build a name to class and name to bean name maps
-        classMap = new HashMap<String, Class>();
-        beanMap = new HashMap<String, String>();
+        classMap = new HashMap<>();
+        beanMap = new HashMap<>();
         for (String beanName : beanNames) {
             Class c = applicationContext.getType(beanName);
-            String name = c.getSimpleName();
-            if (name.endsWith("Process")) {
-                name = name.substring(0, name.indexOf("Process"));
+            if (c != null) {
+                String name = c.getSimpleName();
+                if (name.endsWith("Process")) {
+                    name = name.substring(0, name.indexOf("Process"));
+                }
+                classMap.put(name, c);
+                beanMap.put(name, beanName);
             }
-            classMap.put(name, c);
-            beanMap.put(name, beanName);
         }
-
     }
 
     @Override
     protected DescribeProcess getProcessDescription(Name name) {
-        Class c = classMap.get(name.getLocalPart());
+        Class<?> c = classMap.get(name.getLocalPart());
         if (c == null) {
             return null;
         } else {
-            return (DescribeProcess) c.getAnnotation(DescribeProcess.class);
+            return c.getAnnotation(DescribeProcess.class);
         }
     }
 
@@ -119,15 +125,15 @@ public class SpringBeanProcessFactory extends org.geotools.process.factory.Annot
         Method lastExecute = null;
         if (c != null) {
             for (Method m : c.getMethods()) {
-                if(m.getName().equals("execute")) {
-                    if(lastExecute != null) {
+                if (m.getName().equals("execute")) {
+                    if (lastExecute != null) {
                         lastExecute = m;
                     }
                     // if annotated return immediately, otherwise keep it aside
-                    if(m.getAnnotation(DescribeResult.class) != null 
+                    if (m.getAnnotation(DescribeResult.class) != null
                             || m.getAnnotation(DescribeResults.class) != null) {
                         return m;
-                    } 
+                    }
                 }
             }
         }
@@ -135,8 +141,8 @@ public class SpringBeanProcessFactory extends org.geotools.process.factory.Annot
     }
 
     public Set<Name> getNames() {
-        Set<Name> result = new LinkedHashSet<Name>();
-        List<String> names = new ArrayList<String>(classMap.keySet());
+        Set<Name> result = new LinkedHashSet<>();
+        List<String> names = new ArrayList<>(classMap.keySet());
         Collections.sort(names);
         for (String name : names) {
             result.add(new NameImpl(namespace, name));

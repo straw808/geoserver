@@ -5,13 +5,12 @@
  */
 package org.geoserver.security.decorators;
 
-import static org.geoserver.security.SecurityUtils.*;
+import static org.geoserver.security.SecurityUtils.getWriteQuery;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.geoserver.security.SecureCatalogImpl;
 import org.geoserver.security.WrapperPolicy;
 import org.geotools.data.DataUtilities;
@@ -26,13 +25,15 @@ import org.opengis.filter.Filter;
 
 /**
  * Simple version of SecuredFeatureStore
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
-public class SecuredSimpleFeatureLocking extends
-        SecuredFeatureLocking<SimpleFeatureType, SimpleFeature> implements SimpleFeatureLocking {
+public class SecuredSimpleFeatureLocking
+        extends SecuredFeatureLocking<SimpleFeatureType, SimpleFeature>
+        implements SimpleFeatureLocking {
 
-    protected SecuredSimpleFeatureLocking(FeatureLocking delegate, WrapperPolicy policy) {
+    protected SecuredSimpleFeatureLocking(
+            FeatureLocking<SimpleFeatureType, SimpleFeature> delegate, WrapperPolicy policy) {
         super(delegate, policy);
     }
 
@@ -53,8 +54,7 @@ public class SecuredSimpleFeatureLocking extends
 
     public void modifyFeatures(String name, Object attributeValue, Filter filter)
             throws IOException {
-        modifyFeatures(new String[] { name }, new Object[] { attributeValue }, filter);
-
+        modifyFeatures(new String[] {name}, new Object[] {attributeValue}, filter);
     }
 
     public void modifyFeatures(String[] names, Object[] values, Filter filter) throws IOException {
@@ -76,25 +76,22 @@ public class SecuredSimpleFeatureLocking extends
             ((SimpleFeatureStore) storeDelegate).modifyFeatures(names, values, mixed.getFilter());
         } else {
             // get the writable attribute set
-            Set<String> queryNames = new HashSet<String>(Arrays.asList(writeQuery
-                    .getPropertyNames()));
+            Set<String> queryNames = new HashSet<>(Arrays.asList(writeQuery.getPropertyNames()));
 
             // check the update fields
-            for (int i = 0; i < names.length; i++) {
-                if (!queryNames.contains(names[i])) {
+            for (String name : names) {
+                if (!queryNames.contains(name)) {
                     String typeName = getSchema().getName().getLocalPart();
                     if (policy.getResponse() == org.geoserver.security.Response.CHALLENGE) {
                         throw SecureCatalogImpl.unauthorizedAccess(typeName);
                     } else {
                         throw new UnsupportedOperationException(
-                                "Trying to write on the write protected attribute " + names[i]);
+                                "Trying to write on the write protected attribute " + name);
                     }
                 }
             }
 
             ((SimpleFeatureStore) storeDelegate).modifyFeatures(names, values, mixed.getFilter());
         }
-
     }
-
 }

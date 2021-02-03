@@ -5,10 +5,7 @@
  */
 package org.geoserver.wfs.xml.v1_1_0;
 
-import java.util.Iterator;
-
 import javax.xml.namespace.QName;
-
 import net.opengis.wfs.AllSomeType;
 import net.opengis.wfs.DeleteElementType;
 import net.opengis.wfs.InsertElementType;
@@ -16,17 +13,16 @@ import net.opengis.wfs.NativeType;
 import net.opengis.wfs.TransactionType;
 import net.opengis.wfs.UpdateElementType;
 import net.opengis.wfs.WfsFactory;
-
-import org.geotools.xml.AbstractComplexEMFBinding;
-import org.geotools.xml.ElementInstance;
-import org.geotools.xml.Node;
-
+import org.geotools.xsd.AbstractComplexEMFBinding;
+import org.geotools.xsd.ElementInstance;
+import org.geotools.xsd.Node;
 
 /**
  * Binding object for the type http://www.opengis.net/wfs:TransactionType.
  *
  * <p>
- *        <pre>
+ *
+ * <pre>
  *         <code>
  *  &lt;xsd:complexType name="TransactionType"&gt;
  *      &lt;xsd:annotation&gt;
@@ -102,7 +98,6 @@ import org.geotools.xml.Node;
  *
  *          </code>
  *         </pre>
- * </p>
  *
  * @generated
  */
@@ -113,21 +108,18 @@ public class TransactionTypeBinding extends AbstractComplexEMFBinding {
         this.wfsfactory = wfsfactory;
     }
 
-    /**
-     * @generated
-     */
+    /** @generated */
     public QName getTarget() {
         return WFS.TRANSACTIONTYPE;
     }
 
-    /**
-     * Sets execution mode to be before
-     */
+    /** Sets execution mode to be before */
     public int getExecutionMode() {
         return BEFORE;
     }
 
     /**
+     *
      * <!-- begin-user-doc -->
      * <!-- end-user-doc -->
      *
@@ -138,28 +130,28 @@ public class TransactionTypeBinding extends AbstractComplexEMFBinding {
     }
 
     /**
+     *
      * <!-- begin-user-doc -->
      * <!-- end-user-doc -->
      *
      * @generated modifiable
      */
-    public Object parse(ElementInstance instance, Node node, Object value)
-        throws Exception {
+    @SuppressWarnings("unchecked") // EMF model without generics
+    public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         TransactionType transaction = wfsfactory.createTransactionType();
 
-        //&lt;xsd:element minOccurs="0" ref="wfs:LockId"&gt;
+        // &lt;xsd:element minOccurs="0" ref="wfs:LockId"&gt;
         if (node.hasChild("LockId")) {
             transaction.setLockId((String) node.getChildValue("LockId"));
         }
 
-        //&lt;xsd:choice maxOccurs="unbounded" minOccurs="0"&gt;
+        // &lt;xsd:choice maxOccurs="unbounded" minOccurs="0"&gt;
         //  &lt;xsd:element ref="wfs:Insert"/&gt;
         //  &lt;xsd:element ref="wfs:Update"/&gt;
         //  &lt;xsd:element ref="wfs:Delete"/&gt;
         //  &lt;xsd:element ref="wfs:Native"/&gt;
-        //&lt;/xsd:choice&gt;
-        for (Iterator itr = node.getChildren().iterator(); itr.hasNext();) {
-            Node child = (Node) itr.next();
+        // &lt;/xsd:choice&gt;
+        for (Node child : node.getChildren()) {
             Object cv = child.getValue();
 
             if (cv instanceof InsertElementType) {
@@ -173,7 +165,7 @@ public class TransactionTypeBinding extends AbstractComplexEMFBinding {
             }
         }
 
-        //&lt;xsd:attribute name="releaseAction" type="wfs:AllSomeType" use="optional"&gt;
+        // &lt;xsd:attribute name="releaseAction" type="wfs:AllSomeType" use="optional"&gt;
         if (node.hasAttribute(AllSomeType.class)) {
             transaction.setReleaseAction((AllSomeType) node.getAttributeValue(AllSomeType.class));
         }

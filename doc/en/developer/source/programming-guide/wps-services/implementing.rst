@@ -11,6 +11,8 @@ and test it.
 The example process used is a simple "Hello World" process 
 which accepts a single input parameter and returns a single text output.
 
+.. note:: See also GeoTools :geotools:`process tutorial <tutorial/process.html>`
+
 Prerequisites
 -------------
 
@@ -71,11 +73,6 @@ For this example the project will be called "hello_wps".
            <scope>test</scope>
          </dependency>
          <dependency>
-           <groupId>org.geoserver.extension</groupId>
-           <artifactId>gs-wps-core</artifactId>
-           <version>${gs.version}</version>
-         </dependency>
-         <dependency>
            <groupId>junit</groupId>
            <artifactId>junit</artifactId>
            <version>4.11</version>
@@ -94,8 +91,8 @@ For this example the project will be called "hello_wps".
            <plugin>
              <artifactId>maven-compiler-plugin</artifactId>
              <configuration>
-               <source>1.6</source>
-               <target>1.6</target>
+               <source>1.8</source>
+               <target>1.8</target>
              </configuration>
           </plugin>
         </plugins>
@@ -105,10 +102,12 @@ For this example the project will be called "hello_wps".
             <repository>
                 <id>boundless</id>
                 <name>Boundless Maven Repository</name>
-                <url>http://repo.boundlessgeo.com/main</url>
-                <snapshots>
-                    <enabled>true</enabled>
-                </snapshots>
+                <url>https://repo.boundlessgeo.com/main</url>
+            </repository>
+	    <repository>
+                <id>osgeo</id>
+                <name>Open Source Geospatial Foundation Repository</name>
+                <url>https://download.osgeo.org/webdav/geotools</url>
             </repository>
         </repositories>
 
@@ -139,7 +138,7 @@ Create the process class
 
 #. Create the Java class that implements the custom WPS process.
 
-   Create a Java class called ``HelloWPS.java`` inside the created package:
+   Create a Java class called ``HelloWPS.java`` inside the created package (make sure you are in the 'src/main/java' folder and not in the 'src/test/java' folder):
 
   .. code-block:: java
  

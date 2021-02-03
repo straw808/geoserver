@@ -5,8 +5,37 @@
  */
 package org.geoserver.catalog.event.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.geoserver.catalog.event.CatalogPostModifyEvent;
 
 public class CatalogPostModifyEventImpl extends CatalogEventImpl implements CatalogPostModifyEvent {
 
+    List<String> propertyNames = new ArrayList<>();
+    List<Object> oldValues = new ArrayList<>();
+    List<Object> newValues = new ArrayList<>();
+
+    public List<String> getPropertyNames() {
+        return propertyNames;
+    }
+
+    public void setPropertyNames(List<String> propertyNames) {
+        this.propertyNames = propertyNames;
+    }
+
+    public List<Object> getNewValues() {
+        return newValues;
+    }
+
+    public void setNewValues(List<Object> newValues) {
+        this.newValues = newValues;
+    }
+
+    public List<Object> getOldValues() {
+        return oldValues;
+    }
+
+    public void setOldValues(List<Object> oldValues) {
+        this.oldValues = oldValues;
+    }
 }

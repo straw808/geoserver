@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -10,12 +10,11 @@ import org.geoserver.catalog.LayerInfo;
 import org.geoserver.web.GeoServerApplication;
 
 /**
- * A loadable model for layers. Warning, don't use it in a tabbed form
- * or in any other places where you might need to keep the modifications
- * in a resource stable across page loads.
+ * A loadable model for layers. Warning, don't use it in a tabbed form or in any other places where
+ * you might need to keep the modifications in a resource stable across page loads.
  */
 @SuppressWarnings("serial")
-public class LayerDetachableModel extends LoadableDetachableModel {
+public class LayerDetachableModel extends LoadableDetachableModel<LayerInfo> {
     String id;
 
     public LayerDetachableModel(LayerInfo layer) {
@@ -24,7 +23,7 @@ public class LayerDetachableModel extends LoadableDetachableModel {
     }
 
     @Override
-    protected Object load() {
+    protected LayerInfo load() {
         return GeoServerApplication.get().getCatalog().getLayer(id);
     }
 }

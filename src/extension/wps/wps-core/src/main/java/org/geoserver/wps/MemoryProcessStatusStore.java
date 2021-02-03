@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.apache.commons.beanutils.BeanComparator;
 import org.geoserver.wps.executor.ExecutionStatus;
 import org.geoserver.wps.executor.ProcessState;
@@ -24,14 +23,14 @@ import org.opengis.filter.sort.SortOrder;
 
 /**
  * In memory implementation of the {@link ProcessStatusStore} interface
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
 public class MemoryProcessStatusStore implements ProcessStatusStore {
 
     static final Logger LOGGER = Logging.getLogger(MemoryProcessStatusStore.class);
 
-    Map<String, ExecutionStatus> statuses = new ConcurrentHashMap<String, ExecutionStatus>();
+    Map<String, ExecutionStatus> statuses = new ConcurrentHashMap<>();
 
     @Override
     public void save(ExecutionStatus status) {
@@ -50,8 +49,11 @@ public class MemoryProcessStatusStore implements ProcessStatusStore {
                 ProcessState previousPhase = oldStatus.getPhase();
                 ProcessState currPhase = status.getPhase();
                 if (!currPhase.isValidSuccessor(previousPhase)) {
-                    throw new WPSException("Cannot switch process status from " + previousPhase
-                            + " to " + currPhase);
+                    throw new WPSException(
+                            "Cannot switch process status from "
+                                    + previousPhase
+                                    + " to "
+                                    + currPhase);
                 }
                 ExecutionStatus prevInMap = statuses.put(status.getExecutionId(), newStatus);
                 succeded = prevInMap == oldStatus;
@@ -60,7 +62,6 @@ public class MemoryProcessStatusStore implements ProcessStatusStore {
                 succeded = previous == null;
             }
         }
-
     }
 
     @Override
@@ -98,12 +99,20 @@ public class MemoryProcessStatusStore implements ProcessStatusStore {
             List<Comparator<ExecutionStatus>> comparators = new ArrayList<>();
             for (SortBy sort : sorts) {
                 if (sort == SortBy.NATURAL_ORDER) {
-                    comparators.add(new BeanComparator("creationTime"));
+                    comparators.add(new BeanComparator<>("creationTime"));
                 } else if (sort == SortBy.REVERSE_ORDER) {
-                    comparators.add(Collections.reverseOrder(new BeanComparator("creationTime")));
+                    comparators.add(Collections.reverseOrder(new BeanComparator<>("creationTime")));
                 } else {
                     String property = sort.getPropertyName().getPropertyName();
-                    Comparator<ExecutionStatus> comparator = new BeanComparator(property);
+                    // map property to ExecutionStatus values
+                    if ("node".equalsIgnoreCase(property)) {
+                        property = "nodeId";
+                    } else if ("user".equalsIgnoreCase(property)) {
+                        property = "userName";
+                    } else if ("task".equalsIgnoreCase(property)) {
+                        property = "task";
+                    }
+                    Comparator<ExecutionStatus> comparator = new BeanComparator<>(property);
                     if (sort.getSortOrder() == SortOrder.DESCENDING) {
                         comparator = Collections.reverseOrder(comparator);
                     }
@@ -149,4 +158,14 @@ public class MemoryProcessStatusStore implements ProcessStatusStore {
         return statuses.remove(executionId);
     }
 
+    @Override
+    public boolean supportsPredicate() {
+        //
+        return true;
+    }
+
+    @Override
+    public boolean supportsPaging() {
+        return false;
+    }
 }

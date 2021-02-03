@@ -21,8 +21,8 @@ class ExecuteRequest implements Serializable {
 
     List<OutputParameter> outputs;
 
-    public ExecuteRequest(String processName, List<InputParameterValues> inputs,
-            List<OutputParameter> outputs) {
+    public ExecuteRequest(
+            String processName, List<InputParameterValues> inputs, List<OutputParameter> outputs) {
         this.processName = processName;
         this.inputs = inputs;
         this.outputs = outputs;
@@ -30,8 +30,7 @@ class ExecuteRequest implements Serializable {
 
     public ExecuteRequest() {
         this.processName = null;
-        this.inputs = new ArrayList<InputParameterValues>();
-        this.outputs = new ArrayList<OutputParameter>();
+        this.inputs = new ArrayList<>();
+        this.outputs = new ArrayList<>();
     }
-
 }

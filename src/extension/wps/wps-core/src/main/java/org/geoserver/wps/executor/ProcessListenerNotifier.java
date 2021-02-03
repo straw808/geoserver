@@ -4,11 +4,13 @@
  */
 package org.geoserver.wps.executor;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import org.apache.commons.lang3.StringUtils;
 import org.geoserver.wps.ProcessDismissedException;
 import org.geoserver.wps.ProcessEvent;
 import org.geoserver.wps.ProcessListener;
@@ -18,7 +20,7 @@ import org.opengis.util.ProgressListener;
 
 /**
  * Handles notification to all the {@link ProcessListener} implementations for a given process
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
 public class ProcessListenerNotifier {
@@ -37,15 +39,17 @@ public class ProcessListenerNotifier {
 
     ExecuteRequest request;
 
-    public ProcessListenerNotifier(ExecutionStatus status, ExecuteRequest request,
-            LazyInputMap inputs, List<ProcessListener> listeners) {
+    public ProcessListenerNotifier(
+            ExecutionStatus status,
+            ExecuteRequest request,
+            LazyInputMap inputs,
+            List<ProcessListener> listeners) {
         this.status = status;
         this.request = request;
         this.progressListener = new WPSProgressListener();
         this.inputs = inputs;
         this.listeners = listeners;
         fireProcessSubmitted();
-        
     }
 
     public void fireProcessSubmitted() {
@@ -56,12 +60,29 @@ public class ProcessListenerNotifier {
     }
 
     public void fireProgress(float progress, String task) {
-        if (progress > status.progress || !task.equals(status.task)) {
+        if (progress > status.progress || StringUtils.equals(task, status.task)) {
             if (status.getPhase() == ProcessState.QUEUED) {
                 status.setPhase(ProcessState.RUNNING);
             }
             status.setProgress(progress);
             status.setTask(task);
+
+            // Update the estimated completion.
+            // By default we estimate the completion as:
+            // "time elapsed millis / percentage completed"
+            if (progress > 0) {
+                long timeElapsedMillis =
+                        (new Date().getTime() - status.getCreationTime().getTime());
+                int estimatedCompletionMillis =
+                        (int)
+                                ((timeElapsedMillis / progress) * timeElapsedMillis
+                                        + timeElapsedMillis);
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(status.getCreationTime());
+                calendar.add(Calendar.MILLISECOND, estimatedCompletionMillis);
+                status.setEstimatedCompletion(calendar.getTime());
+            }
+
             ProcessEvent event = new ProcessEvent(status, inputs, outputs);
             for (ProcessListener listener : listeners) {
                 listener.progress(event);
@@ -100,9 +121,7 @@ public class ProcessListenerNotifier {
         }
     }
 
-    /**
-     * Notifies all listeners that the process is being dismissed
-     */
+    /** Notifies all listeners that the process is being dismissed */
     public void dismiss() {
         this.status.phase = ProcessState.DISMISSING;
         ProcessEvent event = new ProcessEvent(status, inputs, outputs);
@@ -111,9 +130,7 @@ public class ProcessListenerNotifier {
         }
     }
 
-    /**
-     * Notifies all listeners that the process is being dismissed
-     */
+    /** Notifies all listeners that the process is being dismissed */
     public void fireDismissed() {
         this.status.phase = ProcessState.FAILED;
         ProcessEvent event = new ProcessEvent(status, inputs, outputs);
@@ -124,7 +141,7 @@ public class ProcessListenerNotifier {
 
     /**
      * Listens to the process progress and allows to cancel it
-     * 
+     *
      * @author Andrea Aime - GeoSolutions
      */
     class WPSProgressListener implements ProgressListener {
@@ -148,17 +165,6 @@ public class ProcessListenerNotifier {
         }
 
         @Override
-        public String getDescription() {
-            return this.description;
-        }
-
-        @Override
-        public void setDescription(String description) {
-            checkDismissed();
-            this.description = description;
-        }
-
-        @Override
         public void started() {
             progress(0f);
         }
@@ -167,7 +173,7 @@ public class ProcessListenerNotifier {
         public void progress(float percent) {
             // force process to just exit immediately
             checkDismissed();
-            fireProgress(percent, task.toString());
+            fireProgress(percent, task != null ? task.toString() : null);
         }
 
         @Override
@@ -197,8 +203,11 @@ public class ProcessListenerNotifier {
 
         @Override
         public void warningOccurred(String source, String location, String warning) {
-            LOGGER.log(Level.WARNING,
-                    "Got a warning during process execution " + status.getExecutionId() + ": "
+            LOGGER.log(
+                    Level.WARNING,
+                    "Got a warning during process execution "
+                            + status.getExecutionId()
+                            + ": "
                             + warning);
             // force process to just exit immediately
             checkDismissed();
@@ -216,22 +225,16 @@ public class ProcessListenerNotifier {
         public Throwable getException() {
             return exception;
         }
-
     }
 
     public WPSProgressListener getProgressListener() {
         return progressListener;
-
     }
 
-    /**
-     * Throws a process cancelled exception if the process has been cancelled
-     */
+    /** Throws a process cancelled exception if the process has been cancelled */
     public void checkDismissed() {
         if (status.getPhase() == ProcessState.DISMISSING) {
             throw new ProcessDismissedException();
         }
     }
-
-
 }

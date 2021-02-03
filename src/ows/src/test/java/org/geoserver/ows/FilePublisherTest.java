@@ -6,9 +6,9 @@
 
 package org.geoserver.ows;
 
-import com.mockrunner.mock.web.MockHttpServletRequest;
-import com.mockrunner.mock.web.MockHttpServletResponse;
-import com.mockrunner.mock.web.MockServletContext;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URLEncoder;
@@ -17,19 +17,17 @@ import java.util.Arrays;
 import java.util.List;
 import org.geoserver.platform.GeoServerResourceLoader;
 import org.junit.AfterClass;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockServletContext;
 
-/**
- *
- * @author Ian Schneider <ischneider@boundlessgeo.com>
- */
+/** @author Ian Schneider <ischneider@boundlessgeo.com> */
 public class FilePublisherTest {
 
     static FilePublisher publisher;
-    static List<String[]> paths = new ArrayList<String[]>();
+    static List<String[]> paths = new ArrayList<>();
 
     @BeforeClass
     public static void create() throws Exception {
@@ -62,21 +60,20 @@ public class FilePublisherTest {
     }
 
     @AfterClass
-    public static void destroy() {
-
-    }
+    public static void destroy() {}
 
     private MockHttpServletResponse request(String[] path, String modifiedSince) throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setContextPath("/geoserver");
+        request.setMethod("GET");
         StringBuilder b = new StringBuilder("/geoserver");
-        for (int i = 0; i < path.length; i++) {
-            b.append('/').append(path[i]);
+        for (String s : path) {
+            b.append('/').append(s);
         }
         String uri = URLEncoder.encode(b.toString(), "UTF-8");
         request.setRequestURI(uri);
         if (modifiedSince != null) {
-            request.setHeader("If-Modified-Since", modifiedSince);
+            request.addHeader("If-Modified-Since", modifiedSince);
         }
         MockHttpServletResponse response = new MockHttpServletResponse();
         publisher.handleRequest(request, response);
@@ -85,32 +82,31 @@ public class FilePublisherTest {
 
     @Test
     public void testEncoding() throws Exception {
-        for (String[] path: paths) {
+        for (String[] path : paths) {
             MockHttpServletResponse response = request(path, null);
-            assertEquals(Arrays.toString(path), 200, response.getErrorCode());
-            assertEquals(path[path.length - 1], response.getOutputStreamContent());
+            assertEquals(Arrays.toString(path), 200, response.getStatus());
+            assertEquals(path[path.length - 1], response.getContentAsString());
         }
     }
 
     @Test
     public void testLastModified() throws Exception {
-        for (String[] path: paths) {
+        for (String[] path : paths) {
             MockHttpServletResponse response = request(path, null);
 
             String lastModified = response.getHeader("Last-Modified");
             assertNotNull(lastModified);
             response = request(path, lastModified);
-            assertEquals(304, response.getStatusCode());
+            assertEquals(304, response.getStatus());
 
             long timeStamp = AbstractURLPublisher.lastModified(lastModified) + 10000;
             response = request(path, AbstractURLPublisher.lastModified(timeStamp));
-            assertEquals(304, response.getStatusCode());
+            assertEquals(304, response.getStatus());
 
             timeStamp -= 20000;
             response = request(path, AbstractURLPublisher.lastModified(timeStamp));
-            assertEquals(200, response.getErrorCode());
-            assertEquals(path[path.length - 1], response.getOutputStreamContent());
+            assertEquals(200, response.getStatus());
+            assertEquals(path[path.length - 1], response.getContentAsString());
         }
     }
-
 }

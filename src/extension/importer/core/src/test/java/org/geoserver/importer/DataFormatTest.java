@@ -9,15 +9,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
-
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
 public class DataFormatTest extends ImporterTestSupport {
 
     @Test
-    public void testLookupShapefile() {
-        DataFormat format = DataFormat.lookup(new File("foo.shp"));
+    public void testLookupShapefile() throws Exception {
+        DataFormat format = DataFormat.lookup(new File(tmpDir(), "foo.shp"));
         assertNotNull("No format found for shape files", format);
         String name = format.getName();
         assertEquals("Shapefile format not found", "Shapefile", name);
@@ -35,7 +34,7 @@ public class DataFormatTest extends ImporterTestSupport {
 
     @Test
     public void testLookupCSV() throws Exception {
-        DataFormat format = DataFormat.lookup(new File("foo.csv"));
+        DataFormat format = DataFormat.lookup(new File(tmpDir(), "foo.csv"));
         assertNotNull("No format found for csv files", format);
         String name = format.getName();
         assertEquals("CSV format not found", "CSV", name);

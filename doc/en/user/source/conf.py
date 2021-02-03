@@ -12,11 +12,14 @@
 # serve to show the default value.
 
 import sys, os, string
-   
+import datetime
+
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #sys.path.append(os.path.abspath('some/directory'))
+
+now = datetime.datetime.now()
 
 # General configuration
 # ---------------------
@@ -39,18 +42,30 @@ master_doc = 'index'
 # General substitutions.
 project = u'GeoServer'
 manual = u'User Manual'
-copyright = u'2015, Open Source Geospatial Foundation'
+copyright = u'{}, Open Source Geospatial Foundation'.format(now.year)
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '2.8'
+version = '2.19'
+
 # The full version, including alpha/beta/rc tags.
-release = '2.8-SNAPSHOT'
+release = '2.19-SNAPSHOT'
+
+# Used in build and documentation links
+branch = 'master'
+
 # Users don't need to see the "SNAPSHOT" notation when it's there
 if release.find('SNAPSHOT') != -1:
-   release = '2.8.x'
+   release = '2.19.x'
+   download_release = 'https://build.geoserver.org/geoserver/'+branch+'/geoserver-'+version+'.x-latest-%s.zip'
+   download_extension = 'https://build.geoserver.org/geoserver/'+branch+'/ext-latest/geoserver-'+version+'-SNAPSHOT-%s-plugin.zip'
+   download_community = 'https://build.geoserver.org/geoserver/'+branch+'/community-latest/geoserver-'+version+'-SNAPSHOT-%s-plugin.zip'
+else:
+   download_release = 'http://sourceforge.net/projects/geoserver/files/GeoServer/'+release+'/geoserver-'+release+'-%s.zip'
+   download_extension = 'http://sourceforge.net/projects/geoserver/files/GeoServer/'+release+'/extensions/geoserver-'+release+'-%s-plugin.zip'
+   download_community = 'https://build.geoserver.org/geoserver/'+branch+'/community-latest/geoserver-'+version+'.x-SNAPSHOT-%s-plugin.zip'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -92,10 +107,16 @@ pygments_style = 'sphinx'
 extlinks = { 
     'wiki': ('https://github.com/geoserver/geoserver/wiki/%s',''),
     'website': ('http://geoserver.org/%s',''),
-    'user': ('http://docs.geoserver.org/latest/en/user/%s',''),
+    'user': ('http://docs.geoserver.org/'+branch+'/en/user/%s',''),
     'developer': ('http://docs.geoserver.org/latest/en/developer/%s',''),
+    'docguide': ('http://docs.geoserver.org/latest/en/docguide/%s',''),
     'geos': ('https://osgeo-org.atlassian.net/browse/GEOS-%s','GEOS-'),
-    'geot': ('https://osgeo-org.atlassian.net/browse/GEOT-%s','GEOT-')
+    'geot': ('https://osgeo-org.atlassian.net/browse/GEOT-%s','GEOT-'),
+    'api': ('http://docs.geoserver.org/latest/en/api/#1.0.0/%s',''),
+    'geotools': ('https://docs.geotools.org/latest/userguide/%s',''),
+    'download_release': (download_release,None),
+    'download_extension': (download_extension,None),
+    'download_community': (download_community,None)
 }
 
 # Common substitutions
@@ -137,7 +158,7 @@ html_title = project + " " + release + " " + manual
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-#html_favicon = None
+html_favicon = '../../themes/geoserver/static/geoserver.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -168,8 +189,11 @@ html_use_index = False
 # If true, the index is split into individual pages for each letter.
 #html_split_index = False
 
-# If true, the reST sources are included in the HTML build as _sources/<name>.
-#html_copy_source = True
+# If true, the sphinx sources are included in the HTML build as _sources/<name>.
+html_copy_source = False
+
+# If true, links to the page source are added to each page.
+html_show_sourcelink = False
 
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
@@ -181,6 +205,15 @@ html_use_index = False
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'GeoServerUserManual'
+
+html_context = {
+  'display_github': True,
+  'github_user': 'geoserver',
+  'github_repo': 'geoserver',
+  'github_version': 'master',
+  'conf_py_path': 'doc/en/user/source'
+}
+
 
 
 # Options for LaTeX output
@@ -213,17 +246,16 @@ latex_elements = {
   'fncychap': '\\usepackage[Sonny]{fncychap}',
 'preamble': #"""\\usepackage[parfill]{parskip}
   """
-	\\hypersetup{
-		colorlinks = true,
+    \\hypersetup{
+    colorlinks = true,
     linkcolor = [rgb]{0,0.46,0.63},
     anchorcolor = [rgb]{0,0.46,0.63},
     citecolor = blue,
     filecolor = [rgb]{0,0.46,0.63},
     pagecolor = [rgb]{0,0.46,0.63},
     urlcolor = [rgb]{0,0.46,0.63}
-	}
+    }
 
-	
 """
 }
 

@@ -9,27 +9,20 @@ package org.geoserver.flow.controller;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.geoserver.flow.FlowController;
 import org.geoserver.ows.Request;
 
 /**
  * Base class for flow controllers using a queue
- * 
+ *
  * @author Juan Marin, OpenGeo
- * 
  */
-
 public abstract class QueueController implements FlowController {
-    /**
-     * The size of each queue
-     */
+    /** The size of each queue */
     int queueSize;
 
-    /**
-     * The per request queue collection
-     */
-    Map<String, TimedBlockingQueue> queues = new ConcurrentHashMap<String, TimedBlockingQueue>();
+    /** The per request queue collection */
+    Map<String, TimedBlockingQueue> queues = new ConcurrentHashMap<>();
 
     @Override
     public boolean requestIncoming(Request request, long timeout) {
@@ -60,7 +53,5 @@ public abstract class QueueController implements FlowController {
             lastModified = System.currentTimeMillis();
             return super.remove(o);
         }
-
     }
-
 }

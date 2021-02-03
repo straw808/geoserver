@@ -7,15 +7,13 @@ package org.geoserver.catalog;
 
 import static org.geoserver.catalog.Predicates.contains;
 import static org.geoserver.catalog.Predicates.equal;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
-import junit.framework.TestCase;
-
 import org.geoserver.catalog.impl.AuthorityURL;
 import org.geoserver.catalog.impl.CoverageInfoImpl;
 import org.geoserver.catalog.impl.CoverageStoreInfoImpl;
@@ -115,7 +113,7 @@ public class PredicatesTest {
         assertTrue(equal("id", ws.getId()).evaluate(ws));
         assertFalse(equal("id", "somethingElse").evaluate(ws));
 
-        Set<StyleInfo> styles = new HashSet<StyleInfo>();
+        Set<StyleInfo> styles = new HashSet<>();
         styles.add(style1);
 
         assertFalse(equal("styles", styles, MatchAction.ALL).evaluate(vectorLayer));
@@ -133,21 +131,22 @@ public class PredicatesTest {
     @Test
     public void testPropertyEqualsCompound() {
         assertTrue(equal("resource.id", featureType.getId()).evaluate(vectorLayer));
-        assertTrue(equal("resource.maxFeatures", featureType.getMaxFeatures())
-                .evaluate(vectorLayer));
+        assertTrue(
+                equal("resource.maxFeatures", featureType.getMaxFeatures()).evaluate(vectorLayer));
         assertTrue(equal("resource.store.type", dataStore.getType()).evaluate(vectorLayer));
 
-        assertTrue(equal("resource.store.connectionParameters.boolParam", true).evaluate(
-                vectorLayer));
-        assertFalse(equal("resource.store.connectionParameters.boolParam", false).evaluate(
-                vectorLayer));
+        assertTrue(
+                equal("resource.store.connectionParameters.boolParam", true).evaluate(vectorLayer));
+        assertFalse(
+                equal("resource.store.connectionParameters.boolParam", false)
+                        .evaluate(vectorLayer));
 
         ws.getMetadata().put("checkMe", new java.util.Date(1000));
 
         assertTrue(equal("metadata.checkMe", new java.util.Date(1000)).evaluate(ws));
 
-        assertFalse(equal("resource.store.someNonExistentProperty", "someValue").evaluate(
-                vectorLayer));
+        assertFalse(
+                equal("resource.store.someNonExistentProperty", "someValue").evaluate(vectorLayer));
     }
 
     @Test
@@ -161,25 +160,27 @@ public class PredicatesTest {
         expected = String.valueOf(featureType.getMaxFeatures());
         assertTrue(equal("resource.maxFeatures", expected).evaluate(vectorLayer));
 
-        expected = new Double(featureType.getMaxFeatures());
+        expected = Double.valueOf(featureType.getMaxFeatures());
         assertTrue(equal("resource.maxFeatures", expected).evaluate(vectorLayer));
 
         expected = "true";
-        assertTrue(equal("resource.store.connectionParameters.boolParam", expected).evaluate(
-                vectorLayer));
+        assertTrue(
+                equal("resource.store.connectionParameters.boolParam", expected)
+                        .evaluate(vectorLayer));
 
         expected = "false";
-        assertFalse(equal("resource.store.connectionParameters.boolParam", false).evaluate(
-                vectorLayer));
+        assertFalse(
+                equal("resource.store.connectionParameters.boolParam", false)
+                        .evaluate(vectorLayer));
 
         ws.getMetadata().put("checkMe", new java.util.Date(1000));
 
         expected = new java.sql.Timestamp(1000);
-        assertTrue(equal("resource.store.workspace.metadata.checkMe", expected).evaluate(
-                vectorLayer));
+        assertTrue(
+                equal("resource.store.workspace.metadata.checkMe", expected).evaluate(vectorLayer));
 
-        assertFalse(equal("resource.store.someNonExistentProperty", "someValue").evaluate(
-                vectorLayer));
+        assertFalse(
+                equal("resource.store.someNonExistentProperty", "someValue").evaluate(vectorLayer));
     }
 
     @Test

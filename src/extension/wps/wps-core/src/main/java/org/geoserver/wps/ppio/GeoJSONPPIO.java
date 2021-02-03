@@ -8,22 +8,29 @@ package org.geoserver.wps.ppio;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import com.vividsolutions.jts.geom.Geometry;
+import org.geoserver.config.GeoServer;
+import org.geoserver.platform.GeoServerExtensions;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.geotools.geojson.geom.GeometryJSON;
+import org.locationtech.jts.geom.Geometry;
 
 /**
  * Inputs and outputs feature collections in GeoJSON format using gt-geojson
- * 
+ *
  * @author Andrea Aime - OpenGeo
- * 
  */
 public abstract class GeoJSONPPIO extends CDataPPIO {
+    GeoServer gs;
 
     protected GeoJSONPPIO(Class clazz) {
         super(clazz, clazz, "application/json");
+        this.gs = (GeoServer) GeoServerExtensions.bean("geoServer");
+    }
+
+    protected GeoJSONPPIO(Class clazz, GeoServer gs) {
+        super(clazz, clazz, "application/json");
+        this.gs = gs;
     }
 
     @Override
@@ -34,7 +41,7 @@ public abstract class GeoJSONPPIO extends CDataPPIO {
 
     @Override
     public abstract Object decode(String input) throws Exception;
-    
+
     @Override
     public final String getFileExtension() {
         return "json";
@@ -45,9 +52,15 @@ public abstract class GeoJSONPPIO extends CDataPPIO {
             super(FeatureCollection.class);
         }
 
+        protected FeatureCollections(GeoServer gs) {
+            super(FeatureCollection.class, gs);
+        }
+
         @Override
         public void encode(Object value, OutputStream os) throws IOException {
-            FeatureJSON json = new FeatureJSON();
+            int decimals = gs.getSettings().getNumDecimals();
+            GeometryJSON js = new GeometryJSON(decimals);
+            FeatureJSON json = new FeatureJSON(js);
             // commented out due to GEOT-3209
             // json.setEncodeFeatureCRS(true);
             // json.setEncodeFeatureCollectionCRS(true);
@@ -70,9 +83,14 @@ public abstract class GeoJSONPPIO extends CDataPPIO {
             super(Geometry.class);
         }
 
+        protected Geometries(GeoServer gs) {
+            super(Geometry.class, gs);
+        }
+
         @Override
         public void encode(Object value, OutputStream os) throws IOException {
-            GeometryJSON json = new GeometryJSON();
+            int decimals = gs.getSettings().getNumDecimals();
+            GeometryJSON json = new GeometryJSON(decimals);
             json.write((Geometry) value, os);
         }
 

@@ -1,17 +1,17 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014-2016 Open Source Geospatial Foundation - all rights reserved
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
  */
 package org.geoserver.wps;
 
 import org.geoserver.wps.executor.MaxExecutionTimeListener;
-import org.geotools.util.DelegateProgressListener;
+import org.geotools.data.util.DelegateProgressListener;
 import org.opengis.util.ProgressListener;
 
 /**
  * Exception used to "poison" inputs and listener methods to force processes to exit when a dismiss
  * request was submitted
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
 public class ProcessDismissedException extends RuntimeException {
@@ -33,13 +33,18 @@ public class ProcessDismissedException extends RuntimeException {
             DelegateProgressListener d = (DelegateProgressListener) listener;
             listener = d.getDelegate();
         }
-        
-        if(listener instanceof MaxExecutionTimeListener) {
+
+        if (listener instanceof MaxExecutionTimeListener) {
             MaxExecutionTimeListener max = (MaxExecutionTimeListener) listener;
-            if(max.isExpired()) {
+            if (max.isExpired()) {
                 return "The process executed got interrupted because it went "
                         + "beyond the configured limits of "
-                        + (max.getMaxExecutionTime() / 1000 + " seconds");
+                        + "maxExecutionTime "
+                        + (max.getMaxExecutionTime() / 1000)
+                        + " seconds, "
+                        + "maxTotalTime "
+                        + (max.getMaxTotalTime() / 1000)
+                        + " seconds";
             }
         }
 
@@ -57,5 +62,4 @@ public class ProcessDismissedException extends RuntimeException {
     public ProcessDismissedException(Throwable cause) {
         super(cause);
     }
-
 }

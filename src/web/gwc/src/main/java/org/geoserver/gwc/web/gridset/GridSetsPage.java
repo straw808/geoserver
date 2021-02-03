@@ -1,15 +1,15 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
  */
 package org.geoserver.gwc.web.gridset;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -33,6 +33,7 @@ import org.geowebcache.grid.GridSet;
 /**
  * Page listing all the available GridSets, following the usual filter/sort/page approach and
  * providing ways to bulk delete gridsets and to add new ones.
+ *
  * <p>
  * <!-- Implementation detail:
  * <p>
@@ -42,9 +43,9 @@ import org.geowebcache.grid.GridSet;
  * <li>which in turn uses a {@link GridSetDetachableModel} to get each gridset out of
  * {@link GWC#getGridSetBroker()}
  * </ul>
- * 
+ *
  * -->
- * 
+ *
  * @see StorePanel
  */
 @SuppressWarnings("serial")
@@ -65,53 +66,62 @@ public class GridSetsPage extends GeoServerSecuredPage {
         @Override
         protected void onSelectionUpdate(AjaxRequestTarget target) {
             removal.setEnabled(table.getSelection().size() > 0);
-            target.addComponent(removal);
+            target.add(removal);
         }
 
         @Override
         protected Component nameLink(final String id, final GridSet gridSet) {
 
             final String gridSetName = gridSet.getName();
-            final boolean isInternal = GWC.get().getGridSetBroker().getEmbeddedNames()
-                    .contains(gridSetName);
+            final boolean isInternal =
+                    GWC.get().getGridSetBroker().getEmbeddedNames().contains(gridSetName);
 
             SimpleBookmarkableLink link;
 
-            link = new SimpleBookmarkableLink(id, GridSetEditPage.class, new Model<String>(
-                    gridSetName), AbstractGridSetPage.GRIDSET_NAME, gridSetName);
+            link =
+                    new SimpleBookmarkableLink(
+                            id,
+                            GridSetEditPage.class,
+                            new Model<>(gridSetName),
+                            AbstractGridSetPage.GRIDSET_NAME,
+                            gridSetName);
 
             if (isInternal) {
-                link.add(new AttributeModifier("style", true, new Model<String>(
-                        "font-style: italic;")));
-                link.add(new AttributeModifier("title", true, new ResourceModel(
-                        "nameLink.titleInternalGridSet")));
+                link.add(new AttributeModifier("style", new Model<>("font-style: italic;")));
+                link.add(
+                        new AttributeModifier(
+                                "title", new ResourceModel("nameLink.titleInternalGridSet")));
             } else {
-                link.add(new AttributeModifier("title", true, new ResourceModel("nameLink.title")));
+                link.add(new AttributeModifier("title", new ResourceModel("nameLink.title")));
             }
             return link;
-
         }
 
         @Override
         protected Component actionLink(final String id, String gridSetName) {
             SimpleBookmarkableLink link;
-            link = new SimpleBookmarkableLink(id, GridSetNewPage.class, new ResourceModel(
-                    "templateLink"), AbstractGridSetPage.GRIDSET_TEMPLATE_NAME, gridSetName);
+            link =
+                    new SimpleBookmarkableLink(
+                            id,
+                            GridSetNewPage.class,
+                            new ResourceModel("templateLink"),
+                            AbstractGridSetPage.GRIDSET_TEMPLATE_NAME,
+                            gridSetName);
 
-            link.add(new AttributeModifier("title", true, new ResourceModel("templateLink.title")));
+            link.add(new AttributeModifier("title", new ResourceModel("templateLink.title")));
             return link;
         }
-
     }
 
     public GridSetsPage() {
 
-        GridSetTableProvider provider = new GridSetTableProvider() {
-            @Override
-            public List<GridSet> getItems() {
-                return GWC.get().getGridSetBroker().getGridSets();
-            }
-        };
+        GridSetTableProvider provider =
+                new GridSetTableProvider() {
+                    @Override
+                    public List<GridSet> getItems() {
+                        return new ArrayList<>(GWC.get().getGridSetBroker().getGridSets());
+                    }
+                };
         // the table, and wire up selection change
         table = new GridSetsPanel("table", provider);
         table.setOutputMarkupId(true);
@@ -122,20 +132,20 @@ public class GridSetsPage extends GeoServerSecuredPage {
         setHeaderPanel(headerPanel());
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     protected Component headerPanel() {
         Fragment header = new Fragment(HEADER_PANEL, "header", this);
 
         // the add button
         BookmarkablePageLink newLink = new BookmarkablePageLink("addNew", GridSetNewPage.class);
-        newLink.add(new AttributeModifier("title", true, new ResourceModel("addNew.title")));
+        newLink.add(new AttributeModifier("title", new ResourceModel("addNew.title")));
         header.add(newLink);
 
         // the removal button
         header.add(removal = new SelectionRemovalLink("removeSelected", table, dialog));
         removal.setOutputMarkupId(true);
         removal.setEnabled(false);
-        removal.add(new AttributeModifier("title", true, new ResourceModel("removalLink.title")));
+        removal.add(new AttributeModifier("title", new ResourceModel("removalLink.title")));
 
         return header;
     }
@@ -146,7 +156,9 @@ public class GridSetsPage extends GeoServerSecuredPage {
 
         GeoServerDialog dialog;
 
-        public SelectionRemovalLink(final String id, final GeoServerTablePanel<GridSet> gridsets,
+        public SelectionRemovalLink(
+                final String id,
+                final GeoServerTablePanel<GridSet> gridsets,
                 final GeoServerDialog dialog) {
             super(id);
             this.gridsets = gridsets;
@@ -157,11 +169,11 @@ public class GridSetsPage extends GeoServerSecuredPage {
         public void onClick(AjaxRequestTarget target) {
             // see if the user selected anything
             List<GridSet> selection = gridsets.getSelection();
-            if (selection.size() == 0) {
+            if (selection.isEmpty()) {
                 return;
             }
 
-            final Set<String> selectedGridsetIds = new HashSet<String>();
+            final Set<String> selectedGridsetIds = new HashSet<>();
             for (GridSet gset : selection) {
                 selectedGridsetIds.add(gset.getName());
             }
@@ -170,63 +182,66 @@ public class GridSetsPage extends GeoServerSecuredPage {
 
             // if there is something to cancel, let's warn the user about what
             // could go wrong, and if the user accepts, let's delete what's needed
-            dialog.showOkCancel(target, new GeoServerDialog.DialogDelegate() {
+            dialog.showOkCancel(
+                    target,
+                    new GeoServerDialog.DialogDelegate() {
 
-                @Override
-                protected Component getContents(final String id) {
-                    final GWC gwc = GWC.get();
+                        @Override
+                        protected Component getContents(final String id) {
+                            final GWC gwc = GWC.get();
 
-                    final int count = selectedGridsetIds.size();
+                            final int count = selectedGridsetIds.size();
 
-                    Quota totalQuota = new Quota();
+                            Quota totalQuota = new Quota();
 
-                    for (String gridsetId : selectedGridsetIds) {
-                        Quota usedQuotaByGridSet = gwc.getUsedQuotaByGridSet(gridsetId);
-                        if (usedQuotaByGridSet != null) {
-                            totalQuota.add(usedQuotaByGridSet);
+                            for (String gridsetId : selectedGridsetIds) {
+                                Quota usedQuotaByGridSet = gwc.getUsedQuotaByGridSet(gridsetId);
+                                if (usedQuotaByGridSet != null) {
+                                    totalQuota.add(usedQuotaByGridSet);
+                                }
+                            }
+
+                            final Set<String> affectedLayers =
+                                    gwc.getLayerNamesForGridSets(selectedGridsetIds);
+
+                            IModel<String> confirmModel =
+                                    new ParamResourceModel(
+                                            "GridSetsPage.confirmGridsetsDelete",
+                                            GridSetsPage.this,
+                                            String.valueOf(count),
+                                            String.valueOf(affectedLayers.size()),
+                                            totalQuota.toNiceString());
+
+                            Label confirmMessage = new Label(id, confirmModel);
+                            confirmMessage.setEscapeModelStrings(false); // allow some html markup
+                            return confirmMessage;
                         }
-                    }
 
-                    final Set<String> affectedLayers = gwc
-                            .getLayerNamesForGridSets(selectedGridsetIds);
+                        @Override
+                        protected boolean onSubmit(AjaxRequestTarget target, Component contents) {
+                            // cascade delete the whole selection
+                            GWC gwc = GWC.get();
+                            try {
+                                gwc.removeGridSets(selectedGridsetIds);
+                            } catch (Exception e) {
+                                getPage().error(e.getMessage());
+                                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                            }
+                            gridsets.clearSelection();
+                            return true;
+                        }
 
-                    IModel<String> confirmModel = new ParamResourceModel(
-                            "GridSetsPage.confirmGridsetsDelete", GridSetsPage.this, String
-                                    .valueOf(count), String.valueOf(affectedLayers.size()),
-                            totalQuota.toNiceString());
-
-                    Label confirmMessage = new Label(id, confirmModel);
-                    confirmMessage.setEscapeModelStrings(false);// allow some html markup
-                    return confirmMessage;
-                }
-
-                @Override
-                protected boolean onSubmit(AjaxRequestTarget target, Component contents) {
-                    // cascade delete the whole selection
-                    GWC gwc = GWC.get();
-                    try {
-                        gwc.removeGridSets(selectedGridsetIds);
-                    } catch (Exception e) {
-                        getPage().error(e.getMessage());
-                        LOGGER.log(Level.WARNING, e.getMessage(), e);
-                    }
-                    gridsets.clearSelection();
-                    return true;
-                }
-
-                @Override
-                public void onClose(AjaxRequestTarget target) {
-                    // if the selection has been cleared out it's sign a deletion
-                    // occurred, so refresh the table
-                    if (gridsets.getSelection().size() == 0) {
-                        setEnabled(false);
-                        target.addComponent(SelectionRemovalLink.this);
-                        target.addComponent(gridsets);
-                    }
-                }
-
-            });
-
+                        @Override
+                        public void onClose(AjaxRequestTarget target) {
+                            // if the selection has been cleared out it's sign a deletion
+                            // occurred, so refresh the table
+                            if (gridsets.getSelection().size() == 0) {
+                                setEnabled(false);
+                                target.add(SelectionRemovalLink.this);
+                                target.add(gridsets);
+                            }
+                        }
+                    });
         }
     }
 }

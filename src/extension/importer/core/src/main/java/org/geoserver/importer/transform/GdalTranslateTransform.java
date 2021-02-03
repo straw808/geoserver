@@ -9,26 +9,21 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import org.geoserver.importer.FileData;
 import org.geoserver.importer.ImportData;
 
 /**
  * Runs gdal_translate on a input raster file
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
-public class GdalTranslateTransform extends AbstractCommandLineTransform implements RasterTransform {
+public class GdalTranslateTransform extends AbstractCommandLinePreTransform
+        implements RasterTransform {
     private static final long serialVersionUID = -6241844409161277128L;
 
-    /**
-     * Checks if gdal_translate is available
-     * 
-     * @return
-     * @throws IOException
-     */
+    /** Checks if gdal_translate is available */
     public static boolean isAvailable() throws IOException {
-        return new GdalTranslateTransform(new ArrayList<String>()).checkAvailable();
+        return new GdalTranslateTransform(new ArrayList<>()).checkAvailable();
     }
 
     public GdalTranslateTransform(List<String> options) {
@@ -59,5 +54,4 @@ public class GdalTranslateTransform extends AbstractCommandLineTransform impleme
     protected List<String> getAvailabilityTestOptions() {
         return Collections.singletonList("--version");
     }
-
 }

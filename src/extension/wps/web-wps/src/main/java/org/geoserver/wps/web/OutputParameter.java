@@ -8,7 +8,6 @@ package org.geoserver.wps.web;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.geoserver.web.GeoServerApplication;
 import org.geoserver.wps.ppio.ComplexPPIO;
 import org.geoserver.wps.ppio.ProcessParameterIO;
@@ -19,7 +18,7 @@ import org.opengis.feature.type.Name;
 
 /**
  * A single output parameter, along with the chosen output mime type and the output inclusion flag
- * 
+ *
  * @author Andrea Aime - OpenGeo
  */
 @SuppressWarnings("serial")
@@ -35,7 +34,6 @@ class OutputParameter implements Serializable {
     public OutputParameter(Name processName, String paramName) {
         this.processName = processName;
         this.paramName = paramName;
-        Parameter<?> p = getParameter();
         this.mimeType = getDefaultMime();
     }
 
@@ -48,7 +46,7 @@ class OutputParameter implements Serializable {
     }
 
     public List<String> getSupportedMime() {
-        List<String> results = new ArrayList<String>();
+        List<String> results = new ArrayList<>();
         for (ProcessParameterIO ppio : getProcessParameterIO()) {
             ComplexPPIO cp = (ComplexPPIO) ppio;
             results.add(cp.getMimeType());
@@ -58,12 +56,12 @@ class OutputParameter implements Serializable {
 
     public boolean isComplex() {
         List<ProcessParameterIO> ppios = getProcessParameterIO();
-        return ppios.size() > 0 && ppios.get(0) instanceof ComplexPPIO;
+        return !ppios.isEmpty() && ppios.get(0) instanceof ComplexPPIO;
     }
 
     List<ProcessParameterIO> getProcessParameterIO() {
-        return ProcessParameterIO.findAll(getParameter(), GeoServerApplication.get()
-                .getApplicationContext());
+        return ProcessParameterIO.findAll(
+                getParameter(), GeoServerApplication.get().getApplicationContext());
     }
 
     ProcessFactory getProcessFactory() {
@@ -73,5 +71,4 @@ class OutputParameter implements Serializable {
     Parameter<?> getParameter() {
         return getProcessFactory().getResultInfo(processName, null).get(paramName);
     }
-
 }

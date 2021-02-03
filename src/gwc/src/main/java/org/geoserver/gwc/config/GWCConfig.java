@@ -1,11 +1,11 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
  */
 package org.geoserver.gwc.config;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -13,9 +13,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
 import org.geowebcache.locks.LockProvider;
 import org.geowebcache.storage.blobstore.memory.CacheConfiguration;
 import org.geowebcache.storage.blobstore.memory.CacheProvider;
@@ -29,66 +28,54 @@ public class GWCConfig implements Cloneable, Serializable {
 
     private boolean directWMSIntegrationEnabled;
 
+    private Boolean requireTiledParameter = true;
+
     private boolean WMSCEnabled;
 
-    private boolean WMTSEnabled;
-
     private boolean TMSEnabled;
-    
+
+    private Boolean WMTSEnabled;
+
     private boolean securityEnabled;
 
-    /**
-     * Boolean indicating if InnerCaching should be used instead of
-     * default FileSystem caching
-     */
+    /** Boolean indicating if InnerCaching should be used instead of default FileSystem caching */
     private boolean innerCachingEnabled;
 
     /**
-     * Boolean indicating if the Tiles stored in memory should be also stored
-     * in the FileSystem as backup
+     * Boolean indicating if the Tiles stored in memory should be also stored in the FileSystem as
+     * backup
      */
     private boolean persistenceEnabled;
 
     /**
-     * String indicating the class of the {@link CacheProvider} instance used for caching
-     * GWC Tiles
+     * String indicating the class of the {@link CacheProvider} instance used for caching GWC Tiles
      */
     private String cacheProviderClass;
 
     /**
-     * {@link Map} containing all the {@link CacheConfiguration} object stored for each
-     * {@link CacheProvider} instance.
+     * {@link Map} containing all the {@link CacheConfiguration} object stored for each {@link
+     * CacheProvider} instance.
      */
     private Map<String, CacheConfiguration> cacheConfigurations;
 
-    /**
-     * Whether to automatically cache GeoServer layers or they should be enabled explicitly
-     */
+    /** Whether to automatically cache GeoServer layers or they should be enabled explicitly */
     private boolean cacheLayersByDefault = true;
 
-    /**
-     * Whether to cache any non default Style associated to the layer
-     */
+    /** Whether to cache any non default Style associated to the layer */
     private boolean cacheNonDefaultStyles;
 
-    /**
-     * Default meta-tiling factor for the X axis
-     */
+    /** Default meta-tiling factor for the X axis */
     private int metaTilingX;
 
-    /**
-     * Default meta-tiling factor for the Y axis
-     */
+    /** Default meta-tiling factor for the Y axis */
     private int metaTilingY;
 
-    /**
-     * Default gutter size in pixels
-     */
+    /** Default gutter size in pixels */
     private int gutter;
 
     /**
-     * Which SRS's to cache by default when adding a new Layer. Defaults to
-     * {@code [EPSG:4326, EPSG:900913]}
+     * Which SRS's to cache by default when adding a new Layer. Defaults to {@code [EPSG:4326,
+     * EPSG:900913]}
      */
     private HashSet<String> defaultCachingGridSetIds;
 
@@ -96,50 +83,46 @@ public class GWCConfig implements Cloneable, Serializable {
 
     private HashSet<String> defaultVectorCacheFormats;
 
-    /**
-     * Default cache formats for non coverage/vector layers (LayerGroups and WMS layers)
-     */
+    /** Default cache formats for non coverage/vector layers (LayerGroups and WMS layers) */
     private HashSet<String> defaultOtherCacheFormats;
-    
+
     private String lockProviderName;
 
-    /**
-     * Creates a new GWC config with default values
-     */
+    /** Creates a new GWC config with default values */
     public GWCConfig() {
         setOldDefaults();
 
         String png = "image/png";
         String jpeg = "image/jpeg";
         setDefaultCoverageCacheFormats(Collections.singleton(jpeg));
-        setDefaultOtherCacheFormats(new HashSet<String>(Arrays.asList(png, jpeg)));
+        setDefaultOtherCacheFormats(new HashSet<>(Arrays.asList(png, jpeg)));
         setDefaultVectorCacheFormats(Collections.singleton(png));
-        Map<String, CacheConfiguration> map = new HashMap<String, CacheConfiguration>();
+        Map<String, CacheConfiguration> map = new HashMap<>();
         map.put(GuavaCacheProvider.class.toString(), new CacheConfiguration());
         setCacheConfigurations(map);
-
+        setRequireTiledParameter(true);
         readResolve();
     }
 
-    private GWCConfig readResolve() {
+    protected Object readResolve() {
         if (null == version) {
             version = "0.0.1";
         }
 
         if (defaultCachingGridSetIds == null) {
-            defaultCachingGridSetIds = new HashSet<String>();
+            defaultCachingGridSetIds = new HashSet<>();
         }
         if (defaultCoverageCacheFormats == null) {
-            defaultCoverageCacheFormats = new HashSet<String>();
+            defaultCoverageCacheFormats = new HashSet<>();
         }
         if (defaultOtherCacheFormats == null) {
-            defaultOtherCacheFormats = new HashSet<String>();
+            defaultOtherCacheFormats = new HashSet<>();
         }
         if (defaultVectorCacheFormats == null) {
-            defaultVectorCacheFormats = new HashSet<String>();
+            defaultVectorCacheFormats = new HashSet<>();
         }
         if (cacheConfigurations == null) {
-            cacheConfigurations = new HashMap<String, CacheConfiguration>();
+            cacheConfigurations = new HashMap<>();
             cacheConfigurations.put(GuavaCacheProvider.class.toString(), new CacheConfiguration());
         }
 
@@ -170,20 +153,23 @@ public class GWCConfig implements Cloneable, Serializable {
         this.directWMSIntegrationEnabled = directWMSIntegrationEnabled;
     }
 
+    public boolean isRequireTiledParameter() {
+        if (requireTiledParameter == null) {
+            return true;
+        }
+        return requireTiledParameter;
+    }
+
+    public void setRequireTiledParameter(boolean requireTiledParameter) {
+        this.requireTiledParameter = requireTiledParameter;
+    }
+
     public boolean isWMSCEnabled() {
         return WMSCEnabled;
     }
 
     public void setWMSCEnabled(boolean wMSCEnabled) {
         WMSCEnabled = wMSCEnabled;
-    }
-
-    public boolean isWMTSEnabled() {
-        return WMTSEnabled;
-    }
-
-    public void setWMTSEnabled(boolean wMTSEnabled) {
-        WMTSEnabled = wMTSEnabled;
     }
 
     public boolean isTMSEnabled() {
@@ -193,11 +179,11 @@ public class GWCConfig implements Cloneable, Serializable {
     public void setTMSEnabled(boolean tMSEnabled) {
         TMSEnabled = tMSEnabled;
     }
-    
+
     public void setSecurityEnabled(boolean securityEnabled) {
         this.securityEnabled = securityEnabled;
     }
-    
+
     public boolean isSecurityEnabled() {
         return securityEnabled;
     }
@@ -215,7 +201,7 @@ public class GWCConfig implements Cloneable, Serializable {
     }
 
     public void setDefaultCachingGridSetIds(Set<String> defaultCachingGridSetIds) {
-        this.defaultCachingGridSetIds = new HashSet<String>(defaultCachingGridSetIds);
+        this.defaultCachingGridSetIds = new HashSet<>(defaultCachingGridSetIds);
     }
 
     public Set<String> getDefaultCoverageCacheFormats() {
@@ -223,7 +209,7 @@ public class GWCConfig implements Cloneable, Serializable {
     }
 
     public void setDefaultCoverageCacheFormats(Set<String> defaultCoverageCacheFormats) {
-        this.defaultCoverageCacheFormats = new HashSet<String>(defaultCoverageCacheFormats);
+        this.defaultCoverageCacheFormats = new HashSet<>(defaultCoverageCacheFormats);
     }
 
     public Set<String> getDefaultVectorCacheFormats() {
@@ -231,7 +217,7 @@ public class GWCConfig implements Cloneable, Serializable {
     }
 
     public void setDefaultVectorCacheFormats(Set<String> defaultVectorCacheFormats) {
-        this.defaultVectorCacheFormats = new HashSet<String>(defaultVectorCacheFormats);
+        this.defaultVectorCacheFormats = new HashSet<>(defaultVectorCacheFormats);
     }
 
     public Set<String> getDefaultOtherCacheFormats() {
@@ -239,22 +225,22 @@ public class GWCConfig implements Cloneable, Serializable {
     }
 
     public void setDefaultOtherCacheFormats(Set<String> defaultOtherCacheFormats) {
-        this.defaultOtherCacheFormats = new HashSet<String>(defaultOtherCacheFormats);
+        this.defaultOtherCacheFormats = new HashSet<>(defaultOtherCacheFormats);
     }
 
     /**
      * @return an instance of GWCConfig (possibly {@code this}) that is sane, in case the configured
-     *         defaults are not (like in missing some config option). This is just a safety measure
-     *         to ensure a mis configured gwc-gs.xml does not prevent the creation of tile layers
-     *         (ej, automatic creation of new tile layers may be disabled in gwc-gs.xml and its
-     *         contents may not lead to a sane state to be used as default settings).
+     *     defaults are not (like in missing some config option). This is just a safety measure to
+     *     ensure a mis configured gwc-gs.xml does not prevent the creation of tile layers (ej,
+     *     automatic creation of new tile layers may be disabled in gwc-gs.xml and its contents may
+     *     not lead to a sane state to be used as default settings).
      */
     public GWCConfig saneConfig() {
         if (isSane()) {
             return this;
         }
         GWCConfig sane = GWCConfig.getOldDefaults();
-
+        sane.setRequireTiledParameter(true);
         // sane.setCacheLayersByDefault(cacheLayersByDefault);
         if (metaTilingX > 0) {
             sane.setMetaTilingX(metaTilingX);
@@ -281,10 +267,13 @@ public class GWCConfig implements Cloneable, Serializable {
     }
 
     public boolean isSane() {
-        return metaTilingX > 0 && metaTilingY > 0 && gutter >= 0
-                && !defaultCachingGridSetIds.isEmpty() && !defaultCoverageCacheFormats.isEmpty()
-                && !defaultOtherCacheFormats.isEmpty() && !defaultVectorCacheFormats.isEmpty();
-
+        return metaTilingX > 0
+                && metaTilingY > 0
+                && gutter >= 0
+                && !defaultCachingGridSetIds.isEmpty()
+                && !defaultCoverageCacheFormats.isEmpty()
+                && !defaultOtherCacheFormats.isEmpty()
+                && !defaultVectorCacheFormats.isEmpty();
     }
 
     /**
@@ -304,19 +293,18 @@ public class GWCConfig implements Cloneable, Serializable {
         setGutter(0);
         // this is not an old default, but a new feature so we enabled it anyway
         setCacheNonDefaultStyles(true);
-        setDefaultCachingGridSetIds(new HashSet<String>(Arrays.asList("EPSG:4326", "EPSG:900913")));
-        Set<String> oldDefaultFormats = new HashSet<String>(
-                Arrays.asList("image/png", "image/jpeg"));
+        setRequireTiledParameter(true);
+        setDefaultCachingGridSetIds(new HashSet<>(Arrays.asList("EPSG:4326", "EPSG:900913")));
+        Set<String> oldDefaultFormats = new HashSet<>(Arrays.asList("image/png", "image/jpeg"));
         setDefaultCoverageCacheFormats(oldDefaultFormats);
         setDefaultOtherCacheFormats(oldDefaultFormats);
         setDefaultVectorCacheFormats(oldDefaultFormats);
         setDirectWMSIntegrationEnabled(false);
         setWMSCEnabled(true);
-        setWMTSEnabled(true);
         setTMSEnabled(true);
         setEnabledPersistence(true);
         setInnerCachingEnabled(false);
-        HashMap<String, CacheConfiguration> map = new HashMap<String, CacheConfiguration>();
+        HashMap<String, CacheConfiguration> map = new HashMap<>();
         map.put(GuavaCacheProvider.class.toString(), new CacheConfiguration());
         setCacheConfigurations(map);
         setCacheProviderClass(GuavaCacheProvider.class.toString());
@@ -360,6 +348,7 @@ public class GWCConfig implements Cloneable, Serializable {
         clone.setDefaultVectorCacheFormats(getDefaultVectorCacheFormats());
         clone.setDefaultOtherCacheFormats(getDefaultOtherCacheFormats());
         clone.setCacheConfigurations(getCacheConfigurations());
+        clone.setRequireTiledParameter(this.isRequireTiledParameter());
 
         return clone;
     }
@@ -370,7 +359,8 @@ public class GWCConfig implements Cloneable, Serializable {
             return isWMSCEnabled();
         }
         if ("wmts".equalsIgnoreCase(serviceId)) {
-            return isWMTSEnabled();
+            throw new RuntimeException(
+                    "To check if WMTS service is enable or disable use service info.");
         }
         if ("tms".equalsIgnoreCase(serviceId)) {
             return isTMSEnabled();
@@ -380,26 +370,74 @@ public class GWCConfig implements Cloneable, Serializable {
 
     @Override
     public boolean equals(Object o) {
-        return EqualsBuilder.reflectionEquals(this, o);
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GWCConfig gwcConfig = (GWCConfig) o;
+        return directWMSIntegrationEnabled == gwcConfig.directWMSIntegrationEnabled
+                && requireTiledParameter == gwcConfig.requireTiledParameter
+                && WMSCEnabled == gwcConfig.WMSCEnabled
+                && TMSEnabled == gwcConfig.TMSEnabled
+                && securityEnabled == gwcConfig.securityEnabled
+                && innerCachingEnabled == gwcConfig.innerCachingEnabled
+                && persistenceEnabled == gwcConfig.persistenceEnabled
+                && cacheLayersByDefault == gwcConfig.cacheLayersByDefault
+                && cacheNonDefaultStyles == gwcConfig.cacheNonDefaultStyles
+                && metaTilingX == gwcConfig.metaTilingX
+                && metaTilingY == gwcConfig.metaTilingY
+                && gutter == gwcConfig.gutter
+                && Objects.equals(version, gwcConfig.version)
+                && Objects.equals(WMTSEnabled, gwcConfig.WMTSEnabled)
+                && Objects.equals(cacheProviderClass, gwcConfig.cacheProviderClass)
+                && Objects.equals(cacheConfigurations, gwcConfig.cacheConfigurations)
+                && Objects.equals(defaultCachingGridSetIds, gwcConfig.defaultCachingGridSetIds)
+                && Objects.equals(
+                        defaultCoverageCacheFormats, gwcConfig.defaultCoverageCacheFormats)
+                && Objects.equals(defaultVectorCacheFormats, gwcConfig.defaultVectorCacheFormats)
+                && Objects.equals(defaultOtherCacheFormats, gwcConfig.defaultOtherCacheFormats)
+                && Objects.equals(lockProviderName, gwcConfig.lockProviderName);
     }
-    
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                version,
+                directWMSIntegrationEnabled,
+                requireTiledParameter,
+                WMSCEnabled,
+                TMSEnabled,
+                WMTSEnabled,
+                securityEnabled,
+                innerCachingEnabled,
+                persistenceEnabled,
+                cacheProviderClass,
+                cacheConfigurations,
+                cacheLayersByDefault,
+                cacheNonDefaultStyles,
+                metaTilingX,
+                metaTilingY,
+                gutter,
+                defaultCachingGridSetIds,
+                defaultCoverageCacheFormats,
+                defaultVectorCacheFormats,
+                defaultOtherCacheFormats,
+                lockProviderName);
+    }
+
     public String getLockProviderName() {
         return lockProviderName;
     }
-    
+
     /**
-     * Sets the name of the {@link LockProvider} Spring bean to be used as the lock provider
-     * for this GWC instance
-     * 
-     * @param lockProviderName
+     * Sets the name of the {@link LockProvider} Spring bean to be used as the lock provider for
+     * this GWC instance
      */
     public void setLockProviderName(String lockProviderName) {
         this.lockProviderName = lockProviderName;
     }
 
     /**
-     * Checks whether GWC Tiles should be cached in memory
-     * instead of caching them in the File System
+     * Checks whether GWC Tiles should be cached in memory instead of caching them in the File
+     * System
      *
      * @return a boolean indicating if tiles are cached in memory
      */
@@ -410,16 +448,16 @@ public class GWCConfig implements Cloneable, Serializable {
     /**
      * This method sets a flag indicating if GWC tiles must be cached in memory
      *
-     * @param innerCachingEnabled If this flag is set to true, GWC tiles will be cached
-     * in memory instead of being cached on the disk.
+     * @param innerCachingEnabled If this flag is set to true, GWC tiles will be cached in memory
+     *     instead of being cached on the disk.
      */
     public void setInnerCachingEnabled(boolean innerCachingEnabled) {
         this.innerCachingEnabled = innerCachingEnabled;
     }
 
     /**
-     * Checks whether GWC Tiles are stored in the File System also if they are already
-     * stored in memory
+     * Checks whether GWC Tiles are stored in the File System also if they are already stored in
+     * memory
      *
      * @return a boolean indicating if GWC tiles are also cached in FileSystem
      */
@@ -428,11 +466,11 @@ public class GWCConfig implements Cloneable, Serializable {
     }
 
     /**
-     * This method sets a flag indicating if GWC tiles must be stored in File System
-     * even if they are also cached in memory
+     * This method sets a flag indicating if GWC tiles must be stored in File System even if they
+     * are also cached in memory
      *
-     * @param persistenceEnabled If this flag is set to true, GWC tiles are stored
-     * in the File System as backup.
+     * @param persistenceEnabled If this flag is set to true, GWC tiles are stored in the File
+     *     System as backup.
      */
     public void setEnabledPersistence(boolean persistenceEnabled) {
         this.persistenceEnabled = persistenceEnabled;
@@ -450,16 +488,15 @@ public class GWCConfig implements Cloneable, Serializable {
     /**
      * This method allows to set a new {@link CacheProvider} instance by defining its name.
      *
-     * @param cacheProviderClass The name of the new {@link CacheProvider} instance to
-     * set.
+     * @param cacheProviderClass The name of the new {@link CacheProvider} instance to set.
      */
     public void setCacheProviderClass(String cacheProviderClass) {
         this.cacheProviderClass = cacheProviderClass;
     }
 
     /**
-     * This method returns a {@link Map} containing the {@link CacheConfiguration} instances
-     * related to each {@link CacheProvider}.
+     * This method returns a {@link Map} containing the {@link CacheConfiguration} instances related
+     * to each {@link CacheProvider}.
      *
      * @return A {@link Map} which maps {@link CacheConfiguration}s to {@link CacheProvider}s
      */
@@ -468,13 +505,21 @@ public class GWCConfig implements Cloneable, Serializable {
     }
 
     /**
-     * This method sets a new {@link Map} which associates to each {@link CacheProvider},
-     * the related {@link CacheConfiguration}.
+     * This method sets a new {@link Map} which associates to each {@link CacheProvider}, the
+     * related {@link CacheConfiguration}.
      *
-     * @param cacheConfigurations A {@link Map} containing {@link CacheConfiguration}s associated
-     * to the {@link CacheProvider} keys.
+     * @param cacheConfigurations A {@link Map} containing {@link CacheConfiguration}s associated to
+     *     the {@link CacheProvider} keys.
      */
     public void setCacheConfigurations(Map<String, CacheConfiguration> cacheConfigurations) {
-        this.cacheConfigurations = new HashMap<String, CacheConfiguration>(cacheConfigurations);
+        this.cacheConfigurations = new HashMap<>(cacheConfigurations);
+    }
+
+    public Boolean isWMTSEnabled() {
+        return WMTSEnabled;
+    }
+
+    public void setWMTSEnabled(Boolean WMTSEnabled) {
+        this.WMTSEnabled = WMTSEnabled;
     }
 }

@@ -7,35 +7,23 @@ package org.geoserver.csw.records;
 
 /**
  * A helper that builds CSW Dublin core records as GeoTools features
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
-public class CSWRecordBuilder extends GenericRecordBuilder{
+public class CSWRecordBuilder extends GenericRecordBuilder {
 
     public CSWRecordBuilder() {
         super(CSWRecordDescriptor.getInstance());
     }
-   
-    /**
-     * Adds an element to the current record
-     * 
-     * @param name
-     * @param values
-     */
+
+    /** Adds an element to the current record */
     public void addElement(String name, String... values) {
         super.addElement(name + ".value", values);
     }
 
-    /**
-     * Adds an element to the current record with scheme
-     * 
-     * @param name
-     * @param scheme
-     * @param values
-     */
+    /** Adds an element to the current record with scheme */
     public void addElementWithScheme(String name, String scheme, String value) {
         super.addElement(name + ".value", value);
         super.addElement(name + ".scheme", scheme);
     }
-
 }

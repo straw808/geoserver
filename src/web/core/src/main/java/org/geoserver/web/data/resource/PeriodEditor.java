@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -6,8 +6,6 @@
 package org.geoserver.web.data.resource;
 
 import java.math.BigDecimal;
-
-import org.apache.wicket.Component;
 import org.apache.wicket.markup.html.form.FormComponentPanel;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.model.IModel;
@@ -15,8 +13,8 @@ import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.validation.validator.RangeValidator;
 
 /**
- * Helps edit a time period 
- * 
+ * Helps edit a time period
+ *
  * @author Andrea Aime - GeoSolutions
  */
 @SuppressWarnings("serial")
@@ -58,20 +56,14 @@ public class PeriodEditor extends FormComponentPanel<BigDecimal> {
     void initComponents() {
         updateFields();
 
-        final RangeValidator<Integer> validator = new RangeValidator<Integer>(0, Integer.MAX_VALUE);
-        add(new TextField<Integer>("years", new PropertyModel<Integer>(this, "years"))
-                .add(validator));
-        add(new TextField<Integer>("months", new PropertyModel<Integer>(this, "months"))
-                .add(validator));
-        add(new TextField<Integer>("weeks", new PropertyModel<Integer>(this, "weeks"))
-                .add(validator));
-        add(new TextField<Integer>("days", new PropertyModel<Integer>(this, "days")).add(validator));
-        add(new TextField<Integer>("hours", new PropertyModel<Integer>(this, "hours"))
-                .add(validator));
-        add(new TextField<Integer>("minutes", new PropertyModel<Integer>(this, "minutes"))
-                .add(validator));
-        add(new TextField<Integer>("seconds", new PropertyModel<Integer>(this, "seconds"))
-                .add(validator));
+        final RangeValidator<Integer> validator = new RangeValidator<>(0, Integer.MAX_VALUE);
+        add(new TextField<>("years", new PropertyModel<>(this, "years")).add(validator));
+        add(new TextField<>("months", new PropertyModel<>(this, "months")).add(validator));
+        add(new TextField<>("weeks", new PropertyModel<>(this, "weeks")).add(validator));
+        add(new TextField<>("days", new PropertyModel<>(this, "days")).add(validator));
+        add(new TextField<>("hours", new PropertyModel<>(this, "hours")).add(validator));
+        add(new TextField<>("minutes", new PropertyModel<>(this, "minutes")).add(validator));
+        add(new TextField<>("seconds", new PropertyModel<>(this, "seconds")).add(validator));
     }
 
     @Override
@@ -83,7 +75,7 @@ public class PeriodEditor extends FormComponentPanel<BigDecimal> {
     private void updateFields() {
         final BigDecimal modelObject = getModelObject();
         long time;
-        if(modelObject != null) {
+        if (modelObject != null) {
             time = modelObject.longValue();
         } else {
             time = 0;
@@ -104,17 +96,21 @@ public class PeriodEditor extends FormComponentPanel<BigDecimal> {
     }
 
     @Override
-    protected void convertInput() {
-        visitChildren(TextField.class, new org.apache.wicket.Component.IVisitor() {
+    public void convertInput() {
+        visitChildren(
+                TextField.class,
+                (component, visit) -> {
+                    ((TextField) component).processInput();
+                });
 
-            public Object component(Component component) {
-                ((TextField) component).processInput();
-                return null;
-            }
-        });
-
-        long time = seconds * secondMS + minutes * minuteMS + hours * hourMS + days * dayMS + weeks
-                * weekMS + months * monthMS + years * yearMS;
+        long time =
+                seconds * secondMS
+                        + minutes * minuteMS
+                        + hours * hourMS
+                        + days * dayMS
+                        + weeks * weekMS
+                        + months * monthMS
+                        + years * yearMS;
         setConvertedInput(new BigDecimal(time));
     }
 
@@ -123,13 +119,10 @@ public class PeriodEditor extends FormComponentPanel<BigDecimal> {
         // when the client programmatically changed the model, update the fields
         // so that the textfields will change too
         updateFields();
-        visitChildren(TextField.class, new Component.IVisitor() {
-
-            public Object component(Component component) {
-                ((TextField) component).clearInput();
-                return CONTINUE_TRAVERSAL;
-            }
-        });
+        visitChildren(
+                TextField.class,
+                (component, visit) -> {
+                    ((TextField) component).clearInput();
+                });
     }
-
 }

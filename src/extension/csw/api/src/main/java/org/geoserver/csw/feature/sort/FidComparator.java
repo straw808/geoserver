@@ -6,12 +6,11 @@
 package org.geoserver.csw.feature.sort;
 
 import java.util.Comparator;
-
 import org.opengis.feature.Feature;
 
 /**
  * Compares two feature based on their feature id
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
 class FidComparator implements Comparator<Feature> {
@@ -20,8 +19,8 @@ class FidComparator implements Comparator<Feature> {
 
     /**
      * Builds a new comparator
-     * 
-     * @param inverse If true the comparator will force an ascending order (descending otherwise)
+     *
+     * @param ascending If true the comparator will force an ascending order (descending otherwise)
      */
     public FidComparator(boolean ascending) {
         this.ascending = ascending;
@@ -52,5 +51,4 @@ class FidComparator implements Comparator<Feature> {
             return id1.compareTo(id2);
         }
     }
-
 }

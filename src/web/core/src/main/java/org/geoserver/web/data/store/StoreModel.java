@@ -12,16 +12,13 @@ import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.web.GeoServerApplication;
 import org.geoserver.web.data.workspace.WorkspaceDetachableModel;
 
-/**
- * Detachable model for a specific store.
- * 
- */
+/** Detachable model for a specific store. */
 @SuppressWarnings("serial")
 public class StoreModel<T extends StoreInfo> extends LoadableDetachableModel<T> {
 
     IModel workspace;
     String name;
-    
+
     public StoreModel(T store) {
         super(store);
         setObject(store);
@@ -32,13 +29,13 @@ public class StoreModel<T extends StoreInfo> extends LoadableDetachableModel<T> 
         if (object != null) {
             workspace = new WorkspaceDetachableModel(object.getWorkspace());
             name = object.getName();
-        }
-        else {
+        } else {
             name = null;
         }
     };
-    
+
     @Override
+    @SuppressWarnings("unchecked")
     protected T load() {
         if (workspace == null) {
             return null;
@@ -46,7 +43,10 @@ public class StoreModel<T extends StoreInfo> extends LoadableDetachableModel<T> 
         if (name == null) {
             return null;
         }
-        return (T) GeoServerApplication.get().getCatalog().getStoreByName(
-            (WorkspaceInfo) workspace.getObject(), name, StoreInfo.class); 
+        return (T)
+                GeoServerApplication.get()
+                        .getCatalog()
+                        .getStoreByName(
+                                (WorkspaceInfo) workspace.getObject(), name, StoreInfo.class);
     }
 }

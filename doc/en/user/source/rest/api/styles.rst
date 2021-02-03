@@ -54,7 +54,7 @@ supported out of the box include:
 * SLD 1.1 / SE 1.1 with a mime type of ``application/vnd.ogc.se+xml``
 * SLD package (zip file containing sld and image files used in the style) with a mime type of application/zip
 
-Other extensions (such as :ref:`css <extensions_css>`) add support for 
+Other extensions (such as :ref:`css <css>`) add support for 
 additional formats. 
 
 Parameters
@@ -114,8 +114,8 @@ Controls a given style.
      - Delete style ``s``
      - 200
      -
-     -
      - :ref:`purge <rest_api_styles_purge>` 
+     - :ref:`recurse <rest_api_styles_recurse>`
 
 Exceptions
 ~~~~~~~~~~
@@ -142,6 +142,13 @@ Parameters
 
 The ``purge`` parameter specifies whether the underlying SLD file for the style should be deleted on disk. Allowable values for this parameter are "true" or "false". When set to "true" the underlying file will be deleted. 
 
+.. _rest_api_styles_recurse:
+
+``recurse``
+^^^^^^^^^^^
+
+The ``recurse`` parameter removes references to the specified style in existing layers. Allowed values for this parameter are "true" or "false". The default value is "false".
+
 .. _rest_api_styles_quietOnNotFound:
 
 ``quietOnNotFound``
@@ -154,7 +161,7 @@ The ``quietOnNotFound`` parameter avoids to log an Exception when the style is n
 ``pretty``
 ^^^^^^^^^^
 
-The ``pretty`` parameter returns the style in a human-readable format, with proper whitespace and indentation. This parameter has no effect if you request a style in its native format - in this case the API returns the exact content of the underlying file. The HTML, XML, and JSON formats do not support this parameter.
+The ``pretty`` parameter returns the style in a human-readable format, with proper blank-space and indentation. This parameter has no effect if you request a style in its native format - in this case the API returns the exact content of the underlying file. The HTML, XML, and JSON formats do not support this parameter.
 
 ``/workspaces/<ws>/styles[.<format>]``
 --------------------------------------

@@ -6,41 +6,38 @@
 
 package org.geoserver.security.xml;
 
+import static org.geoserver.security.xml.XMLConstants.NSP_RR;
+import static org.geoserver.security.xml.XMLConstants.NSP_UR;
+import static org.geoserver.security.xml.XMLConstants.NS_RR;
+import static org.geoserver.security.xml.XMLConstants.NS_UR;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 
-import static org.geoserver.security.xml.XMLConstants.*;
-
 /**
  * This class is a base class for concrete implemenations
- * 
- * The main purpose is to serve as registry of
- * precompiled {@link XPathExpression} objects
- * 
- * 
- * @author christian
  *
+ * <p>The main purpose is to serve as registry of precompiled {@link XPathExpression} objects
+ *
+ * @author christian
  */
 public abstract class XMLXpath {
-    
-    
+
     /**
-     * Inner class providing a {@link NamespaceContext}
-     * implementation
-     * 
-     * @author christian
+     * Inner class providing a {@link NamespaceContext} implementation
      *
+     * @author christian
      */
+    @SuppressWarnings("unchecked") // Java 8 and Java 11 interfaces differ
     public class NamespaceContextImpl implements NamespaceContext {
-        private Map<String,String> prefix_ns_Map = new HashMap<String,String>();
-        private Map<String,String> ns_prefix_Map = new HashMap<String,String>();
-        
+        private Map<String, String> prefix_ns_Map = new HashMap<>();
+        private Map<String, String> ns_prefix_Map = new HashMap<>();
+
         public String getNamespaceURI(String prefix) {
             return prefix_ns_Map.get(prefix);
         }
@@ -52,41 +49,29 @@ public abstract class XMLXpath {
         public Iterator getPrefixes(String namespaceURI) {
             return prefix_ns_Map.keySet().iterator();
         }
-        
+
         public void register(String prefix, String ns) {
             prefix_ns_Map.put(prefix, ns);
-            ns_prefix_Map.put(ns,prefix);
-        }        
+            ns_prefix_Map.put(ns, prefix);
+        }
     }
 
-    
-    /**
-     * XML name space context for user/group store
-     */
+    /** XML name space context for user/group store */
     protected NamespaceContextImpl urContext;
-    /**
-     * XML name space context for role store
-     */
+    /** XML name space context for role store */
     protected NamespaceContextImpl rrContext;
 
-       
     protected XMLXpath() {
-        
-        urContext=new NamespaceContextImpl();
-        urContext.register(NSP_UR, NS_UR);
-        
-        rrContext=new NamespaceContextImpl();
-        rrContext.register(NSP_RR, NS_RR);
 
+        urContext = new NamespaceContextImpl();
+        urContext.register(NSP_UR, NS_UR);
+
+        rrContext = new NamespaceContextImpl();
+        rrContext.register(NSP_RR, NS_RR);
     }
-    
-    /**
-     * Compile XPath Strings to {@link XPathExpression}
-     * @param xpath
-     * @param expression
-     * @return
-     */
-    protected XPathExpression compile(XPath xpath,String expression) {
+
+    /** Compile XPath Strings to {@link XPathExpression} */
+    protected XPathExpression compile(XPath xpath, String expression) {
         try {
             return xpath.compile(expression);
         } catch (XPathExpressionException e) {
@@ -95,18 +80,10 @@ public abstract class XMLXpath {
         }
     }
 
-    /**
-     * Creates a relatvie XPathExpression for
-     * a XML attribute, needs name space prefix 
-     * 
-     * @param xpath
-     * @param attrName
-     * @param prefix
-     * @return
-     */
-    protected XPathExpression compileRelativeAttribute(XPath xpath,String attrName,String prefix) {        
-        //return compile(xpath,"@"+prefix+":"+attrName);
-        return compile(xpath,"@"+attrName);
+    /** Creates a relatvie XPathExpression for a XML attribute, needs name space prefix */
+    protected XPathExpression compileRelativeAttribute(
+            XPath xpath, String attrName, String prefix) {
+        // return compile(xpath,"@"+prefix+":"+attrName);
+        return compile(xpath, "@" + attrName);
     }
-        
 }

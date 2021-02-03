@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2015 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -10,15 +10,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Level;
-
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.Info;
 import org.geoserver.config.util.XStreamPersister;
 import org.geoserver.config.util.XStreamPersisterFactory;
 
-/**
- * @param <T>
- */
 public class XStreamInfoSerialBinding {
 
     private final XStreamPersister xstreamPersister;
@@ -26,6 +22,7 @@ public class XStreamInfoSerialBinding {
     public XStreamInfoSerialBinding(final XStreamPersisterFactory xspf) {
         this.xstreamPersister = xspf.createXMLPersister();
         this.xstreamPersister.setLoggingLevel(Level.WARNING);
+        // new JDBCConfigXStreamPersisterInitializer().init(this.xstreamPersister);
     }
 
     public <T extends Info> T entryToObject(InputStream in, Class<T> target) {
@@ -66,5 +63,4 @@ public class XStreamInfoSerialBinding {
     public void setCatalog(Catalog catalog) {
         xstreamPersister.setCatalog(catalog);
     }
-
 }

@@ -11,9 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.swing.Icon;
-
 import org.geotools.renderer.style.DynamicSymbolFactoryFinder;
 import org.geotools.renderer.style.ExpressionExtractor;
 import org.geotools.renderer.style.ExternalGraphicFactory;
@@ -39,7 +37,7 @@ import org.opengis.style.GraphicalSymbol;
 
 /**
  * Extract the portion of the style whose sizes depend on attribute values
- * 
+ *
  * @author Andrea Aime - GeoSolutions
  */
 class DynamicSizeStyleExtractor extends DuplicatingStyleVisitor {
@@ -51,14 +49,14 @@ class DynamicSizeStyleExtractor extends DuplicatingStyleVisitor {
     public void visit(Rule rule) {
         super.visit(rule);
         Rule copy = (Rule) pages.peek();
-        List<Symbolizer> nonNullCopies = new ArrayList<Symbolizer>();
+        List<Symbolizer> nonNullCopies = new ArrayList<>();
         for (Symbolizer s : copy.symbolizers()) {
             if (s != null) {
                 nonNullCopies.add(s);
             }
         }
 
-        if (nonNullCopies.size() == 0) {
+        if (nonNullCopies.isEmpty()) {
             pages.pop();
             pages.push(null);
         } else {
@@ -66,7 +64,7 @@ class DynamicSizeStyleExtractor extends DuplicatingStyleVisitor {
             copy.symbolizers().addAll(nonNullCopies);
         }
     }
-    
+
     @Override
     public void visit(Fill fill) {
         // whatever goes on in a Fill does not affect the search area of fills
@@ -82,14 +80,14 @@ class DynamicSizeStyleExtractor extends DuplicatingStyleVisitor {
     public void visit(FeatureTypeStyle fts) {
         super.visit(fts);
         FeatureTypeStyle copy = (FeatureTypeStyle) pages.peek();
-        List<Rule> nonNullCopies = new ArrayList<Rule>();
+        List<Rule> nonNullCopies = new ArrayList<>();
         for (Rule r : copy.rules()) {
             if (r != null) {
                 nonNullCopies.add(r);
             }
         }
 
-        if (nonNullCopies.size() == 0) {
+        if (nonNullCopies.isEmpty()) {
             pages.pop();
             pages.push(null);
         } else {
@@ -102,14 +100,14 @@ class DynamicSizeStyleExtractor extends DuplicatingStyleVisitor {
     public void visit(Style style) {
         super.visit(style);
         Style copy = (Style) pages.peek();
-        List<FeatureTypeStyle> nonNullCopies = new ArrayList<FeatureTypeStyle>();
+        List<FeatureTypeStyle> nonNullCopies = new ArrayList<>();
         for (FeatureTypeStyle ft : copy.featureTypeStyles()) {
             if (ft != null) {
                 nonNullCopies.add(ft);
             }
         }
 
-        if (nonNullCopies.size() == 0) {
+        if (nonNullCopies.isEmpty()) {
             pages.pop();
             pages.push(null);
         } else {
@@ -147,13 +145,13 @@ class DynamicSizeStyleExtractor extends DuplicatingStyleVisitor {
             pages.push(null);
         }
     }
-    
+
     @Override
     public void visit(RasterSymbolizer raster) {
         // nothing to do, this style cannot make the buffer grow
         pages.push(null);
     }
-    
+
     @Override
     public void visit(TextSymbolizer text) {
         // nothing to do, this style cannot make the buffer grow
@@ -164,8 +162,12 @@ class DynamicSizeStyleExtractor extends DuplicatingStyleVisitor {
     public void visit(Graphic gr) {
         super.visit(gr);
         Expression sizeExpression = gr.getSize();
-        if(!dynamic) {
-            dynamic = !(sizeExpression != null && (sizeExpression instanceof Literal || sizeExpression instanceof NilExpression)) || hasDynamicGraphic(gr);
+        if (!dynamic) {
+            dynamic =
+                    !(sizeExpression != null
+                                    && (sizeExpression instanceof Literal
+                                            || sizeExpression instanceof NilExpression))
+                            || hasDynamicGraphic(gr);
         }
     }
 
@@ -187,14 +189,16 @@ class DynamicSizeStyleExtractor extends DuplicatingStyleVisitor {
                             return true;
                         }
 
-                        Iterator<ExternalGraphicFactory> it = DynamicSymbolFactoryFinder
-                                .getExternalGraphicFactories();
+                        Iterator<ExternalGraphicFactory> it =
+                                DynamicSymbolFactoryFinder.getExternalGraphicFactories();
                         while (it.hasNext()) {
                             try {
                                 icon = it.next().getIcon(null, expanded, eg.getFormat(), 16);
                             } catch (Exception e) {
-                                LOGGER.log(Level.FINE,
-                                        "Error occurred evaluating external graphic", e);
+                                LOGGER.log(
+                                        Level.FINE,
+                                        "Error occurred evaluating external graphic",
+                                        e);
                             }
                         }
 
@@ -203,14 +207,14 @@ class DynamicSizeStyleExtractor extends DuplicatingStyleVisitor {
                         if (icon != null) {
                             break;
                         }
-
                     }
                 } catch (MalformedURLException e) {
-                    LOGGER.log(Level.FINE,
-                            "Failed to check graphics for attribute embedded in the path " + eg, e);
+                    LOGGER.log(
+                            Level.FINE,
+                            "Failed to check graphics for attribute embedded in the path " + eg,
+                            e);
                 }
             }
-
         }
 
         return false;
@@ -223,5 +227,4 @@ class DynamicSizeStyleExtractor extends DuplicatingStyleVisitor {
             dynamic = true;
         }
     }
-
 }

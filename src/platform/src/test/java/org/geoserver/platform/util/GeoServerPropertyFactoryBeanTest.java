@@ -1,0 +1,99 @@
+/* (c) 2014 - 2015 Open Source Geospatial Foundation - all rights reserved
+ * (c) 2001 - 2013 OpenPlans
+ * This code is licensed under the GPL 2.0 license, available at the root
+ * application directory.
+ */
+
+package org.geoserver.platform.util;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThrows;
+
+import org.easymock.EasyMock;
+import org.geoserver.util.PropertyRule;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
+import org.springframework.context.ApplicationContext;
+
+public class GeoServerPropertyFactoryBeanTest {
+
+    public static final String PROPERTY_NAME = "FOO";
+
+    public @Rule PropertyRule foo = PropertyRule.system(PROPERTY_NAME);
+
+    GeoServerPropertyFactoryBean<String> factory;
+
+    @Before
+    public void setUp() {
+        factory =
+                new GeoServerPropertyFactoryBean<String>(PROPERTY_NAME) {
+
+                    @Override
+                    protected String createInstance(String propertyValue) {
+                        if (propertyValue.equals("UNKNOWN")) return null;
+                        return "Bean: " + propertyValue;
+                    }
+
+                    @Override
+                    public Class<?> getObjectType() {
+                        return String.class;
+                    }
+                };
+        ApplicationContext context = EasyMock.createMock(ApplicationContext.class);
+        EasyMock.replay(context);
+        factory.setApplicationContext(context);
+    }
+
+    @Test
+    public void testGetBean() throws Exception {
+        factory.setDefaultValue("Default");
+        foo.setValue("testValue1");
+
+        assertThat(factory.createInstance(), equalTo("Bean: testValue1"));
+    }
+
+    @Test
+    public void testGetDefault() throws Exception {
+        factory.setDefaultValue("Default");
+
+        assertThat(factory.createInstance(), equalTo("Bean: Default"));
+    }
+
+    @Test
+    public void testGetUnsetDefault() throws Exception {
+        assertThrows(
+                IllegalStateException.class,
+                new ThrowingRunnable() {
+
+                    @Override
+                    public void run() throws Throwable {
+                        factory.createInstance();
+                    }
+                });
+    }
+
+    @Test
+    public void testGetBadDefault() throws Exception {
+        assertThrows(
+                IllegalStateException.class,
+                new ThrowingRunnable() {
+
+                    @Override
+                    public void run() throws Throwable {
+                        factory.setDefaultValue("UNKNOWN");
+                        factory.createInstance();
+                    }
+                });
+    }
+
+    @Test
+    public void testFallBackToDefault() throws Exception {
+        factory.setDefaultValue("Default");
+        foo.setValue("UNKNOWN");
+
+        assertThat(factory.createInstance(), equalTo("Bean: Default"));
+    }
+}

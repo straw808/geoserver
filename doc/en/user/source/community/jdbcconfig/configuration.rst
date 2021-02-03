@@ -3,7 +3,7 @@
 JDBCConfig configuration
 ========================
 
-The JDBCConfig module is configured in the file ``jdbcconfig/jdbcconfig.properties`` inside the :ref:`data_directory`.
+The JDBCConfig module is configured in the file ``jdbcconfig/jdbcconfig.properties`` inside the :ref:`datadir`.
 The following properties may be set:
 
 - ``enabled``: Use JDBCConfig.  Turn off to use the data directory for all configuration instead.
@@ -11,6 +11,8 @@ The following properties may be set:
 - ``initdb``: Initialize an empty database if this is set on true. 
 
 - ``import`` : The import configuration option tells GeoServer whether to import the current catalog from the file system to the database or not. If set to true, it will be imported and the config option will be set the value 'false' for the next start up to avoid trying to re-import the catalog  configuration.
+
+- ``repopulate``: The repopulate configuration option tells GeoServer to repopulate the queryable field values in the database. These are the fields of catalog objects jdbcconfig can query via the database, i.e. much faster than via post-filtering in memory. May be necessary after jdbcconfig upgrades or if someone manually adds queryable fields to the database. (In such cases, if the values were not properly repopulated, queries might give incorrect results.)
 
 - ``initScript``: Path to initialisation script .sql file. Only used if initdb = true.
 

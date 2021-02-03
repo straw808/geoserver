@@ -5,45 +5,72 @@
  */
 package org.geoserver.importer;
 
-import static java.util.Calendar.*;
-import static org.junit.Assert.*;
+import static java.util.Calendar.DAY_OF_MONTH;
+import static java.util.Calendar.FEBRUARY;
+import static java.util.Calendar.HOUR_OF_DAY;
+import static java.util.Calendar.JANUARY;
+import static java.util.Calendar.MILLISECOND;
+import static java.util.Calendar.MINUTE;
+import static java.util.Calendar.MONTH;
+import static java.util.Calendar.SECOND;
+import static java.util.Calendar.YEAR;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
-
 import org.junit.Test;
 
 public class DatesTest {
 
     @Test
     public void testParse() {
-        doTestParse( date(2012, FEBRUARY, 6, 13, 12, 59, 123), "2012-02-06T13:12:59.123Z");
-        doTestParse( date(2012, FEBRUARY, 6, 13, 12, 59, 0), "2012-02-06T13:12:59Z");
-        doTestParse( date(2012, FEBRUARY, 6, 13, 12, 123, 0), "2012-02-06T13:12:123Z");
-        doTestParse( date(2012, FEBRUARY, 6, 13, 12, 0, 0), "2012-02-06T13:12Z");
-        doTestParse( date(2012, FEBRUARY, 6, 13, 0, 0, 0), "2012-02-06T13Z");
-        doTestParse( date(2012, FEBRUARY, 6, 0, 0, 0, 0), "2012-02-06");
-        doTestParse( date(2012, FEBRUARY, 1, 0, 0, 0, 0), "2012-02");
-        doTestParse( date(2012, JANUARY, 1, 0, 0, 0, 0), "2012");
+        doTestParse(date(2012, FEBRUARY, 6, 13, 12, 59, 123), "2012-02-06T13:12:59.123Z");
+        doTestParse(date(2012, FEBRUARY, 6, 13, 12, 59, 0), "2012-02-06T13:12:59Z");
+        doTestParse(date(2012, FEBRUARY, 6, 13, 12, 123, 0), "2012-02-06T13:12:123Z");
+        doTestParse(date(2012, FEBRUARY, 6, 13, 12, 0, 0), "2012-02-06T13:12Z");
+        doTestParse(date(2012, FEBRUARY, 6, 13, 0, 0, 0), "2012-02-06T13Z");
+        doTestParse(date(2012, FEBRUARY, 6, 0, 0, 0, 0), "2012-02-06");
+        doTestParse(date(2012, FEBRUARY, 1, 0, 0, 0, 0), "2012-02");
+        doTestParse(date(2012, JANUARY, 1, 0, 0, 0, 0), "2012");
     }
 
     void doTestParse(Date expected, String str) {
-        //test straight up
+        // test straight up
         assertEquals(expected, Dates.parse(str));
 
-        //padd string
+        // padd string
         assertEquals(expected, Dates.matchAndParse("foo_" + str + ".bar"));
     }
 
-    Date date(int year, int month, int dayOfMonth, int hourOfDay, int minute, int second, 
-        int millisecond) {
-        return date(year, month, dayOfMonth, hourOfDay, minute, second, millisecond, 
-            TimeZone.getTimeZone("GMT"));
+    Date date(
+            int year,
+            int month,
+            int dayOfMonth,
+            int hourOfDay,
+            int minute,
+            int second,
+            int millisecond) {
+        return date(
+                year,
+                month,
+                dayOfMonth,
+                hourOfDay,
+                minute,
+                second,
+                millisecond,
+                TimeZone.getTimeZone("GMT"));
     }
-    
-    Date date(int year, int month, int dayOfMonth, int hourOfDay, int minute, int second, 
-            int millisecond, TimeZone tz) {
+
+    Date date(
+            int year,
+            int month,
+            int dayOfMonth,
+            int hourOfDay,
+            int minute,
+            int second,
+            int millisecond,
+            TimeZone tz) {
         Calendar c = Calendar.getInstance();
         c.set(YEAR, year);
         c.set(MONTH, month);

@@ -5,12 +5,16 @@
  */
 package org.geoserver.gwc;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import org.geoserver.gwc.config.GeoserverXMLResourceProvider;
 import org.geoserver.platform.GeoServerExtensions;
+import org.geoserver.platform.resource.Resource;
+import org.geoserver.platform.resource.ResourceStore;
+import org.geoserver.platform.resource.Resources;
 import org.geoserver.security.GeoServerSecurityManager;
 import org.geoserver.security.SecurityManagerListener;
 import org.geotools.util.logging.Logging;
@@ -19,19 +23,15 @@ import org.geowebcache.diskquota.DiskQuotaConfig;
 import org.geowebcache.diskquota.QuotaStore;
 import org.geowebcache.diskquota.jdbc.JDBCConfiguration;
 import org.geowebcache.diskquota.jdbc.JDBCQuotaStoreFactory;
-import org.geowebcache.storage.DefaultStorageFinder;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
 
 /**
  * Loads/save and tests the JDBC configuration in the GeoServer environment, adding support for the
  * GUI and password encryption
- * 
+ *
  * @author Andrea Aime - GeoSolutions
- * 
  */
 class JDBCConfigurationStorage implements ApplicationContextAware, SecurityManagerListener {
 
@@ -39,40 +39,50 @@ class JDBCConfigurationStorage implements ApplicationContextAware, SecurityManag
 
     private JDBCPasswordEncryptionHelper passwordHelper;
 
-    private DefaultStorageFinder storageFinder;
-
     private ApplicationContext applicationContext;
 
-    public JDBCConfigurationStorage(DefaultStorageFinder storageFinder,
-            GeoServerSecurityManager securityManager) {
-        this.storageFinder = storageFinder;
+    private Resource configDir;
+
+    public JDBCConfigurationStorage(ResourceStore store, GeoServerSecurityManager securityManager) {
+        GeoserverXMLResourceProvider configProvider =
+                (GeoserverXMLResourceProvider)
+                        GeoServerExtensions.bean("jdbcDiskQuotaConfigResourceProvider");
+        this.configDir = configProvider.getConfigDirectory();
         this.passwordHelper = new JDBCPasswordEncryptionHelper(securityManager);
         securityManager.addListener(this);
     }
 
-    public synchronized void saveDiskQuotaConfig(DiskQuotaConfig config,
-            JDBCConfiguration jdbcConfig) throws ConfigurationException, IOException,
-            InterruptedException {
-        File configFile = new File(storageFinder.getDefaultPath(), "geowebcache-diskquota-jdbc.xml");
+    public synchronized void saveDiskQuotaConfig(
+            DiskQuotaConfig config, JDBCConfiguration jdbcConfig)
+            throws ConfigurationException, IOException, InterruptedException {
+        Resource configFile = configDir.get("geowebcache-diskquota-jdbc.xml");
         if ("JDBC".equals(config.getQuotaStore())) {
             JDBCConfiguration encrypted = passwordHelper.encryptPassword(jdbcConfig);
-            JDBCConfiguration.store(encrypted, configFile);
+            try (OutputStream os = configFile.out()) {
+                JDBCConfiguration.store(encrypted, os);
+            }
         } else {
-            if (configFile.exists() && !configFile.delete()) {
-                LOGGER.log(Level.SEVERE, "Failed to delete " + configFile
-                        + ", this might cause misbehavior on GeoServer restart");
+            if (Resources.exists(configFile) && !configFile.delete()) {
+                LOGGER.log(
+                        Level.SEVERE,
+                        "Failed to delete "
+                                + configFile
+                                + ", this might cause misbehavior on GeoServer restart");
             }
         }
     }
 
-    public synchronized JDBCConfiguration getJDBCDiskQuotaConfig() throws IOException,
-            org.geowebcache.config.ConfigurationException {
-        File configFile = new File(storageFinder.getDefaultPath(), "geowebcache-diskquota-jdbc.xml");
-        if (!configFile.exists()) {
+    public synchronized JDBCConfiguration getJDBCDiskQuotaConfig()
+            throws IOException, org.geowebcache.config.ConfigurationException {
+        Resource configFile = configDir.get("geowebcache-diskquota-jdbc.xml");
+        if (!Resources.exists(configFile)) {
             return null;
         }
         try {
-            JDBCConfiguration configuration = JDBCConfiguration.load(configFile);
+            JDBCConfiguration configuration;
+            try (InputStream is = configFile.in()) {
+                configuration = JDBCConfiguration.load(is);
+            }
             return passwordHelper.unencryptPassword(configuration);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to load geowebcache-diskquota-jdbc.xml", e);
@@ -82,10 +92,8 @@ class JDBCConfigurationStorage implements ApplicationContextAware, SecurityManag
 
     /**
      * Checks the JDBC quota store can be instantiated
-     * 
-     * @param config
-     * @param jdbcConfiguration
-     * @throws ConfigurationException
+     *
+     * @param jdbcConfiguration the GWC diskquota JDBC configuration
      */
     public void testQuotaConfiguration(JDBCConfiguration jdbcConfiguration)
             throws ConfigurationException, IOException {
@@ -112,27 +120,33 @@ class JDBCConfigurationStorage implements ApplicationContextAware, SecurityManag
     @Override
     public void handlePostChanged(GeoServerSecurityManager securityManager) {
         // we can't know if the password encoder changed, so we check if the encrypted pwd changed
-        // (unfortunately some password encoders change the encrypted password every time they are called...) 
+        // (unfortunately some password encoders change the encrypted password every time they are
+        // called...)
         try {
             JDBCConfiguration config = getJDBCDiskQuotaConfig();
-            if(config != null) {
-                File configFile = new File(storageFinder.getDefaultPath(), "geowebcache-diskquota-jdbc.xml");
-                if(!configFile.exists()) {
+            if (config != null) {
+                Resource configFile = configDir.get("geowebcache-diskquota-jdbc.xml");
+                if (!Resources.exists(configFile)) {
                     return;
                 }
-                JDBCConfiguration c1 = JDBCConfiguration.load(configFile);
-                if(c1 == null || c1.getConnectionPool() == null) {
+                JDBCConfiguration c1;
+                try (InputStream is = configFile.in()) {
+                    c1 = JDBCConfiguration.load(is);
+                }
+                if (c1 == null || c1.getConnectionPool() == null) {
                     return;
                 }
                 String originalEncrypted = c1.getConnectionPool().getPassword();
-                if(originalEncrypted == null) {
+                if (originalEncrypted == null) {
                     return;
                 }
                 JDBCConfiguration c2 = passwordHelper.unencryptPassword(c1);
                 JDBCConfiguration c3 = passwordHelper.encryptPassword(c2);
                 String newEncrypted = c3.getConnectionPool().getPassword();
-                if(!originalEncrypted.equals(newEncrypted)) { 
-                    JDBCConfiguration.store(c3, configFile);
+                if (!originalEncrypted.equals(newEncrypted)) {
+                    try (OutputStream os = configFile.out()) {
+                        JDBCConfiguration.store(c3, os);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -140,5 +154,4 @@ class JDBCConfigurationStorage implements ApplicationContextAware, SecurityManag
             e.printStackTrace();
         }
     }
-
 }

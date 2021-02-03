@@ -5,6 +5,7 @@ Data Access Integration
 
 This page assumes prior knowledge of :ref:`app-schema` and :ref:`app-schema.feature-chaining`. 
 To use feature chaining, the nested features can come from any complex feature data access, as long as:
+
 * it has valid data referred by the "container" feature type,
 * the data access is registered via DataAccessRegistry, 
 * if FEATURE_LINK is used as the link field, the feature types were created via ComplexFeatureTypeFactoryImpl
@@ -74,7 +75,7 @@ How to use filters
 From the user point of view, filters are configured as per normal, using the mapped/output target attribute XPath expressions. 
 However, when one or more attributes in the expression is a multi-valued property, we need to specify a function such as "contains_text" in the filter. 
 This is because when multiple values are returned, comparing them to a single value would only return true if there is only one value returned, and it is the same value. 
-Please note that the "contains_text" function used in the following example is not available in Geoserver API, but defined in the database. 
+Please note that the "contains_text" function used in the following example is not available in GeoServer API, but defined in the database. 
 
 **Example:**
 

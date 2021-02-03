@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -11,32 +11,30 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
-
 import javax.imageio.ImageIO;
-
-import org.apache.wicket.markup.html.WebResource;
-import org.apache.wicket.util.resource.IResourceStream;
+import org.apache.wicket.request.IRequestParameters;
+import org.apache.wicket.request.resource.AbstractResource;
+import org.apache.wicket.util.lang.Bytes;
+import org.apache.wicket.util.resource.AbstractResourceStream;
 import org.apache.wicket.util.resource.ResourceStreamNotFoundException;
-import org.apache.wicket.util.value.ValueMap;
+import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-import com.vividsolutions.jts.geom.Envelope;
-
 /**
- * A wicket resource that acts as a mini WMS to generate a map for a
- * {@link CoordinateReferenceSystem CRS}'s area of validity.
- * <p>
- * This resource expects the following parameters in order to generate the area of validity map:
+ * A wicket resource that acts as a mini WMS to generate a map for a {@link
+ * CoordinateReferenceSystem CRS}'s area of validity.
+ *
+ * <p>This resource expects the following parameters in order to generate the area of validity map:
+ *
  * <ul>
- * <li>WIDTH
- * <li>HEIGHT
- * <li>BBOX
+ *   <li>WIDTH
+ *   <li>HEIGHT
+ *   <li>BBOX
  * </ul>
- * </p>
- * 
+ *
  * @author Gabriel Roldan
  */
-public class DynamicCrsMapResource extends WebResource {
+public class DynamicCrsMapResource extends AbstractResource {
 
     private static final long serialVersionUID = 1L;
 
@@ -47,31 +45,40 @@ public class DynamicCrsMapResource extends WebResource {
     }
 
     @Override
-    public IResourceStream getResourceStream() {
+    protected ResourceResponse newResourceResponse(Attributes attributes) {
+        ResourceResponse rsp = new ResourceResponse();
+        rsp.setWriteCallback(
+                new WriteCallback() {
+                    @Override
+                    public void writeData(Attributes attributes) throws IOException {
+                        IRequestParameters params = attributes.getRequest().getQueryParameters();
+                        int width = params.getParameterValue("WIDTH").toInt(400);
+                        int height = params.getParameterValue("HEIGHT").toInt(200);
+                        String bboxStr = params.getParameterValue("BBOX").toOptionalString();
 
-        ValueMap parameters = getParameters();
-        int width = parameters.getInt("WIDTH", 400);
-        int height = parameters.getInt("HEIGHT", 200);
-        String bboxStr = parameters.getString("BBOX");
+                        ByteArrayOutputStream output = null;
+                        if (bboxStr != null) {
 
-        ByteArrayOutputStream output = null;
-        if (bboxStr != null) {
+                            try {
+                                CRSAreaOfValidityMapBuilder builder =
+                                        new CRSAreaOfValidityMapBuilder(width, height);
+                                Envelope envelope = parseEnvelope(bboxStr);
+                                RenderedImage image = builder.createMapFor(crs, envelope);
+                                output = new ByteArrayOutputStream();
+                                ImageIO.write(image, "PNG", output);
+                            } catch (Exception e) {
+                                output = null;
+                                e.printStackTrace();
+                            }
+                        }
 
-            try {
-                CRSAreaOfValidityMapBuilder builder = new CRSAreaOfValidityMapBuilder(width, height);
-                Envelope envelope = parseEnvelope(bboxStr);
-                RenderedImage image = builder.createMapFor(crs, envelope);
-                output = new ByteArrayOutputStream();
-                ImageIO.write(image, "PNG", output);
-            } catch (Exception e) {
-                output = null;
-                e.printStackTrace();
-            }
-        }
-
-        final byte[] byteArray = output == null ? null : output.toByteArray();
-
-        return new ByteArrayResourceStream(byteArray);
+                        final byte[] byteArray = output == null ? null : output.toByteArray();
+                        if (byteArray != null) {
+                            attributes.getResponse().write(byteArray);
+                        }
+                    }
+                });
+        return rsp;
     }
 
     private Envelope parseEnvelope(String bboxStr) {
@@ -83,7 +90,7 @@ public class DynamicCrsMapResource extends WebResource {
         return new Envelope(minx, maxx, miny, maxy);
     }
 
-    private static class ByteArrayResourceStream implements IResourceStream {
+    private static class ByteArrayResourceStream extends AbstractResourceStream {
 
         private static final long serialVersionUID = 1L;
 
@@ -93,15 +100,10 @@ public class DynamicCrsMapResource extends WebResource {
             this.content = content;
         }
 
-        public void setLocale(Locale arg0) {
-        }
+        public void setLocale(Locale arg0) {}
 
-        public long length() {
-            return content == null? 0 : content.length;
-        }
-
-        public Locale getLocale() {
-            return null;
+        public Bytes length() {
+            return Bytes.bytes(content == null ? 0 : content.length);
         }
 
         public InputStream getInputStream() throws ResourceStreamNotFoundException {
@@ -115,11 +117,6 @@ public class DynamicCrsMapResource extends WebResource {
             return "image/png";
         }
 
-        public void close() throws IOException {
-        }
-
-        public org.apache.wicket.util.time.Time lastModifiedTime() {
-            return null;
-        }
+        public void close() throws IOException {}
     }
 }

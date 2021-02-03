@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -8,15 +8,18 @@ package org.geoserver.web.data.layer;
 import java.io.Serializable;
 
 class SQLViewAttribute implements Serializable {
+    /** serialVersionUID */
+    private static final long serialVersionUID = -926721043289684925L;
+
     String name;
 
-    Class type;
+    Class<?> type;
 
     Integer srid;
 
     boolean pk;
 
-    public SQLViewAttribute(String name, Class type) {
+    public SQLViewAttribute(String name, Class<?> type) {
         this.name = name;
         this.type = type;
     }
@@ -29,11 +32,11 @@ class SQLViewAttribute implements Serializable {
         this.name = name;
     }
 
-    public Class getType() {
+    public Class<?> getType() {
         return type;
     }
 
-    public void setType(Class type) {
+    public void setType(Class<?> type) {
         this.type = type;
     }
 
@@ -66,39 +69,33 @@ class SQLViewAttribute implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
         SQLViewAttribute other = (SQLViewAttribute) obj;
         if (name == null) {
-            if (other.name != null)
-                return false;
-        } else if (!name.equals(other.name))
-            return false;
-        if (pk != other.pk)
-            return false;
+            if (other.name != null) return false;
+        } else if (!name.equals(other.name)) return false;
+        if (pk != other.pk) return false;
         if (srid == null) {
-            if (other.srid != null)
-                return false;
-        } else if (!srid.equals(other.srid))
-            return false;
+            if (other.srid != null) return false;
+        } else if (!srid.equals(other.srid)) return false;
         if (type == null) {
-            if (other.type != null)
-                return false;
-        } else if (!type.equals(other.type))
-            return false;
+            if (other.type != null) return false;
+        } else if (!type.equals(other.type)) return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
-        return "SQLViewAttribute [name=" + name + ", pk=" + pk + ", srid=" + srid + ", type="
-                + type + "]";
+        return "SQLViewAttribute [name="
+                + name
+                + ", pk="
+                + pk
+                + ", srid="
+                + srid
+                + ", type="
+                + type
+                + "]";
     }
-    
-    
-
 }

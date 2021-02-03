@@ -27,14 +27,20 @@
           <label><wicket:message key="sufix">Sufix to append to the resource name (plus the count)</wicket:message></label>
           <input type="text" class="text" wicket:id="sufix" style="width: 260px;"/>
         </li>
+        <li class="choiceItem">
+          <input type="checkbox" wicket:id="recursive" size="6" /> 
+          <label for="recursive">
+            <wicket:message key="recursive">recursive</wicket:message>
+          </label>
+        </li>
       </ul>
     </fieldset>
    </li>
    <li>
-    <div class="button-group selfclear">
-       <a href="#" wicket:id="submit"><wicket:message key="submit">Start</wicket:message></a>
-       <a href="#" wicket:id="cancel"><wicket:message key="cancel">Cancel</wicket:message></a>
-       <span wicket:id="progress"></span>
+    <div class="button-group toolbar-sticky selfclear">
+       <a href="#" class="form-button-start" wicket:id="submit"><wicket:message key="submit">Start</wicket:message></a>
+       <a href="#" class="form-button-cancel" wicket:id="cancel"><wicket:message key="cancel">Cancel</wicket:message></a>
+       <span class="form-progress" wicket:id="progress"></span>
     </div>
    </li>
   </ul>

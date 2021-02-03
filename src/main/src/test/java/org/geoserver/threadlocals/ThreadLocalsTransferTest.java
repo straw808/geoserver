@@ -1,4 +1,4 @@
-/* (c) 2014 - 2015 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -16,14 +16,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.catalog.impl.LayerInfoImpl;
 import org.geoserver.catalog.impl.WorkspaceInfoImpl;
 import org.geoserver.data.test.SystemTestData;
 import org.geoserver.ows.Dispatcher;
-import org.geoserver.ows.LocalLayer;
+import org.geoserver.ows.LocalPublished;
 import org.geoserver.ows.LocalWorkspace;
 import org.geoserver.ows.Request;
 import org.geoserver.security.AdminRequest;
@@ -54,23 +53,22 @@ public class ThreadLocalsTransferTest extends GeoServerSystemTestSupport {
     public void stopExecutor() {
         executor.shutdown();
     }
-    
+
     @After
     public void cleanupThreadLocals() {
         Dispatcher.REQUEST.remove();
         AdminRequest.finish();
-        LocalLayer.remove();
+        LocalPublished.remove();
         LocalWorkspace.remove();
         SecurityContextHolder.getContext().setAuthentication(null);
     }
-    
 
     @Test
     public void testThreadLocalTransfer() throws InterruptedException, ExecutionException {
         final Request request = new Request();
         Dispatcher.REQUEST.set(request);
         final LayerInfo layer = new LayerInfoImpl();
-        LocalLayer.set(layer);
+        LocalPublished.set(layer);
         final WorkspaceInfo ws = new WorkspaceInfoImpl();
         LocalWorkspace.set(ws);
         final Object myState = new Object();
@@ -78,38 +76,42 @@ public class ThreadLocalsTransferTest extends GeoServerSystemTestSupport {
         final Authentication auth = new UsernamePasswordAuthenticationToken("user", "password");
         SecurityContextHolder.getContext().setAuthentication(auth);
         final ThreadLocalsTransfer transfer = new ThreadLocalsTransfer();
-        Future<Void> future = executor.submit(new Callable<Void>() {
+        Future<Void> future =
+                executor.submit(
+                        new Callable<Void>() {
 
-            @Override
-            public Void call() throws Exception {
-                testApply();
-                testCleanup();
-                return null;
-            }
+                            @Override
+                            public Void call() throws Exception {
+                                testApply();
+                                testCleanup();
+                                return null;
+                            }
 
-            private void testApply() {
-                transfer.apply();
+                            private void testApply() {
+                                transfer.apply();
 
-                // check all thread locals have been applied to the current thread
-                assertSame(request, Dispatcher.REQUEST.get());
-                assertSame(myState, AdminRequest.get());
-                assertSame(layer, LocalLayer.get());
-                assertSame(ws, LocalWorkspace.get());
-                assertSame(auth, SecurityContextHolder.getContext().getAuthentication());
-            }
+                                // check all thread locals have been applied to the current thread
+                                assertSame(request, Dispatcher.REQUEST.get());
+                                assertSame(myState, AdminRequest.get());
+                                assertSame(layer, LocalPublished.get());
+                                assertSame(ws, LocalWorkspace.get());
+                                assertSame(
+                                        auth,
+                                        SecurityContextHolder.getContext().getAuthentication());
+                            }
 
-            private void testCleanup() {
-                transfer.cleanup();
+                            private void testCleanup() {
+                                transfer.cleanup();
 
-                // check all thread locals have been cleaned up from the current thread
-                assertNull(Dispatcher.REQUEST.get());
-                assertNull(AdminRequest.get());
-                assertNull(LocalLayer.get());
-                assertNull(LocalWorkspace.get());
-                assertNull(SecurityContextHolder.getContext().getAuthentication());
-            }
-
-        });
+                                // check all thread locals have been cleaned up from the current
+                                // thread
+                                assertNull(Dispatcher.REQUEST.get());
+                                assertNull(AdminRequest.get());
+                                assertNull(LocalPublished.get());
+                                assertNull(LocalWorkspace.get());
+                                assertNull(SecurityContextHolder.getContext().getAuthentication());
+                            }
+                        });
         future.get();
     }
 
@@ -119,7 +121,7 @@ public class ThreadLocalsTransferTest extends GeoServerSystemTestSupport {
 
         ThreadLocalTransfer transfer;
 
-        Map<String, Object> storage = new HashMap<String, Object>();
+        Map<String, Object> storage = new HashMap<>();
 
         public ThreadLocalTransferCallable(ThreadLocalTransfer transfer) {
             this.originalThread = Thread.currentThread();
@@ -146,6 +148,5 @@ public class ThreadLocalsTransferTest extends GeoServerSystemTestSupport {
         abstract void assertThreadLocalCleaned();
 
         abstract void assertThreadLocalApplied();
-
     };
 }

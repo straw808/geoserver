@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 
- Copyright (C) 2014 - Open Source Geospatial Foundation. All rights reserved.
+ Copyright (C) 2014 - 2016 Open Source Geospatial Foundation. All rights reserved.
  This code is licensed under the GPL 2.0 license, available at the root
  application directory.
  -->
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 
 <beans>
+    <bean class="org.geoserver.platform.ModuleStatusImpl">
+      <constructor-arg index="0" value="gs-wfs"/>
+      <constructor-arg index="1" value="GeoServer Web Feature Service"/>
+    </bean>
 	<bean id="wfsLegacyLoader" class="org.geoserver.wfs.WFSLoader"/>
 	<bean id="wfsLoader" class="org.geoserver.wfs.WFSXStreamLoader">
 	  <constructor-arg ref="resourceLoader"/>
@@ -151,10 +155,11 @@
     <!-- the schema cleaner -->
     <bean id="xsdSchemaCleaner" class="org.geoserver.wfs.xml.SchemaCleanerCallback"/>
 
-    <bean id="wfs20ExceptionHandler" class="org.geoserver.ows.OWS11ServiceExceptionHandler">
+    <bean id="wfs20ExceptionHandler" class="org.geoserver.wfs.response.Wfs2ExceptionHandler">
         <constructor-arg>
-           <ref bean="wfsService-2.0"/>
-        </constructor-arg>  
+            <ref bean="wfsService-2.0"/>
+        </constructor-arg>
+        <constructor-arg ref="geoServer"/>
         <property name="useServiceVersion" value="true"/>
     </bean>
 	
@@ -189,23 +194,23 @@
    
 	<!-- responses -->
 	<bean id="getCapabilitiesResponse"
-		class="org.geoserver.wfs.response.GetCapabilitiesResponse" singleton="false"/>
+		class="org.geoserver.wfs.response.GetCapabilitiesResponse" scope="prototype"/>
 	<bean id="lockFeatureResponse"
-		class="org.geoserver.wfs.response.LockFeatureTypeResponse" singleton="false">
+		class="org.geoserver.wfs.response.LockFeatureTypeResponse" scope="prototype">
 		<constructor-arg ref="geoServer"/>
 		<constructor-arg ref="xmlConfiguration-1.1"/>
 	</bean>
 	<bean id="lockFeatureResponse-2.0"
-        class="org.geoserver.wfs.response.v2_0.LockFeatureTypeResponse" singleton="false">
+        class="org.geoserver.wfs.response.v2_0.LockFeatureTypeResponse" scope="prototype">
         <constructor-arg ref="geoServer"/>
     </bean>
 	<bean id="transactionResponse-1.0.0"
-		class="org.geoserver.wfs.response.TransactionResponse" singleton="false">
+		class="org.geoserver.wfs.response.TransactionResponse" scope="prototype">
 		<constructor-arg ref="geoServer"/>
 		<constructor-arg ref="xmlConfiguration-1.1"/>
 	</bean>
 	<bean id="transactionResponse-2.0"
-        class="org.geoserver.wfs.response.v2_0.TransactionResponse" singleton="false">
+        class="org.geoserver.wfs.response.v2_0.TransactionResponse" scope="prototype">
         <constructor-arg ref="geoServer"/>
     </bean>
 	
@@ -304,11 +309,19 @@
     <property name="request"><value>GetFeature</value></property>
   </bean>
   <bean id="getFeature20NamespaceKvpParser" class="org.geoserver.ows.kvp.NamespaceKvpParser">
-    <constructor-arg value="namespace"/>
+    <constructor-arg value="namespaces"/>
+    <constructor-arg value="true"/>
     <property name="service"><value>WFS</value></property>
     <property name="version"><value>2.0.0</value></property>
     <property name="request"><value>GetFeature</value></property>
   </bean>
+	<bean id="getPropertyValue20NamespaceKvpParser" class="org.geoserver.ows.kvp.NamespaceKvpParser">
+		<constructor-arg value="namespaces"/>
+		<constructor-arg value="true"/>
+		<property name="service"><value>WFS</value></property>
+		<property name="version"><value>2.0.0</value></property>
+		<property name="request"><value>GetPropertyValue</value></property>
+	</bean>
   <bean id="dftNamespaceKvpParser" class="org.geoserver.ows.kvp.NamespaceKvpParser">
     <constructor-arg value="namespace"/>
     <property name="service"><value>WFS</value></property>
@@ -316,12 +329,27 @@
     <property name="request"><value>DescribeFeatureType</value></property>
   </bean>
   <bean id="dft20NamespaceKvpParser" class="org.geoserver.ows.kvp.NamespaceKvpParser">
-    <constructor-arg value="namespace"/>
+    <constructor-arg value="namespaces"/>
+    <constructor-arg value="true"/>
     <property name="service"><value>WFS</value></property>
     <property name="version"><value>2.0.0</value></property>
     <property name="request"><value>DescribeFeatureType</value></property>
   </bean>
-  
+	<bean id="lockFeatureNamespaceParser" class="org.geoserver.ows.kvp.NamespaceKvpParser">
+		<constructor-arg value="namespace"/>
+		<property name="service"><value>WFS</value></property>
+		<property name="version"><value>1.1.0</value></property>
+		<property name="request"><value>LockFeature</value></property>
+	</bean>
+	<bean id="lockFeature20NamespaceParser" class="org.geoserver.ows.kvp.NamespaceKvpParser">
+		<constructor-arg value="namespaces"/>
+		<constructor-arg value="true"/>
+		<property name="service"><value>WFS</value></property>
+		<property name="version"><value>2.0.0</value></property>
+		<property name="request"><value>LockFeature</value></property>
+	</bean>
+
+
 	<bean id="featureIdKvpParser" class="org.geoserver.ows.FlatKvpParser">
 		<constructor-arg index="0" value="featureId"/>
 		<constructor-arg index="1" value="java.lang.String"/>
@@ -377,7 +405,7 @@
     </bean>
 	
 	<bean id="srsNameKvpParser" class="org.geoserver.wfs.kvp.SrsNameKvpParser"/>
-	<bean id="sortByKvpParser" class="org.geoserver.wfs.kvp.SortByKvpParser">
+	<bean id="sortByKvpParser" class="org.geoserver.ows.kvp.SortByKvpParser">
 		<constructor-arg ref="filterFactory"/>
 	</bean>
 	<bean id="expiryKvpParser" class="org.geoserver.ows.util.NumericKvpParser">
@@ -419,7 +447,9 @@
   <bean id="resolveTimeOutKvpParser" class="org.geoserver.ows.util.NumericKvpParser">
 		<constructor-arg index="0" value="resolveTimeOut"/>
 		<constructor-arg index="1" value="java.math.BigInteger"/>
-</bean>
+  </bean>
+	<bean id="sectionsKvpParser20" class="org.geoserver.wfs.kvp.v2_0.SectionsKvpParser"/>
+	<bean id="sectionsKvpParser" class="org.geoserver.wfs.kvp.SectionsKvpParser"/>
     
 	<!-- kvp request readers -->
 	<bean id="wfsGetCapabilitiesKvpReader"  
@@ -438,7 +468,7 @@
 
 	<bean id="getFeatureKvpReader" class="org.geoserver.wfs.kvp.GetFeatureKvpRequestReader">
 		<constructor-arg value="net.opengis.wfs.GetFeatureType"/>
-		<constructor-arg ref="catalog"/>
+		<constructor-arg ref="geoServer"/>
 		<constructor-arg ref="filterFactory"/>
 	</bean>
 	<bean id="getFeature20KvpReader" class="org.geoserver.wfs.kvp.v2_0.GetFeatureKvpRequestReader">
@@ -448,11 +478,16 @@
     </bean>
 	<bean id="getFeatureWithLockKvpReader" class="org.geoserver.wfs.kvp.GetFeatureKvpRequestReader">
 		<constructor-arg value="net.opengis.wfs.GetFeatureWithLockType"/>
-		<constructor-arg ref="catalog"/>
+		<constructor-arg ref="geoServer"/>
 		<constructor-arg ref="filterFactory"/>
 	</bean>
-	<bean id="lockFeatureKvpReader" class="org.geoserver.wfs.kvp.WFSKvpRequestReader">
-		<constructor-arg value="net.opengis.wfs.LockFeatureType"/>
+	<bean id="lockFeatureKvpReader" class="org.geoserver.wfs.kvp.LockFeatureKvpRequestReader">
+		<constructor-arg ref="geoServer"/>
+		<constructor-arg ref="filterFactory"/>
+	</bean>
+	<bean id="lockFeatureKvp20Reader" class="org.geoserver.wfs.kvp.v2_0.LockFeatureKvpRequestReader">
+		<constructor-arg ref="geoServer"/>
+		<constructor-arg ref="filterFactory"/>
 	</bean>
 	<bean id="transactionKvpReader" class="org.geoserver.wfs.kvp.WFSKvpRequestReader">
 		<constructor-arg value="net.opengis.wfs.TransactionType"/>
@@ -583,12 +618,12 @@
     </bean>
 	<!-- default get feature producers -->
 	<bean id="gml2OutputFormat" 
-		class="org.geoserver.wfs.xml.GML2OutputFormat" singleton="false">
+		class="org.geoserver.wfs.xml.GML2OutputFormat" scope="prototype">
 		<constructor-arg ref="geoServer"/>
 	</bean>
 	<!-- uncomment below and comment out above to switch between gml2 output formats -->
 	<!--bean id="gml2OutputFormat" 
-        class="org.geoserver.wfs.xml.GML2OutputFormat2" singleton="false">
+        class="org.geoserver.wfs.xml.GML2OutputFormat2" scope=prototype">
         <constructor-arg ref="geoServer"/>
     </bean-->
 	<bean id="gml3OutputFormat" class="org.geoserver.wfs.xml.GML3OutputFormat"> 
@@ -604,7 +639,11 @@
 		<constructor-arg ref="geoServer"/>
 		<constructor-arg ref="xmlConfiguration-1.1"/>
 	</bean>
-	<bean id="shapezipOutputFormat" class="org.geoserver.wfs.response.ShapeZipOutputFormat" />
+	<bean id="shapezipOutputFormat" class="org.geoserver.wfs.response.ShapeZipOutputFormat" >
+		<constructor-arg ref="geoServer"/>
+		<constructor-arg ref="catalog"/>
+		<constructor-arg ref="resourceLoader"/>
+	</bean>
 
     <bean id="CSVOutputFormat" class="org.geoserver.wfs.response.CSVOutputFormat">
         <constructor-arg index="0" ref="geoServer"/>
@@ -667,4 +706,11 @@
     <!-- XStream persister initializer -->
     <bean id="wfsXStreamPersisterInitializer" class="org.geoserver.wfs.WFSXStreamPersisterInitializer" />
 
+  	<!-- dispatcher callback that will enforce configured MIME type for WFS GML responses -->
+	<bean id="wfsGMLMimeTypeEnforcer" class="org.geoserver.wfs.WFSGMLMimeTypeEnforcer">
+		<constructor-arg ref="geoServer"/>
+	</bean>
+	
+	<!-- Resource voter -->
+	<bean id="wfsResourceVoter" class="org.geoserver.wfs.WFSResourceVoter"/>
 </beans>

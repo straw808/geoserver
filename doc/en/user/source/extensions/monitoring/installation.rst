@@ -13,12 +13,6 @@ The monitor extension is not part of the GeoServer core and must be installed as
 #. Find the page that matches the version of the running GeoServer.
 #. Download the monitor extension. The download link will be in the :guilabel:`Extensions` 
    section under :guilabel:`Other`.
-
-   .. note::
-
-       The :ref:`monitor_db` function is packaged as a separate extension. If you plan to use it
-       both the core "monitor" and "monitor-hibernate" extensions must be installed.
-
 #. Extract the files in this archive to the :file:`WEB-INF/lib` directory of your GeoServer installation.
 #. Restart GeoServer
 
@@ -34,4 +28,4 @@ There are two ways to verify that the monitoring extension has been properly ins
 
      *Monitoring section in the web admin interface*
 
-#. Start GeoServer and navigate to the current :ref:`data_directory`.  If successfully installed, a new directory named ``monitoring`` will be created in the data directory.
+#. Start GeoServer and navigate to the current :ref:`datadir`.  If successfully installed, a new directory named ``monitoring`` will be created in the data directory.

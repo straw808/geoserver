@@ -13,9 +13,9 @@
             <label for="groupname"><wicket:message key="groupname">groupname</wicket:message></label>
             <input type="text" wicket:id="groupname" id="groupname" class="text"/>
           </li>
-          <li>
-            <input type="checkbox" wicket:id="enabled" id="enabled" class="field checkbox"/>
-            <label class="choice"><wicket:message key="enabled">enabled</wicket:message></label>
+          <li class="choiceItem">
+            <input type="checkbox" wicket:id="enabled" id="enabled"/>
+            <label for="enabled"><wicket:message key="enabled">enabled</wicket:message></label>
           </li>
         </ul>
        </fieldset>
@@ -27,9 +27,9 @@
        <wicket:child></wicket:child>
      </li>
    </ul>
-   <div class="button-group selfclear">
-     <a href="#" wicket:id="save"><wicket:message key="save">Save</wicket:message></a>
-     <a href="#" wicket:id="cancel"><wicket:message key="cancel">Cancel</wicket:message></a>
+   <div class="button-group toolbar-sticky selfclear">
+     <a href="#" class="form-button-save" wicket:id="save"><wicket:message key="save">Save</wicket:message></a>
+     <a href="#" class="form-button-cancel" wicket:id="cancel"><wicket:message key="cancel">Cancel</wicket:message></a>
    </div>
   </form>
   

@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-
 import org.apache.wicket.extensions.ajax.markup.html.autocomplete.AutoCompleteBehavior;
 import org.apache.wicket.extensions.ajax.markup.html.autocomplete.AutoCompleteSettings;
 import org.apache.wicket.extensions.ajax.markup.html.autocomplete.IAutoCompleteRenderer;
@@ -18,15 +17,19 @@ import org.apache.wicket.extensions.ajax.markup.html.autocomplete.IAutoCompleteR
 /**
  * Implements auto complete behavior to manage the roles choice as a list of string separated by ";"
  */
-public class RolesAutoCompleteBehavior extends AutoCompleteBehavior<String>{
+public class RolesAutoCompleteBehavior extends AutoCompleteBehavior<String> {
 
     private static final long serialVersionUID = -6743826046815447371L;
     private StringBuilder selectedRoles;
-    private List<String> availableRoles;    
-    
-    public RolesAutoCompleteBehavior(IAutoCompleteRenderer<String> renderer,  AutoCompleteSettings settings, StringBuilder selectedRoles, List<String> availableRoles) {
-        super(renderer,settings);
-        this.selectedRoles = selectedRoles;   
+    private List<String> availableRoles;
+
+    public RolesAutoCompleteBehavior(
+            IAutoCompleteRenderer<String> renderer,
+            AutoCompleteSettings settings,
+            StringBuilder selectedRoles,
+            List<String> availableRoles) {
+        super(renderer, settings);
+        this.selectedRoles = selectedRoles;
         this.availableRoles = availableRoles;
     }
 
@@ -43,18 +46,18 @@ public class RolesAutoCompleteBehavior extends AutoCompleteBehavior<String>{
             realInput = input.substring(lastCommaIndex + 1);
         }
 
-        List<String> completions = new ArrayList<String>();
-        for (int i = 0; i < availableRoles.size(); i++) {
-            String role = availableRoles.get(i);
-            if (realInput.isEmpty() || role.startsWith(realInput.toUpperCase()) || role.startsWith(realInput.toLowerCase())) {
+        List<String> completions = new ArrayList<>();
+        for (String role : availableRoles) {
+            if (realInput.isEmpty()
+                    || role.startsWith(realInput.toUpperCase())
+                    || role.startsWith(realInput.toLowerCase())) {
                 List<String> sr = Arrays.asList(selectedRoles.toString().split(";"));
-                if(!sr.contains(role)){
+                if (!sr.contains(role)) {
                     completions.add(role + ";");
                 }
             }
         }
         Collections.sort(completions);
         return completions.iterator();
-    }    
-    
+    }
 }

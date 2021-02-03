@@ -5,9 +5,8 @@
  */
 package org.geoserver.cluster.hazelcast;
 
-import java.net.InetSocketAddress;
-
 import com.hazelcast.core.HazelcastInstance;
+import java.net.InetSocketAddress;
 
 public class HazelcastUtil {
 
@@ -22,5 +21,13 @@ public class HazelcastUtil {
 
     public static String addressString(InetSocketAddress addr) {
         return addr.getAddress().getHostAddress() + ":" + addr.getPort();
+    }
+
+    public static String nodeId(HzCluster cluster) {
+        try {
+            return localIPAsString(cluster.getHz());
+        } catch (RuntimeException e) {
+            return "nodeId not available: " + e.getMessage();
+        }
     }
 }

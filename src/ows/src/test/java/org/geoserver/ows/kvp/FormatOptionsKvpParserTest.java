@@ -8,42 +8,45 @@ package org.geoserver.ows.kvp;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import junit.framework.TestCase;
-
-        
 /**
  * Test for the format options / SQL View parameters in a request.
- * 
+ *
  * @author Robert Coup
  */
-public class FormatOptionsKvpParserTest extends TestCase {
-    
+public class FormatOptionsKvpParserTest {
+
     private FormatOptionsKvpParser parser;
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         parser = new FormatOptionsKvpParser();
     }
-    
+
     /**
      * Tests normal-style format options
      *
      * @throws ParseException if the string can't be parsed.
      */
+    @Test
     public void testPairs() throws Exception {
-        Map<String,String> expected = new HashMap<String, String>()
-        {
-            {
-                put("key1", "value1");
-                put("key2", "value2");
-                put("key3", "true");
-                put("key4", "value4");
-            }
-        };        
-        
-        Map<String,String> actual = (Map<String,String>)parser.parse("key1:value1;key2:value2;key3;key4:value4");
-        assertEquals(expected, actual);
+        Map<String, String> expected =
+                new HashMap<String, String>() {
+                    {
+                        put("key1", "value1");
+                        put("key2", "value2");
+                        put("key3", "true");
+                        put("key4", "value4");
+                    }
+                };
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> actual =
+                (Map<String, String>) parser.parse("key1:value1;key2:value2;key3;key4:value4");
+        Assert.assertEquals(expected, actual);
     }
 
     /**
@@ -51,18 +54,22 @@ public class FormatOptionsKvpParserTest extends TestCase {
      *
      * @throws ParseException if the string can't be parsed.
      */
+    @Test
     public void testEscapedSeparators() throws Exception {
-        Map<String,String> expected = new HashMap<String, String>()
-        {
-            {
-                put("key1", "value:1");
-                put("key2", "value:2");
-                put("key3", "value:3;ZZZ");
-            }
-        };        
-        
-        Map<String,String> actual = (Map<String,String>)parser.parse("key1:value\\:1;key2:value\\:2;key3:value\\:3\\;ZZZ");
-        assertEquals(expected, actual);
+        Map<String, String> expected =
+                new HashMap<String, String>() {
+                    {
+                        put("key1", "value:1");
+                        put("key2", "value:2");
+                        put("key3", "value:3;ZZZ");
+                    }
+                };
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> actual =
+                (Map<String, String>)
+                        parser.parse("key1:value\\:1;key2:value\\:2;key3:value\\:3\\;ZZZ");
+        Assert.assertEquals(expected, actual);
     }
 
     /**
@@ -70,18 +77,22 @@ public class FormatOptionsKvpParserTest extends TestCase {
      *
      * @throws ParseException if the string can't be parsed.
      */
+    @Test
     public void testEmbeddedSeparators() throws Exception {
-        Map<String,String> expected = new HashMap<String, String>()
-        {
-            {
-                put("key1", "value:1");
-                put("key2", "value:2");
-                put("key3", "value:3:ZZ;XX");
-            }
-        };        
-        
-        Map<String,String> actual = (Map<String,String>)parser.parse("key1:value:1;key2:value:2;key3:value:3\\:ZZ\\;XX");
-        assertEquals(expected, actual);
+        Map<String, String> expected =
+                new HashMap<String, String>() {
+                    {
+                        put("key1", "value:1");
+                        put("key2", "value:2");
+                        put("key3", "value:3:ZZ;XX");
+                    }
+                };
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> actual =
+                (Map<String, String>)
+                        parser.parse("key1:value:1;key2:value:2;key3:value:3\\:ZZ\\;XX");
+        Assert.assertEquals(expected, actual);
     }
 
     /**
@@ -89,19 +100,21 @@ public class FormatOptionsKvpParserTest extends TestCase {
      *
      * @throws ParseException if the string can't be parsed.
      */
+    @Test
     public void testErrors() throws Exception {
-        Map<String,String> expected = new HashMap<String, String>()
-        {
-            {
-                put("key1", "value:1");
-                put("key2", "value:2");
-                put("key3", "value:3");
-            }
-        };        
-        
-        Map<String,String> actual = (Map<String,String>)parser.parse("key1:value:1;key2:value:2;key3:value:3");
-        assertEquals(expected.size(), actual.size());
-        assertEquals(expected, actual);
-    }
+        Map<String, String> expected =
+                new HashMap<String, String>() {
+                    {
+                        put("key1", "value:1");
+                        put("key2", "value:2");
+                        put("key3", "value:3");
+                    }
+                };
 
+        @SuppressWarnings("unchecked")
+        Map<String, String> actual =
+                (Map<String, String>) parser.parse("key1:value:1;key2:value:2;key3:value:3");
+        Assert.assertEquals(expected.size(), actual.size());
+        Assert.assertEquals(expected, actual);
+    }
 }

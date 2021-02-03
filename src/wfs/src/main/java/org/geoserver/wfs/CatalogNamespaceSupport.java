@@ -2,23 +2,18 @@
  * (c) 2014 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
-*/
+ */
 package org.geoserver.wfs;
 
-import com.google.common.collect.Iterators;
+import java.util.Enumeration;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.NamespaceInfo;
 import org.geoserver.catalog.Predicates;
 import org.geoserver.catalog.util.CloseableIterator;
 import org.xml.sax.helpers.NamespaceSupport;
 
-import javax.xml.namespace.NamespaceContext;
-import java.util.Enumeration;
-import java.util.Iterator;
-
-/**
- * NamespaceContext based on GeoServer catalog.
- */
+/** NamespaceContext based on GeoServer catalog. */
+@SuppressWarnings("unchecked") // due to Java 8 and Java 11 differences in interface
 public class CatalogNamespaceSupport extends NamespaceSupport {
 
     Catalog catalog;
@@ -35,14 +30,15 @@ public class CatalogNamespaceSupport extends NamespaceSupport {
 
     @Override
     public Enumeration getPrefixes() {
-        final CloseableIterator<NamespaceInfo> it = catalog.list(NamespaceInfo.class, Predicates.acceptAll());
+        @SuppressWarnings("PMD.CloseResource") // best effort closing
+        final CloseableIterator<NamespaceInfo> it =
+                catalog.list(NamespaceInfo.class, Predicates.acceptAll());
         return new Enumeration() {
             @Override
             public boolean hasMoreElements() {
                 if (it.hasNext()) {
                     return true;
-                }
-                else {
+                } else {
                     it.close();
                     return false;
                 }
@@ -64,6 +60,7 @@ public class CatalogNamespaceSupport extends NamespaceSupport {
                 public boolean hasMoreElements() {
                     return false;
                 }
+
                 @Override
                 public Object nextElement() {
                     return null;
@@ -83,8 +80,7 @@ public class CatalogNamespaceSupport extends NamespaceSupport {
             public Object nextElement() {
                 try {
                     return pre;
-                }
-                finally {
+                } finally {
                     read = false;
                 }
             }
@@ -93,13 +89,17 @@ public class CatalogNamespaceSupport extends NamespaceSupport {
 
     @Override
     public String getPrefix(String uri) {
-        NamespaceInfo ns = "".equals(uri) ? catalog.getDefaultNamespace() : catalog.getNamespaceByURI(uri);
+        NamespaceInfo ns =
+                "".equals(uri) ? catalog.getDefaultNamespace() : catalog.getNamespaceByURI(uri);
         return ns != null ? ns.getPrefix() : null;
     }
 
     @Override
     public String getURI(String prefix) {
-        NamespaceInfo ns = "".equals(prefix) ? catalog.getDefaultNamespace() : catalog.getNamespaceByPrefix(prefix);
+        NamespaceInfo ns =
+                "".equals(prefix)
+                        ? catalog.getDefaultNamespace()
+                        : catalog.getNamespaceByPrefix(prefix);
         return ns != null ? ns.getURI() : null;
     }
 
@@ -137,5 +137,4 @@ public class CatalogNamespaceSupport extends NamespaceSupport {
     public boolean isNamespaceDeclUris() {
         throw new UnsupportedOperationException();
     }
-
 }

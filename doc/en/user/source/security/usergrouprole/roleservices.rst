@@ -1,4 +1,4 @@
-.. _sec_rolesystem_roleservices:
+.. _security_rolesystem_roleservices:
 
 Role services
 =============
@@ -10,7 +10,7 @@ A **role service** provides the following information for roles:
 * Mapping of a role to the system role ``ROLE_ADMINISTRATOR``
 * Mapping of a role to the system role ``ROLE_GROUP_ADMIN``
 
-When a user/group service loads information about a user or a group, it delegates to the role service to determine which roles should be assigned to the user or group.  Unlike :ref:`sec_rolesystem_usergroupservices`, only one role service is active at any given time.
+When a user/group service loads information about a user or a group, it delegates to the role service to determine which roles should be assigned to the user or group.  Unlike :ref:`security_rolesystem_usergroupservices`, only one role service is active at any given time.
 
 By default, GeoServer supports two types of role services:
 
@@ -18,7 +18,7 @@ By default, GeoServer supports two types of role services:
 * JDBC—Role service persisted in a database via JDBC
 
 
-.. _sec_rolesystem_mapping:
+.. _security_rolesystem_mapping:
 
 Mapping roles to system roles
 -----------------------------
@@ -41,7 +41,7 @@ To assign the system role ``ROLE_ADMINISTRATOR`` to a user or to a group, a new 
 In this example, a user or a group assigned to the role ``ADMIN`` is also assigned to the system role ``ROLE_ADMINISTRATOR``. The same holds true for ``GROUP_ADMIN`` and ``ROLE_GROUP_ADMIN``.
 
 
-.. _sec_rolesystem_rolexml:
+.. _security_rolesystem_rolexml:
 
 XML role service
 ----------------
@@ -74,10 +74,10 @@ The following provides an illustration of the ``roles.xml`` that ships with the 
 
 This configuration contains two roles named ``ADMIN`` and ``GROUP_ADMIN``. The role ``ADMIN`` is assigned to the ``admin`` user. Since the ``ADMIN`` role is mapped to the system role ``ROLE_ADMINISTRATOR``, the role calculation assigns both roles to the ``admin`` user.
 
-For further information, please refer to :ref:`configuring a role service <webadmin_sec_roleservices>` in the :ref:`web_admin`.
+For further information, please refer to :ref:`configuring a role service <security_webadmin_roleservices>` in the :ref:`web_admin`.
 
 
-.. _sec_rolesystem_rolej2ee:
+.. _security_rolesystem_rolej2ee:
 
 J2EE role service
 -----------------
@@ -149,7 +149,7 @@ Roles are extracted from the following XML elements:
    * ``MGR``
 
 
-.. _sec_rolesystem_rolejdbc:
+.. _security_rolesystem_rolejdbc:
 
 JDBC role service
 -----------------
@@ -228,7 +228,7 @@ The JDBC role service persists the role database via JDBC, managing the role inf
      - NO
      - PRI
 
-The ``roles`` table is the primary table and contains the list of roles.  Roles in GeoServer support inheritance, so a role may optionally have a link to a parent role. The ``role_props`` table maps additional properties to a role. (See the section on :ref:`sec_rolesystem_roles` for more details.)  The ``user_roles`` table maps users to the roles they are assigned.  Similarly the ``group_roles`` table maps which groups have been assigned to which roles. 
+The ``roles`` table is the primary table and contains the list of roles.  Roles in GeoServer support inheritance, so a role may optionally have a link to a parent role. The ``role_props`` table maps additional properties to a role. (See the section on :ref:`security_rolesystem_roles` for more details.)  The ``user_roles`` table maps users to the roles they are assigned.  Similarly the ``group_roles`` table maps which groups have been assigned to which roles. 
 
 The default GeoServer security configuration is:
 
@@ -271,7 +271,7 @@ The default GeoServer security configuration is:
    * - *Empty*
      - *Empty*
 
-For further information, please refer to :ref:`configuring a role service <webadmin_sec_roleservices>` in the :ref:`web_admin`.
+For further information, please refer to :ref:`configuring a role service <security_webadmin_roleservices>` in the :ref:`web_admin`.
 
 LDAP role service
 -----------------
@@ -306,4 +306,83 @@ An example of configuration file (config.xml) for this type of role service is t
           <allGroupsSearchFilter>cn=*</allGroupsSearchFilter>
         </org.geoserver.security.ldap.LDAPRoleServiceConfig>
 
-For further information, please refer to :ref:`configuring a role service <webadmin_sec_roleservices>` in the :ref:`web_admin`.
+For further information, please refer to :ref:`configuring a role service <security_webadmin_roleservices>` in the :ref:`web_admin`.
+
+REST role service
+-----------------
+
+The REST role service is a read only role service that maps groups and associated users to roles from a remote REST web service.
+
+The REST service **must** support JSON encoding.
+
+Here is a listing of significant methods provided by the REST Role Service (based on the LDAP role service, which similarly has to make network calls to work):
+
+.. list-table:: Table: roles
+   :widths: 10 20 
+   :header-rows: 1
+
+   * - Method
+     - Mandatory
+   * - *getUserNamesForRole(roleName)*
+     - N (implemented in LDAP, but I don’t see actual users of this method besides a utility method that nobody uses)
+   * - *getRolesForUser(user)*
+     - Y
+   * - *getRolesForGroup(group)*
+     - N
+   * - *getRoles()*
+     - Y (used by the UI)
+   * - *getParentRole(role)*
+     - N
+   * - *getAdminRole()*
+     - Y
+   * - *getGroupAdminRole()*
+     - Y
+   * - *getRoleCount()*
+     - Y (does not seem to be used much, we can trivially implement it from getRoles()
+
+REST APIs
+^^^^^^^^^
+
+The following is an example of the REST API the role service may handle. The JSON and remote endpoints may differ; this is conifgurable via UI, allowing the REST role service to connect to a generci REST Service
+
+From the above we could have the following REST API to talk to
+
+``../api/roles``
+
+Returns the full list of roles (no paging required, we assume it’s small). Example response:
+
+.. code-block:: json
+
+    {"groups":["r1","r2","r3"]}
+
+``../api/adminrole``
+
+Returns the role of the administrator (yes, just one, it’s strange…):
+
+.. code-block:: json
+
+    {"adminRole":["root"]}
+
+``../api/users/<user>``
+
+Returns the list of roles for a particular user. Example response:
+
+.. code-block:: json
+
+    {"users": [{"user":"u1", "groups":["r1","r2"]}]}
+
+Configurable API
+^^^^^^^^^^^^^^^^
+
+The GeoServerRoleService talking to a remote service provides the following config parameters:
+
+* Base URL for the remote service
+* Configurable URLs for the various calls
+* JSON paths to the properties that contain the list of roles, and the one admin role
+
+The above can be configured via the :ref:`web_admin`. The figure below shows the REST role service options configured to be compatible with the sampe APIs above:
+
+.. figure:: images/restroleservice.png
+   :align: center
+
+   *REST based role service configuration panel*

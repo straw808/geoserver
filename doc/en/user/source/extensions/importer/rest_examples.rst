@@ -194,7 +194,7 @@ Drilling into the task layer we can see the srs information is missing::
 	    "attributes": [
 	      {
 	        "name": "the_geom",
-	        "binding": "com.vividsolutions.jts.geom.MultiPoint"
+	        "binding": "org.locationtech.jts.geom.MultiPoint"
 	      },
 	      {
 	        "name": "CITY_NAME",
@@ -295,6 +295,55 @@ And eventually succeed::
 	    ]
 	  }
 	}
+
+Uploading a Shapefile to PostGIS
+--------------------------------
+
+This example shows the process for uploading a Shapefile (in a zip file) to an existing PostGIS datastore (cite:postgis).
+
+Create the import definition::
+
+  {
+    "import": {
+      "targetStore": {
+        "dataStore": {
+          "name": "postgis"
+        }
+      },
+      "targetWorkspace": {
+        "workspace": {
+          "name": "cite"
+        }
+      }
+    }
+  }
+
+POST this definition to /geoserver/rest/imports::
+
+    curl -u admin:geoserver -XPOST -H "Content-type: application/json" -d @import.json "http://localhost:8080/geoserver/rest/imports"
+
+The response will contain the import ID.
+
+We now have an empty import with no tasks. To add a task, POST the shapefile to the list of tasks::
+
+  curl -u admin:geoserver -F name=myshapefile.zip -F filedata=@myshapefile.zip "http://localhost:8080/geoserver/rest/imports/14/tasks"
+
+Since we sent a shapefile, importer assumes the target will be a shapefile store. To import to PostGIS, we will need to reset it.
+Create the following JSON file::
+
+  {
+    "dataStore": {
+      "name":"postgis"
+    }
+  }
+
+PUT this file to /geoserver/rest/imports/14/tasks/0/target::
+
+  curl -u admin:geoserver -XPUT -H "Content-type: application/json" -d @target.json "http://localhost:8080/geoserver/rest/imports/14/tasks/0/target"
+
+Finally, we execute the import by sending a POST to /geoserver/rest/imports/14::
+
+  curl -u admin:geoserver -XPOST "http://localhost:8080/geoserver/rest/imports/14"
 	
 Uploading a CSV file to PostGIS while transforming it
 -----------------------------------------------------
@@ -302,7 +351,7 @@ Uploading a CSV file to PostGIS while transforming it
 A remote sensing tool is generating CSV files with some locations and measurements, that we want to upload
 into PostGIS as a new spatial table. The CSV file looks as follows::
 
-	#AssetID, SampleTime, Lat, Lon, Value
+	AssetID, SampleTime, Lat, Lon, Value
 	1, 2015-01-01T10:00:00, 10.00, 62.00, 15.2
 	1, 2015-01-01T11:00:00, 10.10, 62.11, 30.25
 	1, 2015-01-01T12:00:00, 10.20, 62.22, 41.2
@@ -430,7 +479,7 @@ Then, we are going to POST the GeoTiff file to the tasks list, in order to creat
 
     curl -u admin:geoserver -F name=test -F filedata=@box_gcp_fixed.tif "http://localhost:8080/geoserver/rest/imports/0/tasks"
     
-We are then going to append the transformations to rectify (gdalwarp), retile (gdal_translate) and add overviews (gdaladdo) to it:
+We are then going to append the transformations to rectify (gdalwarp), retile (gdal_translate) and add overviews (gdaladdo) to it::
 
    curl -u admin:geoserver -XPOST -H "Content-type: application/json" -d @warp.json "http://localhost:8080/geoserver/rest/imports/0/tasks/0/transforms"
    curl -u admin:geoserver -XPOST -H "Content-type: application/json" -d @gtx.json "http://localhost:8080/geoserver/rest/imports/0/tasks/0/transforms"
@@ -445,7 +494,7 @@ We are then going to append the transformations to rectify (gdalwarp), retile (g
     }
 
 
-``gtx.json`` is:
+``gtx.json`` is::
 
     {
       "type": "GdalTranslateTransform",
@@ -502,12 +551,12 @@ Where import.json is::
        }
     }
 
-We are then going to append the transformations to harmonize the file with the rest of the mosaic:
+We are then going to append the transformations to harmonize the file with the rest of the mosaic::
 
    curl -u admin:geoserver -XPOST -H "Content-type: application/json" -d @gtx.json "http://localhost:8080/geoserver/rest/imports/0/tasks/0/transforms"
    curl -u admin:geoserver -XPOST -H "Content-type: application/json" -d @gad.json "http://localhost:8080/geoserver/rest/imports/0/tasks/0/transforms"
    
-``gtx.json`` is:
+``gtx.json`` is::
 
     {
       "type": "GdalTranslateTransform",
@@ -516,7 +565,7 @@ We are then going to append the transformations to harmonize the file with the r
 
 ``gad.json`` is::
 
-{
+    {
       "type": "GdalAddoTransform",
       "options": [ "-r", "average"],
       "levels" : [2, 4, 8, 16, 32, 64, 128]

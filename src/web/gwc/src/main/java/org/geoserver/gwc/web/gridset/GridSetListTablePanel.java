@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -8,7 +8,6 @@ package org.geoserver.gwc.web.gridset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
 import org.apache.wicket.Component;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.CheckBox;
@@ -22,7 +21,7 @@ import org.geowebcache.grid.GridSet;
 
 /**
  * Panel listing the configured GridSet object on a table
- * 
+ *
  * @author groldan
  * @see GridSetTableProvider
  */
@@ -30,19 +29,17 @@ public abstract class GridSetListTablePanel extends GeoServerTablePanel<GridSet>
 
     private static final long serialVersionUID = 5957961031378924960L;
 
-    public GridSetListTablePanel(final String id, final GridSetTableProvider provider,
-            final boolean selectable) {
+    public GridSetListTablePanel(
+            final String id, final GridSetTableProvider provider, final boolean selectable) {
         super(id, provider, selectable);
-
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    protected Component getComponentForProperty(final String id, final IModel itemModel,
-            final Property<GridSet> property) {
+    protected Component getComponentForProperty(
+            final String id, final IModel<GridSet> itemModel, final Property<GridSet> property) {
 
         if (property == GridSetTableProvider.NAME) {
-            GridSet gridSet = (GridSet) itemModel.getObject();
+            GridSet gridSet = itemModel.getObject();
             return nameLink(id, gridSet);
 
         } else if (property == GridSetTableProvider.EPSG_CODE) {
@@ -84,14 +81,14 @@ public abstract class GridSetListTablePanel extends GeoServerTablePanel<GridSet>
     /**
      * Overrides to return a disabled and non selectable checkbox if the GridSet for the item is an
      * internally defined one
-     * 
+     *
      * @see org.geoserver.web.wicket.GeoServerTablePanel#selectOneCheckbox
      */
     @Override
-    protected CheckBox selectOneCheckbox(Item item) {
+    protected CheckBox selectOneCheckbox(Item<GridSet> item) {
         CheckBox cb = super.selectOneCheckbox(item);
 
-        GridSet gs = (GridSet) item.getModelObject();
+        GridSet gs = item.getModelObject();
 
         String name = gs.getName();
         final boolean internal = GWC.get().isInternalGridSet(name);
@@ -104,13 +101,13 @@ public abstract class GridSetListTablePanel extends GeoServerTablePanel<GridSet>
 
     /**
      * Overrides to remove any internal gridset from the list
-     * 
+     *
      * @see org.geoserver.web.wicket.GeoServerTablePanel#getSelection()
      */
     @Override
     public List<GridSet> getSelection() {
-        List<GridSet> selection = new ArrayList<GridSet>(super.getSelection());
-        for (Iterator<GridSet> it = selection.iterator(); it.hasNext();) {
+        List<GridSet> selection = new ArrayList<>(super.getSelection());
+        for (Iterator<GridSet> it = selection.iterator(); it.hasNext(); ) {
             GridSet g = it.next();
             if (GWC.get().isInternalGridSet(g.getName())) {
                 it.remove();

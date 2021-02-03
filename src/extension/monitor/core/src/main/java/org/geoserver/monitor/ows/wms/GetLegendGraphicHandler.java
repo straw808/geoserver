@@ -7,7 +7,6 @@ package org.geoserver.monitor.ows.wms;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.geoserver.monitor.MonitorConfig;
 import org.geoserver.monitor.ows.RequestObjectHandler;
 import org.geoserver.ows.util.OwsUtils;
@@ -21,15 +20,16 @@ public class GetLegendGraphicHandler extends RequestObjectHandler {
 
     @Override
     protected List<String> getLayers(Object request) {
+        @SuppressWarnings("unchecked")
         List<FeatureType> types = (List<FeatureType>) OwsUtils.get(request, "layers");
-        if (types != null) {
-            List<String> result = new ArrayList<String>();
+        if (types == null || types.isEmpty()) {
+            return null;
+        } else {
+            List<String> result = new ArrayList<>();
             for (FeatureType ft : types) {
                 result.add(ft.getName().toString());
             }
             return result;
         }
-        return null;
     }
-
 }

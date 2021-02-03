@@ -7,13 +7,13 @@ package org.geoserver.wfs;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.geotools.data.DataUtilities;
+import org.opengis.feature.Feature;
 
 public class TransactionListenerTester implements TransactionListener {
-    List events = new ArrayList();
-    List features = new ArrayList();
-    
+    List<TransactionEvent> events = new ArrayList<>();
+    List<Feature> features = new ArrayList<>();
+
     public void clear() {
         events.clear();
         features.clear();
@@ -23,7 +23,4 @@ public class TransactionListenerTester implements TransactionListener {
         events.add(event);
         features.addAll(DataUtilities.list(event.getAffectedFeatures()));
     }
-    
-    
-    
 }

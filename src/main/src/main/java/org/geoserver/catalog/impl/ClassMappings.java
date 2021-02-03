@@ -21,6 +21,8 @@ import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.StyleInfo;
 import org.geoserver.catalog.WMSLayerInfo;
 import org.geoserver.catalog.WMSStoreInfo;
+import org.geoserver.catalog.WMTSLayerInfo;
+import org.geoserver.catalog.WMTSStoreInfo;
 import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.config.GeoServerInfo;
 import org.geoserver.config.LoggingInfo;
@@ -38,23 +40,23 @@ public enum ClassMappings {
     //
     WORKSPACE {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return WorkspaceInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return WorkspaceInfoImpl.class;
         };
     },
     NAMESPACE {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return NamespaceInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return NamespaceInfoImpl.class;
         };
     },
@@ -62,161 +64,193 @@ public enum ClassMappings {
     // stores, order matters
     DATASTORE {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return DataStoreInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return DataStoreInfoImpl.class;
         };
     },
     COVERAGESTORE {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return CoverageStoreInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return CoverageStoreInfoImpl.class;
         };
     },
     WMSSTORE {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return WMSStoreInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return WMSStoreInfoImpl.class;
+        };
+    },
+    WMTSSTORE {
+        @Override
+        public Class<? extends Info> getInterface() {
+            return WMTSStoreInfo.class;
+        }
+
+        @Override
+        public Class<? extends Info> getImpl() {
+            return WMTSStoreInfoImpl.class;
         };
     },
     STORE {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return StoreInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return StoreInfoImpl.class;
         };
 
         @Override
+        @SuppressWarnings("unchecked")
         public Class<? extends CatalogInfo>[] concreteInterfaces() {
-            return new Class[] { CoverageStoreInfo.class, DataStoreInfo.class, WMSStoreInfo.class };
+            return new Class[] {
+                CoverageStoreInfo.class,
+                DataStoreInfo.class,
+                WMSStoreInfo.class,
+                WMTSStoreInfo.class
+            };
         }
     },
 
     // resources, order matters
     FEATURETYPE {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return FeatureTypeInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return FeatureTypeInfoImpl.class;
         };
     },
     COVERAGE {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return CoverageInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return CoverageInfoImpl.class;
         };
     },
     WMSLAYER {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return WMSLayerInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return WMSLayerInfoImpl.class;
+        };
+    },
+    WMTSLAYER {
+        @Override
+        public Class<? extends Info> getInterface() {
+            return WMTSLayerInfo.class;
+        }
+
+        @Override
+        public Class<? extends Info> getImpl() {
+            return WMTSLayerInfoImpl.class;
         };
     },
     RESOURCE {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return ResourceInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return ResourceInfoImpl.class;
         };
 
         @Override
+        @SuppressWarnings("unchecked")
         public Class<? extends CatalogInfo>[] concreteInterfaces() {
-            return new Class[] { CoverageInfo.class, FeatureTypeInfo.class, WMSLayerInfo.class };
+            return new Class[] {
+                CoverageInfo.class, FeatureTypeInfo.class, WMSLayerInfo.class, WMTSLayerInfo.class
+            };
         }
     },
     PUBLISHED {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return PublishedInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return null;
         };
 
         @Override
+        @SuppressWarnings("unchecked")
         public Class<? extends CatalogInfo>[] concreteInterfaces() {
-            return new Class[] { LayerInfo.class, LayerGroupInfo.class };
+            return new Class[] {LayerInfo.class, LayerGroupInfo.class};
         }
     },
     LAYER {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return LayerInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return LayerInfoImpl.class;
         };
     },
     LAYERGROUP {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return LayerGroupInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return LayerGroupInfoImpl.class;
         };
     },
     MAP {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return MapInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return MapInfoImpl.class;
         };
     },
     STYLE {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return StyleInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return StyleInfoImpl.class;
         };
     },
@@ -226,36 +260,36 @@ public enum ClassMappings {
     //
     GLOBAL {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return GeoServerInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return GeoServerInfoImpl.class;
         };
     },
 
     LOGGING {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return LoggingInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return LoggingInfoImpl.class;
         };
     },
 
     SETTINGS {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return SettingsInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return SettingsInfoImpl.class;
         };
     },
@@ -278,24 +312,24 @@ public enum ClassMappings {
 
     SERVICE {
         @Override
-        public Class getInterface() {
+        public Class<? extends Info> getInterface() {
             return ServiceInfo.class;
         }
 
         @Override
-        public Class getImpl() {
+        public Class<? extends Info> getImpl() {
             return ServiceInfoImpl.class;
         };
     };
 
-    public abstract <T> Class<T> getInterface();
+    public abstract Class<? extends Info> getInterface();
 
     public abstract Class<? extends Info> getImpl();
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public Class<? extends Info>[] concreteInterfaces() {
-        Class interf = getInterface();
-        return new Class[] { interf };
+        Class<? extends Info> interf = getInterface();
+        return new Class[] {interf};
     }
 
     public static ClassMappings fromInterface(Class<? extends Info> interfce) {
@@ -315,10 +349,8 @@ public enum ClassMappings {
             return SERVICE;
         }
         for (ClassMappings cm : values()) {
-            if (clazz == cm.getImpl())
-                return cm;
+            if (clazz == cm.getImpl()) return cm;
         }
         return null;
     }
-
 }

@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
-
 import org.geoserver.config.ConfigurationListenerAdapter;
 import org.geoserver.config.GeoServer;
 import org.geoserver.config.ServiceInfo;
@@ -29,24 +28,17 @@ import org.geotools.process.ProcessFactory;
 import org.geotools.util.logging.Logging;
 import org.opengis.feature.type.Name;
 
-/**
- * Allows to manage the rules used by the WPS security subsystem
- * 
- */
+/** Allows to manage the rules used by the WPS security subsystem */
 public class WpsAccessRuleDAO extends ConfigurationListenerAdapter {
 
     private static final Logger LOGGER = Logging.getLogger(WpsAccessRuleDAO.class);
 
-    /**
-     * property file name
-     */
+    /** property file name */
     static final String WPS_PROP_FILE = "wps.xml";
 
     private GeoServer gs;
 
-    /**
-     * Default to the highest security mode
-     */
+    /** Default to the highest security mode */
     CatalogMode catalogMode = CatalogMode.HIDE;
 
     List<WpsAccessRule> rules;
@@ -77,7 +69,7 @@ public class WpsAccessRuleDAO extends ConfigurationListenerAdapter {
      */
     protected void loadRules() {
         WPSInfo wps = this.gs.getService(WPSInfo.class);
-        TreeSet<WpsAccessRule> result = new TreeSet<WpsAccessRule>();
+        TreeSet<WpsAccessRule> result = new TreeSet<>();
 
         if (wps != null) {
             catalogMode = CatalogMode.HIDE;
@@ -85,9 +77,9 @@ public class WpsAccessRuleDAO extends ConfigurationListenerAdapter {
                 catalogMode = wps.getCatalogMode();
             }
             for (ProcessGroupInfo group : wps.getProcessGroups()) {
-                Set<String> prefixes = new HashSet<String>();
-                ProcessFactory pf = GeoServerProcessors.getProcessFactory(group.getFactoryClass(),
-                        false);
+                Set<String> prefixes = new HashSet<>();
+                ProcessFactory pf =
+                        GeoServerProcessors.getProcessFactory(group.getFactoryClass(), false);
                 if (pf != null) {
                     Set<Name> names = pf.getNames();
                     for (Name name : names) {
@@ -97,20 +89,22 @@ public class WpsAccessRuleDAO extends ConfigurationListenerAdapter {
 
                 for (String prefix : prefixes) {
                     if (group.getRoles() != null && !group.getRoles().isEmpty()) {
-                        result.add(new WpsAccessRule(prefix, ANY, new HashSet<String>(group
-                                .getRoles())));
+                        result.add(new WpsAccessRule(prefix, ANY, new HashSet<>(group.getRoles())));
                     }
                 }
                 for (ProcessInfo process : group.getFilteredProcesses()) {
                     if (process.getRoles() != null && !process.getRoles().isEmpty()) {
-                        result.add(new WpsAccessRule(process.getName().getNamespaceURI(), process
-                                .getName().getLocalPart(), new HashSet<String>(process.getRoles())));
+                        result.add(
+                                new WpsAccessRule(
+                                        process.getName().getNamespaceURI(),
+                                        process.getName().getLocalPart(),
+                                        new HashSet<>(process.getRoles())));
                     }
                 }
             }
         }
         // make sure the single basic rules if the set is empty
-        if (result.size() == 0) {
+        if (result.isEmpty()) {
             result.add(new WpsAccessRule(WpsAccessRule.EXECUTE_ALL));
         }
 
@@ -142,17 +136,17 @@ public class WpsAccessRuleDAO extends ConfigurationListenerAdapter {
                     node = ws;
                 } else {
                     SecureTreeNode layerNode = ws.getChild(name);
-                    if (layerNode == null)
-                        layerNode = ws.addChild(name);
+                    if (layerNode == null) layerNode = ws.addChild(name);
                     node = layerNode;
                 }
-
             }
 
             // actually set the rule, but don't complain for the default root contents
             if (node != root) {
-                LOGGER.warning("Rule " + rule
-                        + " is overriding another rule targetting the same resource");
+                LOGGER.warning(
+                        "Rule "
+                                + rule
+                                + " is overriding another rule targetting the same resource");
             }
             node.setAuthorizedRoles(AccessMode.READ, rule.getRoles());
             node.setAuthorizedRoles(AccessMode.WRITE, Collections.singleton("NO_ONE"));
@@ -175,5 +169,4 @@ public class WpsAccessRuleDAO extends ConfigurationListenerAdapter {
             this.root = null;
         }
     }
-
 }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <StyledLayerDescriptor version="1.0.0" xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <!-- a named layer is the basic building block of an sld document -->
 <NamedLayer>
@@ -8,10 +8,8 @@
 <UserStyle>
     <!-- again they have names, titles and abstracts -->
   <Name>Blue</Name>
-  <Title>A blue linestring style</Title>
-  <Abstract>A sample style that uses a filter, printing only the
-            lines with a LENGTH property of over 5000.  This will work
-            with the default bc_roads layer</Abstract>
+  <Title>Blue Polygon</Title>
+  <Abstract>Blue filled polygon with black outline with width of 2 pixels</Abstract>
     <!-- FeatureTypeStyles describe how to render different features -->
     <!-- a feature type for polygons -->
     <FeatureTypeStyle>

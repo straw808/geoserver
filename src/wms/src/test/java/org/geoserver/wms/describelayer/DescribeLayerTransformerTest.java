@@ -5,13 +5,14 @@
  */
 package org.geoserver.wms.describelayer;
 
-import static junit.framework.Assert.*;
-import static org.custommonkey.xmlunit.XMLAssert.*;
+import static org.custommonkey.xmlunit.XMLAssert.assertXpathEvaluatesTo;
+import static org.custommonkey.xmlunit.XMLAssert.assertXpathExists;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.StringWriter;
-
 import javax.xml.transform.TransformerException;
-
 import org.custommonkey.xmlunit.XMLUnit;
 import org.custommonkey.xmlunit.XpathEngine;
 import org.geoserver.catalog.impl.CatalogImpl;
@@ -36,7 +37,7 @@ import org.w3c.dom.Element;
 
 /**
  * Unit test suite for {@link DescribeLayerTransformer}
- * 
+ *
  * @author Gabriel Roldan
  * @version $Id$
  */
@@ -62,9 +63,7 @@ public class DescribeLayerTransformerTest {
 
     private LayerInfoImpl coverageLayerInfo;
 
-    /**
-     * Sets up a base request with a mocked up geoserver and catalog for the tests
-     */
+    /** Sets up a base request with a mocked up geoserver and catalog for the tests */
     @Before
     public void setUp() throws Exception {
         // Map<String, String> namespaces = new HashMap<String, String>();
@@ -76,7 +75,7 @@ public class DescribeLayerTransformerTest {
         GeoServerImpl geoServerImpl = new GeoServerImpl();
         catalog = new CatalogImpl();
         geoServerImpl.setCatalog(catalog);
-        
+
         NamespaceInfoImpl ns = new NamespaceInfoImpl();
         ns.setPrefix("fakeWs");
         ns.setURI("http://fakews.org");
@@ -158,13 +157,10 @@ public class DescribeLayerTransformerTest {
 
     /**
      * Test the root element name and version attribute.
-     * <p>
-     * This test does not set a requested layer to the request and {@link DescribeLayerTransformer}
-     * does not care since checking the mandatory arguments shall be done prior to using the
-     * transformer, so it'll return an empty root element in this case.
-     * </p>
-     * 
-     * @throws Exception
+     *
+     * <p>This test does not set a requested layer to the request and {@link
+     * DescribeLayerTransformer} does not care since checking the mandatory arguments shall be done
+     * prior to using the transformer, so it'll return an empty root element in this case.
      */
     @Test
     public void testRootElement() throws Exception {
@@ -177,7 +173,8 @@ public class DescribeLayerTransformerTest {
 
     @Test
     public void testDTDLocation() throws Exception {
-        final String expected = "!DOCTYPE WMS_DescribeLayerResponse SYSTEM \"http://geoserver.org/schemas/wms/1.1.1/WMS_DescribeLayerResponse.dtd\"";
+        final String expected =
+                "!DOCTYPE WMS_DescribeLayerResponse SYSTEM \"http://geoserver.org/schemas/wms/1.1.1/WMS_DescribeLayerResponse.dtd\"";
         transformer = new DescribeLayerTransformer("http://geoserver.org");
         StringWriter writer = new StringWriter();
         transformer.transform(request, writer);

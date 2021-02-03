@@ -1,4 +1,4 @@
-/* (c) 2014 - 2015 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -9,41 +9,40 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedReader;
 import java.util.Map;
-
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
-
 import org.junit.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.util.WebUtils;
-
-import com.mockrunner.mock.web.MockHttpServletRequest;
 
 public class BufferedRequestWrapperTest extends RequestWrapperTestSupport {
 
     @Test
     public void testGetInputStream() throws Exception {
-        for (int i = 0; i < testStrings.length; i++) {
-            doInputStreamTest(testStrings[i]);
+        for (String testString : testStrings) {
+            doInputStreamTest(testString);
         }
     }
 
     @Test
     public void testGetReader() throws Exception {
-        for (int i = 0; i < testStrings.length; i++) {
-            doGetReaderTest(testStrings[i]);
+        for (String testString : testStrings) {
+            doGetReaderTest(testString);
         }
     }
 
     public void doInputStreamTest(String testString) throws Exception {
         HttpServletRequest req = makeRequest(testString, null);
 
-        BufferedRequestWrapper wrapper = new BufferedRequestWrapper(req,
-                WebUtils.DEFAULT_CHARACTER_ENCODING, testString.getBytes());
+        BufferedRequestWrapper wrapper =
+                new BufferedRequestWrapper(
+                        req, WebUtils.DEFAULT_CHARACTER_ENCODING, testString.getBytes());
         ServletInputStream sis = req.getInputStream();
         byte b[] = new byte[32];
         int amountRead;
 
-        while ((sis.readLine(b, 0, 32)) > 0) { /* clear out the request body */
+        while ((sis.readLine(b, 0, 32)) > 0) {
+            /* clear out the request body */
         }
 
         sis = wrapper.getInputStream();
@@ -60,11 +59,13 @@ public class BufferedRequestWrapperTest extends RequestWrapperTestSupport {
         HttpServletRequest req = makeRequest(testString, null);
 
         BufferedReader br = req.getReader();
-        while ((br.readLine()) != null) { /* clear out the body */
+        while ((br.readLine()) != null) {
+            /* clear out the body */
         }
 
-        BufferedRequestWrapper wrapper = new BufferedRequestWrapper(req,
-                WebUtils.DEFAULT_CHARACTER_ENCODING, testString.getBytes());
+        BufferedRequestWrapper wrapper =
+                new BufferedRequestWrapper(
+                        req, WebUtils.DEFAULT_CHARACTER_ENCODING, testString.getBytes());
         StringBuffer buff = new StringBuffer();
         int c;
         br = wrapper.getReader();
@@ -83,7 +84,8 @@ public class BufferedRequestWrapperTest extends RequestWrapperTestSupport {
         HttpServletRequest req = makeRequest(body, queryString);
 
         BufferedReader br = req.getReader();
-        while ((br.readLine()) != null) { /* clear out the body */
+        while ((br.readLine()) != null) {
+            /* clear out the body */
         }
 
         BufferedRequestWrapper wrapper = new BufferedRequestWrapper(req, "UTF-8", body.getBytes());
@@ -104,7 +106,8 @@ public class BufferedRequestWrapperTest extends RequestWrapperTestSupport {
         req.setContentType(null);
 
         BufferedReader br = req.getReader();
-        while ((br.readLine()) != null) { /* clear out the body */
+        while ((br.readLine()) != null) {
+            /* clear out the body */
         }
 
         // should not NPE like it did
@@ -120,7 +123,8 @@ public class BufferedRequestWrapperTest extends RequestWrapperTestSupport {
         req.setContentType(null);
 
         BufferedReader br = req.getReader();
-        while ((br.readLine()) != null) { /* clear out the body */
+        while ((br.readLine()) != null) {
+            /* clear out the body */
         }
 
         // should not NPE like it did

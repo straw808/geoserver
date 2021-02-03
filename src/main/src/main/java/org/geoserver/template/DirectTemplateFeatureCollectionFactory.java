@@ -6,40 +6,35 @@
 
 package org.geoserver.template;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import org.geotools.feature.FeatureCollection;
-import org.geotools.feature.FeatureIterator;
-import org.geotools.util.logging.Logging;
-
 import freemarker.ext.beans.BeansWrapper;
 import freemarker.template.TemplateCollectionModel;
 import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import freemarker.template.TemplateModelIterator;
 import freemarker.template.TemplateSequenceModel;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.geotools.feature.FeatureCollection;
+import org.geotools.feature.FeatureIterator;
+import org.geotools.util.logging.Logging;
 
 /**
- * 
- * Create FeatureCollection Template Model without copying features to memory
- * When using this in a FeatureWrapper, it is necessary to call purge() method after
- * processing template, to close any open database connections
- * 
+ * Create FeatureCollection Template Model without copying features to memory When using this in a
+ * FeatureWrapper, it is necessary to call purge() method after processing template, to close any
+ * open database connections
+ *
  * @author Niels Charlier, Curtin University of Technology
- * 
  */
-public class DirectTemplateFeatureCollectionFactory implements FeatureWrapper.TemplateFeatureCollectionFactory<DirectTemplateFeatureCollectionFactory.TemplateFeatureCollection> {
+public class DirectTemplateFeatureCollectionFactory
+        implements FeatureWrapper.TemplateFeatureCollectionFactory<
+                DirectTemplateFeatureCollectionFactory.TemplateFeatureCollection> {
 
     static Logger LOGGER = Logging.getLogger(DirectTemplateFeatureCollectionFactory.class);
 
-    /**
-     * thread local to track open iterators
-     */
-    static ThreadLocal<List<TemplateFeatureIterator>> ITERATORS = 
-            new ThreadLocal<List<TemplateFeatureIterator>>();
+    /** thread local to track open iterators */
+    static ThreadLocal<List<TemplateFeatureIterator>> ITERATORS = new ThreadLocal<>();
 
     public void purge() {
         List<TemplateFeatureIterator> its = ITERATORS.get();
@@ -47,8 +42,7 @@ public class DirectTemplateFeatureCollectionFactory implements FeatureWrapper.Te
             for (TemplateFeatureIterator it : its) {
                 try {
                     it.close();
-                }
-                catch(Throwable t) {
+                } catch (Throwable t) {
                     LOGGER.log(Level.WARNING, "Error closing iterator", t);
                 }
             }
@@ -56,24 +50,24 @@ public class DirectTemplateFeatureCollectionFactory implements FeatureWrapper.Te
             ITERATORS.remove();
         }
     }
-    
-    public DirectTemplateFeatureCollectionFactory() {
-    }
 
-    public TemplateCollectionModel createTemplateFeatureCollection(FeatureCollection collection,
-            BeansWrapper wrapper) {
+    public DirectTemplateFeatureCollectionFactory() {}
+
+    public TemplateCollectionModel createTemplateFeatureCollection(
+            FeatureCollection collection, BeansWrapper wrapper) {
         return new TemplateFeatureCollection(collection, wrapper);
     }
-    
-    protected class TemplateFeatureCollection implements TemplateCollectionModel, TemplateSequenceModel {
+
+    protected class TemplateFeatureCollection
+            implements TemplateCollectionModel, TemplateSequenceModel {
         protected BeansWrapper wrapper;
 
         protected FeatureCollection collection;
-        
+
         protected TemplateFeatureIterator indexIterator = null;
-        
+
         protected int currentIndex = -1;
-        
+
         protected TemplateModel currentItem = null;
 
         public TemplateFeatureCollection(FeatureCollection collection, BeansWrapper wrapper) {
@@ -82,10 +76,11 @@ public class DirectTemplateFeatureCollectionFactory implements FeatureWrapper.Te
         }
 
         public TemplateModelIterator iterator() throws TemplateModelException {
-            TemplateFeatureIterator it = new TemplateFeatureIterator(collection.features(), wrapper);
+            TemplateFeatureIterator it =
+                    new TemplateFeatureIterator(collection.features(), wrapper);
             List<TemplateFeatureIterator> open = ITERATORS.get();
             if (open == null) {
-                open = new LinkedList();
+                open = new LinkedList<>();
                 ITERATORS.set(open);
             }
             open.add(it);
@@ -94,14 +89,13 @@ public class DirectTemplateFeatureCollectionFactory implements FeatureWrapper.Te
 
         @Override
         public TemplateModel get(int index) throws TemplateModelException {
-            if (currentIndex > index ) {
-                //we have gone backwards, close iterator and clean up as we will need to start over
+            if (currentIndex > index) {
+                // we have gone backwards, close iterator and clean up as we will need to start over
                 if (indexIterator != null) {
                     ITERATORS.get().remove(indexIterator);
                     try {
                         indexIterator.close();
-                    }
-                    catch(Throwable t) {
+                    } catch (Throwable t) {
                         LOGGER.log(Level.WARNING, "Error closing iterator", t);
                     }
                     indexIterator = null;
@@ -113,7 +107,7 @@ public class DirectTemplateFeatureCollectionFactory implements FeatureWrapper.Te
                 indexIterator = (TemplateFeatureIterator) iterator();
             }
             while (currentIndex < index && indexIterator.hasNext()) {
-                //forward to correct index
+                // forward to correct index
                 currentItem = indexIterator.next();
                 currentIndex++;
             }
@@ -124,7 +118,6 @@ public class DirectTemplateFeatureCollectionFactory implements FeatureWrapper.Te
         public int size() throws TemplateModelException {
             return collection.size();
         }
-
     }
 
     protected class TemplateFeatureIterator implements TemplateModelIterator {
@@ -149,7 +142,5 @@ public class DirectTemplateFeatureCollectionFactory implements FeatureWrapper.Te
         public void close() {
             iterator.close();
         }
-
     }
-
 }

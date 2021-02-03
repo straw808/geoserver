@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2016 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -6,68 +6,69 @@
 package org.geoserver.web.util;
 
 import java.io.Serializable;
-
-import org.apache.wicket.model.IChainingModel;
 import org.apache.wicket.model.IModel;
 import org.geoserver.catalog.MetadataMap;
 
 /**
  * A model which backs onto an underlying {@link MetadataMap}
- * <p>
- * The semantics of this model are similar to {@link #PropertyModel} except for that expressions map
- * to keys of a map rather than java bean property names.
- * </p>
- * <p>
- * Closely derived from {@link MapModel}
- * </p>
- * 
+ *
+ * <p>The semantics of this model are similar to {@link org.apache.wicket.model.PropertyModel}
+ * except for that expressions map to keys of a map rather than java bean property names.
+ *
+ * <p>Closely derived from {@link MapModel}
+ *
  * @author Andrea Aime - Geosolutions
  * @author Justin Deoliveira, The Open Planning Project
  */
 @SuppressWarnings("serial")
-public class MetadataMapModel implements IModel {
+public class MetadataMapModel<T> implements IModel<T> {
 
-    protected IModel model;
+    protected IModel<MetadataMap> model;
 
     protected String expression;
 
     protected Class<?> target;
-    
+
     protected Serializable value;
 
+    /**
+     * @deprecated use @link{MetadataMapModel(IModel<MetadataMap>, String, Class<?>)} instead. This
+     *     constructor is not safe with (de)serialization and can cause bugs with for example the
+     *     hazelcast module.
+     */
+    @Deprecated
     public MetadataMapModel(MetadataMap map, String expression, Class<?> target) {
         this(new MetadataMapWrappingModel(map), expression, target);
     }
 
-    public MetadataMapModel(IModel model, String expression, Class<?> target) {
+    public MetadataMapModel(IModel<MetadataMap> model, String expression, Class<?> target) {
         this.model = model;
         this.expression = expression;
         this.target = target;
     }
 
     @SuppressWarnings("unchecked")
-    public Object getObject() {
-        if(value == null) {
-            value = (Serializable) ((MetadataMap) model.getObject()).get(expression, target);
+    public T getObject() {
+        if (value == null) {
+            value = (Serializable) model.getObject().get(expression, target);
         }
-        return value;
+        return (T) value;
     }
 
-    @SuppressWarnings("unchecked")
-    public void setObject(Object object) {
+    public void setObject(T object) {
         value = (Serializable) object;
-        ((MetadataMap) model.getObject()).put(expression, (Serializable) object);
+        model.getObject().put(expression, (Serializable) object);
     }
 
     public void detach() {
         model.detach();
     }
-    
+
     public String getExpression() {
         return expression;
     }
 
-    private static class MetadataMapWrappingModel implements IModel {
+    private static class MetadataMapWrappingModel implements IModel<MetadataMap> {
 
         private MetadataMap map;
 
@@ -75,17 +76,12 @@ public class MetadataMapModel implements IModel {
             map = m;
         }
 
-        public Object getObject() {
+        public MetadataMap getObject() {
             return map;
         }
 
-        public void setObject(Object arg0) {
-        }
+        public void setObject(MetadataMap arg0) {}
 
-        public void detach() {
-        }
-
+        public void detach() {}
     }
-
-
 }

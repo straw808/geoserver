@@ -15,78 +15,51 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-
-import javax.xml.XMLConstants;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
-
-import org.xml.sax.ErrorHandler;
+import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-
 public class SLDValidator {
     static Logger LOGGER = org.geotools.util.logging.Logging.getLogger("org.vfny.geoserver");
 
-    public SLDValidator() {
-    }
+    EntityResolver entityResolver;
 
-    /**
-     * validates against the SLD schema in the classpath 
-     *
-     * @param xml
-     * @param baseUrl GeoServer base URL
-     *
-     * @return
-     */
-    @Deprecated
-    public List validateSLD(InputStream xml, String baseUrl) {
-        return validateSLD(xml);
-    }
-    
-    /**
-     * validates against the SLD schema in the classpath 
-     *
-     * @param xml
-     * @param baseUrl GeoServer base URL
-     *
-     * @return
-     */
-    public List validateSLD(InputStream xml) {
+    public SLDValidator() {}
+
+    /** Validates against the SLD schema in the classpath */
+    public List<SAXException> validateSLD(InputStream xml) {
         return validateSLD(new InputSource(xml));
     }
 
-    public static String getErrorMessage(InputStream xml, List errors) {
+    public EntityResolver getEntityResolver() {
+        return entityResolver;
+    }
+
+    public void setEntityResolver(EntityResolver entityResolver) {
+        this.entityResolver = entityResolver;
+    }
+
+    public static String getErrorMessage(InputStream xml, List<? extends Exception> errors) {
         return getErrorMessage(new InputStreamReader(xml), errors);
     }
 
     /**
-     * returns a better formated error message - suitable for framing. There's
-     * a more complex version in StylesEditorAction. This will kick out a VERY
-     * LARGE errorMessage.
-     *
-     * @param xml
-     * @param errors
-     *
-     * @return DOCUMENT ME!
+     * returns a better formated error message - suitable for framing. There's a more complex
+     * version in StylesEditorAction. This will kick out a VERY LARGE errorMessage.
      */
-    public static String getErrorMessage(Reader xml, List errors) {
+    public static String getErrorMessage(Reader xml, List<? extends Exception> errors) {
         BufferedReader reader = null;
         StringBuffer result = new StringBuffer();
         result.append("Your SLD is not valid.\n");
         result.append(
-            "Most common problems are: \n(1) no namespaces - use <ows:GetMap>, <sld:Rule>, <ogc:Filter>, <gml:Point>  - the part before the ':' is important\n");
+                "Most common problems are: \n(1) no namespaces - use <ows:GetMap>, <sld:Rule>, <ogc:Filter>, <gml:Point>  - the part before the ':' is important\n");
         result.append("(2) capitialization - use '<And>' not '<and>' \n");
         result.append("(3) Order - The order of elements is important \n");
         result.append(
-            "(4) Make sure your first tag imports the correct namespaces.  ie. xmlns:sld=\"http://www.opengis.net/sld\" for EVERY NAMESPACE \n");
+                "(4) Make sure your first tag imports the correct namespaces.  ie. xmlns:sld=\"http://www.opengis.net/sld\" for EVERY NAMESPACE \n");
         result.append("\n");
 
         try {
@@ -96,8 +69,8 @@ public class SLDValidator {
             int linenumber = 1;
             int exceptionNum = 0;
 
-            //check for lineNumber -1 errors  --> invalid XML
-            if (errors.size() > 0) {
+            // check for lineNumber -1 errors  --> invalid XML
+            if (!errors.isEmpty() && errors.get(0) instanceof SAXParseException) {
                 SAXParseException sax = (SAXParseException) errors.get(0);
 
                 if (sax.getLineNumber() < 0) {
@@ -108,8 +81,8 @@ public class SLDValidator {
             }
 
             while (line != null) {
-                line.replace('\n', ' ');
-                line.replace('\r', ' ');
+                line = line.replace('\n', ' ');
+                line = line.replace('\r', ' ');
 
                 String header = linenumber + ": ";
                 result.append(header + line + "\n"); // record the current line
@@ -117,21 +90,27 @@ public class SLDValidator {
                 boolean keep_going = true;
 
                 while (keep_going) {
-                    if ((exceptionNum < errors.size())) {
+                    if ((exceptionNum < errors.size())
+                            && errors.get(exceptionNum) instanceof SAXParseException) {
                         SAXParseException sax = (SAXParseException) errors.get(exceptionNum);
 
                         if (sax.getLineNumber() <= linenumber) {
                             String head = "---------------------".substring(0, header.length() - 1);
-                            String body = "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------";
+                            String body =
+                                    "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------";
 
-                            int colNum = sax.getColumnNumber(); //protect against col 0 problems
+                            int colNum = sax.getColumnNumber(); // protect against col 0 problems
 
                             if (colNum < 1) {
                                 colNum = 1;
                             }
 
                             if (colNum > body.length()) {
-                                body = body + body + body + body + body + body; // make it longer (not usually required, but might be for SLD_BODY=... which is all one line)
+                                body =
+                                        body + body + body + body + body
+                                                + body; // make it longer (not usually required, but
+                                // might be for SLD_BODY=... which is all
+                                // one line)
 
                                 if (colNum > body.length()) {
                                     colNum = body.length();
@@ -139,25 +118,37 @@ public class SLDValidator {
                             }
 
                             result.append(head + body.substring(0, colNum - 1) + "^\n");
-                            result.append("       (line " + sax.getLineNumber() + ", column "
-                                + sax.getColumnNumber() + ")" + sax.getLocalizedMessage() + "\n");
+                            result.append(
+                                    "       (line "
+                                            + sax.getLineNumber()
+                                            + ", column "
+                                            + sax.getColumnNumber()
+                                            + ")"
+                                            + sax.getLocalizedMessage()
+                                            + "\n");
                             exceptionNum++;
                         } else {
-                            keep_going = false; //report later (sax.getLineNumber() > linenumber)
+                            keep_going = false; // report later (sax.getLineNumber() > linenumber)
                         }
                     } else {
                         keep_going = false; // no more errors to report
                     }
                 }
 
-                line = reader.readLine(); //will be null at eof
+                line = reader.readLine(); // will be null at eof
                 linenumber++;
             }
 
             for (int t = exceptionNum; t < errors.size(); t++) {
                 SAXParseException sax = (SAXParseException) errors.get(t);
-                result.append("       (line " + sax.getLineNumber() + ", column "
-                    + sax.getColumnNumber() + ")" + sax.getLocalizedMessage() + "\n");
+                result.append(
+                        "       (line "
+                                + sax.getLineNumber()
+                                + ", column "
+                                + sax.getColumnNumber()
+                                + ")"
+                                + sax.getLocalizedMessage()
+                                + "\n");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -173,31 +164,15 @@ public class SLDValidator {
 
         return result.toString();
     }
-    
-    /**
-     * validate a .sld against the schema
-     *
-     * @param xml input stream representing the .sld file
-     * @param baseURL 
-     * @param SchemaUrl location of the schemas. Normally use
-     *        ".../schemas/sld/StyleLayerDescriptor.xsd"
-     *
-     * @return list of SAXExceptions (0 if the file's okay)
-     */
-    @Deprecated 
-    public List validateSLD(InputSource xml, String baseUrl) {
-        return validateSLD(xml);
-    }
 
     /**
      * validate a .sld against the schema
      *
      * @param xml input stream representing the .sld file
-     *
      * @return list of SAXExceptions (0 if the file's okay)
      */
-    public List validateSLD(InputSource xml) {
+    public List<SAXException> validateSLD(InputSource xml) {
         URL schemaURL = SLDValidator.class.getResource("/schemas/sld/StyledLayerDescriptor.xsd");
-        return ResponseUtils.validate(xml, schemaURL, false);
+        return ResponseUtils.validate(xml, schemaURL, false, entityResolver);
     }
 }
